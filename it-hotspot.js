@@ -4,8 +4,8 @@
   if (!img || !link) return;
 
   const spots = {
-    landscape: { x: 0.548, y: 0.537, w: 0.052, h: 0.078 },
-    portrait: { x: 0.572, y: 0.51, w: 0.085, h: 0.057 },
+    landscape: { x: 0.562, y: 0.537, w: 0.052, h: 0.078 },
+    portrait: { x: 0.586, y: 0.51, w: 0.085, h: 0.057 },
   };
 
   function place() {
@@ -21,10 +21,13 @@
     const ox = (rw - shownW) / 2;
     const oy = (rh - shownH) / 2;
 
+    const width = spot.w * shownW;
+    const height = spot.h * shownH;
     link.style.left = ox + spot.x * shownW + "px";
     link.style.top = oy + spot.y * shownH + "px";
-    link.style.width = spot.w * shownW + "px";
-    link.style.height = spot.h * shownH + "px";
+    link.style.width = width + "px";
+    link.style.height = height + "px";
+    link.style.fontSize = height * 0.7 + "px";
     link.classList.add("is-ready");
   }
 

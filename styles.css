@@ -58,29 +58,28 @@ body {
 .it-link {
   position: absolute;
   z-index: 3;
-  display: block;
+  display: grid;
+  place-items: center;
   width: 80px;
   height: 80px;
   overflow: hidden;
   visibility: hidden;
+  border-radius: 22%;
+  border: 0.09em solid #14d4d6;
+  background: linear-gradient(152deg, #ff9a28 0%, #8a2a86 55%, #3a1466 100%);
+  color: #fff8f2;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
   text-decoration: none;
   cursor: pointer;
-  background: none;
-  border: 0;
+  transform-origin: center;
+  animation: it-button-pulse 1.35s ease-in-out infinite;
 }
 
 .it-link.is-ready {
   visibility: visible;
   overflow: visible;
-}
-
-.it-button {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  transform-origin: center center;
-  animation: it-button-pulse 1.35s ease-in-out infinite;
 }
 
 .it-link:focus-visible {
@@ -138,11 +137,11 @@ body {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 transparent);
+    box-shadow: 0 0 0 0 transparent;
   }
   50% {
-    transform: scale(1.16);
-    filter: drop-shadow(0 0 16px rgb(0 200 201 / 80%));
+    transform: scale(1.06);
+    box-shadow: 0 0 12px rgb(0 200 201 / 45%);
   }
 }
 
