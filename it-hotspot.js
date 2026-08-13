@@ -4,8 +4,8 @@
   if (!img || !link) return;
 
   const spots = {
-    landscape: { x: 0.552, y: 0.496, w: 0.072, h: 0.108 },
-    portrait: { x: 0.581, y: 0.474, w: 0.12, h: 0.08 },
+    landscape: { x: 0.548, y: 0.537, w: 0.052, h: 0.078 },
+    portrait: { x: 0.572, y: 0.51, w: 0.085, h: 0.057 },
   };
 
   function place() {
@@ -25,6 +25,7 @@
     link.style.top = oy + spot.y * shownH + "px";
     link.style.width = spot.w * shownW + "px";
     link.style.height = spot.h * shownH + "px";
+    link.classList.add("is-ready");
   }
 
   img.addEventListener("load", place);

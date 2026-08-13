@@ -59,10 +59,19 @@ body {
   position: absolute;
   z-index: 3;
   display: block;
+  width: 80px;
+  height: 80px;
+  overflow: hidden;
+  visibility: hidden;
   text-decoration: none;
   cursor: pointer;
   background: none;
   border: 0;
+}
+
+.it-link.is-ready {
+  visibility: visible;
+  overflow: visible;
 }
 
 .it-button {
