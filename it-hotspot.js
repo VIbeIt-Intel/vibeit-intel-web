@@ -4,8 +4,8 @@
   if (!img || !link) return;
 
   const spots = {
-    landscape: { x: 0.5586, y: 0.5215, w: 0.0677, h: 0.1016 },
-    portrait: { x: 0.6211, y: 0.4961, w: 0.1211, h: 0.0807 },
+    landscape: { x: 0.5944, y: 0.5723, s: 0.068 },
+    portrait: { x: 0.679, y: 0.536, s: 0.112 },
   };
 
   function place() {
@@ -20,11 +20,12 @@
     const shownH = nh * scale;
     const ox = (rw - shownW) / 2;
     const oy = (rh - shownH) / 2;
+    const size = spot.s * shownW;
 
     link.style.left = ox + spot.x * shownW + "px";
     link.style.top = oy + spot.y * shownH + "px";
-    link.style.width = spot.w * shownW + "px";
-    link.style.height = spot.h * shownH + "px";
+    link.style.width = size + "px";
+    link.style.height = size + "px";
   }
 
   img.addEventListener("load", place);
