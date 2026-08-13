@@ -57,72 +57,33 @@ body {
 
 .it-link {
   position: absolute;
-  left: 54.6%;
-  top: 50.2%;
+  left: 59.4%;
+  top: 54.1%;
   z-index: 3;
-  width: clamp(3.4rem, 5.6vw, 6.2rem);
-  height: clamp(3.4rem, 5.6vw, 6.2rem);
-  display: grid;
-  place-items: center;
+  width: clamp(3.1rem, 5.1vw, 5.6rem);
+  height: clamp(3.1rem, 5.1vw, 5.6rem);
+  border-radius: 22%;
   text-decoration: none;
   transform: translate(-50%, -50%);
-}
-
-.it-face {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  border-radius: 22%;
-  border: 0.18em solid var(--teal);
-  background: linear-gradient(160deg, #ff9a2a 0%, #7a2a8a 58%, #3c1468 100%);
-  color: #fff;
-  font-size: clamp(1.05rem, 1.8vw, 1.85rem);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow:
-    0 0 0 0.12rem rgb(255 255 255 / 35%),
-    0 10px 28px rgb(74 31 122 / 28%);
-  animation: it-breathe 1.8s ease-in-out infinite;
+  animation: it-glow 1.8s ease-in-out infinite;
 }
 
 .it-pulse {
   position: absolute;
-  inset: -8%;
+  inset: -10%;
   border-radius: 26%;
-  border: 2px solid color-mix(in srgb, var(--teal) 80%, white);
+  border: 2px solid color-mix(in srgb, var(--teal) 85%, white);
   animation: it-ring 2.2s ease-out infinite;
+  pointer-events: none;
 }
 
 .it-pulse-delay {
   animation-delay: 1.1s;
 }
 
-.it-link:hover .it-face,
-.it-link:focus-visible .it-face {
-  animation-duration: 0.9s;
-  filter: brightness(1.08);
-}
-
 .it-link:focus-visible {
-  outline: none;
-}
-
-.it-hint {
-  position: absolute;
-  left: 54.6%;
-  top: calc(50.2% + clamp(2.4rem, 4.1vw, 4.5rem));
-  z-index: 3;
-  transform: translateX(-50%);
-  color: var(--purple);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 10px rgb(255 255 255 / 85%);
-  pointer-events: none;
+  outline: 2px solid var(--teal);
+  outline-offset: 4px;
 }
 
 .overlay {
@@ -171,21 +132,13 @@ body {
   text-shadow: 0 1px 8px rgb(255 255 255 / 70%);
 }
 
-@keyframes it-breathe {
+@keyframes it-glow {
   0%,
   100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 0 0.12rem rgb(255 255 255 / 35%),
-      0 0 0 0 color-mix(in srgb, var(--teal) 55%, transparent),
-      0 10px 28px rgb(74 31 122 / 28%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--teal) 0%, transparent);
   }
   50% {
-    transform: scale(1.08);
-    box-shadow:
-      0 0 0 0.12rem rgb(255 255 255 / 45%),
-      0 0 0 0.55rem color-mix(in srgb, var(--teal) 28%, transparent),
-      0 14px 34px rgb(74 31 122 / 35%);
+    box-shadow: 0 0 0 0.55rem color-mix(in srgb, var(--teal) 35%, transparent);
   }
 }
 
@@ -210,31 +163,18 @@ body {
 }
 
 @media (orientation: portrait) {
-  .it-link,
-  .it-hint {
-    left: 58.5%;
-  }
-
   .it-link {
-    top: 47.8%;
-    width: clamp(3.6rem, 12vw, 5.6rem);
-    height: clamp(3.6rem, 12vw, 5.6rem);
-  }
-
-  .it-hint {
-    top: calc(47.8% + clamp(2.6rem, 9vw, 4.4rem));
+    left: 61.2%;
+    top: 49.2%;
+    width: clamp(3.4rem, 11vw, 5.2rem);
+    height: clamp(3.4rem, 11vw, 5.2rem);
   }
 }
 
 @media (max-width: 700px) and (orientation: landscape) {
   .it-link {
-    left: 55%;
-    top: 51%;
-  }
-
-  .it-hint {
-    left: 55%;
-    top: calc(51% + 2.6rem);
+    left: 59.6%;
+    top: 54.4%;
   }
 }
 
