@@ -72,6 +72,7 @@ body {
 
 .it-link.is-ready {
   visibility: visible;
+  overflow: visible;
 }
 
 .it-face {
@@ -81,7 +82,7 @@ body {
   object-fit: cover;
   border-radius: 22%;
   transform-origin: center;
-  animation: it-button-pulse 1.35s ease-in-out infinite;
+  animation: it-button-pulse 1.25s ease-in-out infinite;
 }
 
 .it-link:focus-visible {
@@ -139,11 +140,16 @@ body {
   0%,
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 transparent;
+    filter:
+      drop-shadow(0 0 6px rgb(0 220 221 / 70%))
+      drop-shadow(0 0 14px rgb(255 138 26 / 35%));
   }
   50% {
-    transform: scale(1.06);
-    box-shadow: 0 0 12px rgb(0 200 201 / 45%);
+    transform: scale(1.08);
+    filter:
+      drop-shadow(0 0 10px rgb(0 240 242 / 95%))
+      drop-shadow(0 0 22px rgb(0 200 201 / 75%))
+      drop-shadow(0 0 28px rgb(255 138 26 / 45%));
   }
 }
 
