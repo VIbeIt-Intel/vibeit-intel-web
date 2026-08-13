@@ -4,8 +4,8 @@
   if (!img || !link) return;
 
   const spots = {
-    landscape: { x: 0.5651, y: 0.5254, w: 0.0625, h: 0.0938 },
-    portrait: { x: 0.627, y: 0.5, w: 0.1094, h: 0.0729 },
+    landscape: { x: 0.552, y: 0.496, w: 0.072, h: 0.108 },
+    portrait: { x: 0.581, y: 0.474, w: 0.12, h: 0.08 },
   };
 
   function place() {
