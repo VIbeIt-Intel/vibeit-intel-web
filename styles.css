@@ -1,0 +1,98 @@
+:root {
+  --bg: #f3f1ef;
+  --charcoal: #2b2430;
+  --muted: #6b6273;
+  --teal: #00c8c9;
+  --orange: #ff8a1a;
+  --purple: #4a1f7a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: Outfit, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--charcoal);
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.25rem 3rem;
+  text-align: center;
+}
+
+.logo {
+  width: min(34rem, 88vw);
+  height: auto;
+  display: block;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.25rem;
+  padding: 0.45rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--teal) 55%, white);
+  border-radius: 999px;
+  background: color-mix(in srgb, white 70%, var(--teal));
+  color: var(--purple);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 55%, transparent);
+  animation: pulse 1.8s ease-out infinite;
+}
+
+.note {
+  margin-top: 1rem;
+  max-width: 26rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.domain {
+  margin-top: 1.75rem;
+  color: var(--charcoal);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0.7rem transparent;
+  }
+}
+
+@media (max-width: 640px) {
+  .note {
+    font-size: 0.95rem;
+  }
+}
