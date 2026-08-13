@@ -27,7 +27,6 @@
     link.style.top = oy + spot.y * shownH + "px";
     link.style.width = width + "px";
     link.style.height = height + "px";
-    link.style.fontSize = height * 0.7 + "px";
     link.classList.add("is-ready");
   }
 
