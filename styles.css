@@ -57,11 +57,11 @@ body {
 
 .it-link {
   position: absolute;
-  left: 59.4%;
-  top: 54.1%;
+  left: 56.1%;
+  top: 55.7%;
   z-index: 3;
-  width: clamp(3.1rem, 5.1vw, 5.6rem);
-  height: clamp(3.1rem, 5.1vw, 5.6rem);
+  width: 5vw;
+  height: 5vw;
   border-radius: 22%;
   text-decoration: none;
   transform: translate(-50%, -50%);
@@ -70,10 +70,10 @@ body {
 
 .it-pulse {
   position: absolute;
-  inset: -10%;
-  border-radius: 26%;
-  border: 2px solid color-mix(in srgb, var(--teal) 85%, white);
-  animation: it-ring 2.2s ease-out infinite;
+  inset: 0;
+  border-radius: 22%;
+  border: 2px solid color-mix(in srgb, var(--teal) 90%, white);
+  animation: it-ring 2.1s ease-out infinite;
   pointer-events: none;
 }
 
@@ -144,11 +144,11 @@ body {
 
 @keyframes it-ring {
   0% {
-    transform: scale(0.92);
-    opacity: 0.7;
+    transform: scale(1);
+    opacity: 0.85;
   }
   100% {
-    transform: scale(1.55);
+    transform: scale(1.45);
     opacity: 0;
   }
 }
@@ -164,17 +164,10 @@ body {
 
 @media (orientation: portrait) {
   .it-link {
-    left: 61.2%;
-    top: 49.2%;
-    width: clamp(3.4rem, 11vw, 5.2rem);
-    height: clamp(3.4rem, 11vw, 5.2rem);
-  }
-}
-
-@media (max-width: 700px) and (orientation: landscape) {
-  .it-link {
     left: 59.6%;
-    top: 54.4%;
+    top: 50.4%;
+    width: 9.8vw;
+    height: 9.8vw;
   }
 }
 
