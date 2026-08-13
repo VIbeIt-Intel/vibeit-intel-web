@@ -1,7 +1,6 @@
 :root {
-  --bg: #f3f1ef;
+  --bg: #efece8;
   --charcoal: #2b2430;
-  --muted: #6b6273;
   --teal: #00c8c9;
   --orange: #ff8a1a;
   --purple: #4a1f7a;
@@ -15,7 +14,8 @@
 
 html,
 body {
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -25,35 +25,55 @@ body {
 }
 
 .page {
-  min-height: 100vh;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.hero,
+.hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-image {
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: auto;
+}
+
+.overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.4rem;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2.5rem 1.25rem 3rem;
+  gap: 0.65rem;
+  padding: 0 1rem;
   text-align: center;
-}
-
-.logo {
-  width: min(34rem, 88vw);
-  height: auto;
-  display: block;
 }
 
 .status {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  margin-top: 0.25rem;
   padding: 0.45rem 1rem;
   border: 1px solid color-mix(in srgb, var(--teal) 55%, white);
   border-radius: 999px;
-  background: color-mix(in srgb, white 70%, var(--teal));
+  background: color-mix(in srgb, white 78%, var(--teal));
   color: var(--purple);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  backdrop-filter: blur(8px);
 }
 
 .status-dot {
@@ -61,25 +81,14 @@ body {
   height: 0.5rem;
   border-radius: 50%;
   background: var(--orange);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 55%, transparent);
   animation: pulse 1.8s ease-out infinite;
 }
 
 .note {
-  margin-top: 1rem;
-  max-width: 26rem;
-  color: var(--muted);
-  font-size: 1.05rem;
-  line-height: 1.5;
-}
-
-.domain {
-  margin-top: 1.75rem;
-  color: var(--charcoal);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  color: color-mix(in srgb, var(--charcoal) 78%, white);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-shadow: 0 1px 8px rgb(255 255 255 / 70%);
 }
 
 @keyframes pulse {
@@ -88,11 +97,5 @@ body {
   }
   100% {
     box-shadow: 0 0 0 0.7rem transparent;
-  }
-}
-
-@media (max-width: 640px) {
-  .note {
-    font-size: 0.95rem;
   }
 }

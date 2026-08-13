@@ -12,28 +12,32 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="page">
-      <img
-        class="logo"
-        src="assets/logo.png"
-        alt="Vibe It INTEL logo"
-        width="720"
-        height="720"
-      />
+      <picture class="hero">
+        <source
+          media="(orientation: portrait)"
+          srcset="assets/logo-hero-portrait.png"
+        />
+        <img
+          class="hero-image"
+          src="assets/logo-hero.png"
+          alt="Vibe It INTEL"
+        />
+      </picture>
 
-      <p class="status">
-        <span class="status-dot" aria-hidden="true"></span>
-        Under Construction
-      </p>
-
-      <p class="note">We're building something new. Please check back soon.</p>
-      <p class="domain">vibeit-intel.net</p>
+      <div class="overlay">
+        <p class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          Under Construction
+        </p>
+        <p class="note">We're building something new. Please check back soon.</p>
+      </div>
     </main>
   </body>
 </html>
