@@ -57,11 +57,11 @@ body {
 
 .it-link {
   position: absolute;
-  left: 56.1%;
-  top: 55.7%;
+  left: 59.44%;
+  top: 57.23%;
   z-index: 3;
-  width: 5vw;
-  height: 5vw;
+  width: 6.25vw;
+  height: 6.25vw;
   border-radius: 22%;
   text-decoration: none;
   transform: translate(-50%, -50%);
@@ -164,10 +164,10 @@ body {
 
 @media (orientation: portrait) {
   .it-link {
-    left: 59.6%;
-    top: 50.4%;
-    width: 9.8vw;
-    height: 9.8vw;
+    left: 67.9%;
+    top: 53.6%;
+    width: 10.5vw;
+    height: 10.5vw;
   }
 }
 
