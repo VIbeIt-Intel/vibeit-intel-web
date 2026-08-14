@@ -195,13 +195,6 @@ body {
   border-radius: 0.85rem;
 }
 
-.brand img.brand-mark-wide {
-  width: auto;
-  height: 3.6rem;
-  object-fit: contain;
-  border-radius: 0.55rem;
-}
-
 .back {
   color: var(--purple);
   font-size: 0.85rem;
