@@ -458,7 +458,8 @@ html.from-it .foot {
 .pack-jump:focus-visible,
 .pack-cta:focus-visible,
 .pack-wa:focus-visible,
-.reach-card:focus-visible,
+.wa-hero:focus-visible,
+.dock-item:focus-visible,
 .cta:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 3px;
@@ -800,95 +801,157 @@ html.from-it .foot {
 }
 
 .contact {
-  padding-bottom: 3rem;
+  text-align: center;
+  padding-bottom: 4.2rem;
   scroll-margin-top: 1.25rem;
 }
 
-.reach {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-top: 1.4rem;
+.contact p {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.reach-card,
-.reach-card:visited {
+.wa-hero,
+.wa-hero:visited {
   display: flex;
-  flex-direction: row;
   align-items: center;
   gap: 1rem;
-  min-height: 5.25rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 1.15rem;
-  background: #2a1b36;
+  width: min(100%, 28rem);
+  margin: 1.7rem auto 0;
+  padding: 0.85rem 1.1rem 0.85rem 0.85rem;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(#1a1026, #1a1026) padding-box,
+    linear-gradient(120deg, var(--teal), var(--orange), var(--purple)) border-box;
   color: #fff;
   text-decoration: none;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 16px 40px rgb(0 200 201 / 22%);
+  animation: wa-glow 2.4s ease-in-out infinite;
 }
 
-.reach-card:hover {
-  border-color: rgb(0 200 201 / 55%);
-  background: #322040;
-}
-
-.reach-hot {
-  border-color: rgb(0 200 201 / 40%);
-  box-shadow: 0 10px 28px rgb(0 200 201 / 16%);
-}
-
-.reach-icon {
+.wa-hero-mark {
   display: grid;
   place-items: center;
-  flex: 0 0 64px;
-  width: 64px;
-  height: 64px;
-  min-width: 64px;
-  min-height: 64px;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
   overflow: hidden;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 6px 14px rgb(0 0 0 / 28%);
-}
-
-.reach-hot .reach-icon {
   border-radius: 50%;
   background: #fff;
+  box-shadow: 0 0 18px rgb(37 211 102 / 55%);
 }
 
-.reach-icon svg,
-.reach-icon img {
+.wa-hero-mark svg {
   display: block;
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
 }
 
-.reach-copy {
+.wa-hero-copy {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  align-items: flex-start;
+  text-align: left;
 }
 
-.reach-kicker {
+.wa-hero-kicker {
   color: var(--teal);
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.reach-name {
-  margin-top: 0.12rem;
-  font-size: 1.02rem;
-  font-weight: 700;
+.wa-hero-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
-.reach-value {
-  margin-top: 0.12rem;
+.wa-hero-go {
+  margin-left: auto;
+  color: var(--teal);
+  font-size: 1.6rem;
+  font-weight: 700;
+  transition: transform 0.25s ease;
+}
+
+.wa-hero:hover .wa-hero-go,
+.wa-hero:focus-visible .wa-hero-go {
+  transform: translateX(6px);
+  color: var(--orange);
+}
+
+@keyframes wa-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 8%),
+      0 12px 32px rgb(0 200 201 / 18%);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 12%),
+      0 18px 48px rgb(255 138 26 / 28%),
+      0 0 36px rgb(0 200 201 / 30%);
+  }
+}
+
+.dock {
+  display: flex;
+  justify-content: center;
+  gap: 1.6rem;
+  margin-top: 1.8rem;
+}
+
+.dock-item,
+.dock-item:visited {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  color: rgb(246 241 251 / 82%);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.dock-orb {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgb(255 255 255 / 26%), transparent 46%),
+    linear-gradient(145deg, var(--purple), var(--orange));
+  box-shadow:
+    0 0 0 3px var(--teal),
+    0 0 20px rgb(0 200 201 / 45%),
+    0 10px 22px rgb(0 0 0 / 30%);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dock-orb svg {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   overflow: hidden;
-  color: rgb(246 241 251 / 70%);
-  font-size: 0.82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.dock-item:hover .dock-orb,
+.dock-item:focus-visible .dock-orb {
+  transform: translateY(-5px) scale(1.06);
+  box-shadow:
+    0 0 0 3px var(--orange),
+    0 0 26px rgb(255 138 26 / 55%),
+    0 14px 26px rgb(0 0 0 / 32%);
 }
 
 .cta {
@@ -983,34 +1046,8 @@ html.from-it .foot {
 }
 
 @media (min-width: 640px) {
-  .reach {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (min-width: 1280px) {
-  .reach {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .reach-card,
-  .reach-card:visited {
-    min-height: 5.6rem;
-    padding: 1.1rem 1.15rem;
-  }
-
-  .reach-icon {
-    flex-basis: 72px;
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
-    min-height: 72px;
-  }
-
-  .reach-icon svg,
-  .reach-icon img {
-    width: 72px;
-    height: 72px;
+  .dock {
+    gap: 2.2rem;
   }
 }
 
@@ -1022,6 +1059,7 @@ html.from-it .foot {
   .vibe-blob,
   .back-orb,
   .pack-jump,
+  .wa-hero,
   .it-link.is-opening .it-face,
   html.from-it .arrive,
   html.from-it .topbar,
