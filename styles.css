@@ -816,20 +816,19 @@ html.from-it .foot {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0.9rem;
-  min-height: 4.6rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 1.1rem;
-  background: rgb(255 255 255 / 8%);
+  gap: 1rem;
+  min-height: 5.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 1.15rem;
+  background: #2a1b36;
   color: #fff;
   text-decoration: none;
-  backdrop-filter: blur(14px);
 }
 
 .reach-card:hover {
-  border-color: rgb(0 200 201 / 45%);
-  background: rgb(255 255 255 / 12%);
+  border-color: rgb(0 200 201 / 55%);
+  background: #322040;
 }
 
 .reach-hot {
@@ -840,15 +839,13 @@ html.from-it .foot {
 .reach-icon {
   display: grid;
   place-items: center;
-  flex: 0 0 3.1rem;
-  width: 3.1rem;
-  height: 3.1rem;
-  min-width: 3.1rem;
-  min-height: 3.1rem;
-  max-width: 3.1rem;
-  max-height: 3.1rem;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  min-height: 64px;
   overflow: hidden;
-  border-radius: 0.85rem;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 6px 14px rgb(0 0 0 / 28%);
 }
@@ -861,9 +858,8 @@ html.from-it .foot {
 .reach-icon svg,
 .reach-icon img {
   display: block;
-  width: 3.1rem;
-  height: 3.1rem;
-  object-fit: contain;
+  width: 64px;
+  height: 64px;
 }
 
 .reach-copy {
@@ -986,31 +982,35 @@ html.from-it .foot {
   }
 }
 
-@media (min-width: 901px) {
+@media (min-width: 640px) {
+  .reach {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
   .reach {
     grid-template-columns: repeat(4, 1fr);
   }
 
   .reach-card,
   .reach-card:visited {
-    min-height: 5.4rem;
-    padding: 1.05rem 1.1rem;
+    min-height: 5.6rem;
+    padding: 1.1rem 1.15rem;
   }
 
   .reach-icon {
-    flex-basis: 3.75rem;
-    width: 3.75rem;
-    height: 3.75rem;
-    min-width: 3.75rem;
-    min-height: 3.75rem;
-    max-width: 3.75rem;
-    max-height: 3.75rem;
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+    min-width: 72px;
+    min-height: 72px;
   }
 
   .reach-icon svg,
   .reach-icon img {
-    width: 3.75rem;
-    height: 3.75rem;
+    width: 72px;
+    height: 72px;
   }
 }
 
