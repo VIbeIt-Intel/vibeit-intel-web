@@ -3,21 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Services — VibeIt-Intel</title>
+    <title>Packages — VibeIt-Intel</title>
     <meta
       name="description"
-      content="VibeIt-Intel builds operational software, fleet intelligence, field systems, and rapid digital products."
+      content="Simple websites for salons, food businesses, and local shops. Entry from R1,105. Bookings, payments, and apps when you are ready."
     />
     <link rel="icon" href="assets/logo-v-it.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body class="site">
+    <div class="vibe" aria-hidden="true">
+      <span class="vibe-blob vibe-blob-teal"></span>
+      <span class="vibe-blob vibe-blob-orange"></span>
+      <span class="vibe-blob vibe-blob-purple"></span>
+      <span class="vibe-blob vibe-blob-mix"></span>
+      <span class="vibe-grain"></span>
+    </div>
+
     <header class="topbar">
       <a class="brand" href="index.html">
         <img src="assets/logo-v-it.png" alt="VibeIt-Intel" width="56" height="56" />
@@ -28,77 +36,165 @@
 
     <main>
       <section class="intro">
-        <p class="eyebrow">Who we are</p>
-        <h1>Intelligence, built with feeling.</h1>
+        <p class="eyebrow">Packages</p>
+        <h1>Look good online.<br />Get more customers.</h1>
         <p class="lead">
-          VibeIt-Intel designs and ships software for organisations that need
-          clarity in the field — live operations, evidence, fleets, and
-          community platforms. We move fast, keep the brand sharp, and leave
-          teams with tools they can actually run.
+          Simple websites for hairdressers, nail salons, food businesses, and
+          local shops. You pick a package. We build it. No tech talk.
         </p>
+        <ul class="for-who">
+          <li>Hairdressers</li>
+          <li>Nail salons</li>
+          <li>Food businesses</li>
+          <li>Local shops</li>
+        </ul>
+      </section>
+
+      <section class="path" aria-labelledby="path-heading">
+        <h2 id="path-heading">How it works</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <h3>Tell us about your shop</h3>
+            <p>A short chat is enough. What you sell, who you serve, how people reach you.</p>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <h3>We build it for you</h3>
+            <p>Photos, words, colours — we put your business on a site that feels like you.</p>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <h3>You go live</h3>
+            <p>Customers can find you, message you, and book you. We stay close after launch.</p>
+          </li>
+        </ol>
       </section>
 
       <section class="services" aria-labelledby="services-heading">
-        <h2 id="services-heading">What we do</h2>
-        <div class="cards">
-          <article class="card">
-            <h3>Custom software platforms</h3>
-            <p>
-              Web and mobile systems built around your workflow — dashboards,
-              portals, and internal tools that replace spreadsheets and scattered
-              apps.
+        <h2 id="services-heading">Choose your package</h2>
+        <p class="pack-hint">Three clear options. Start small, or grow when you are ready.</p>
+
+        <div class="packs">
+          <article class="pack pack-entry">
+            <p class="pack-kicker">Entry</p>
+            <h3>Your shop online</h3>
+            <p class="pack-for">Best if you just need a proper page people can find.</p>
+            <p class="pack-price">
+              <span class="pack-amount">R1,105</span>
             </p>
+            <ul class="pack-list">
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>
+                  Your own web address for 1 year
+                  <small>After that, about R105 a year — it depends on the name</small>
+                </span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>A home page with photos, your story, and your products</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>WhatsApp, email, and Facebook — so customers can reach you in one tap</span>
+              </li>
+            </ul>
+            <a
+              class="pack-cta"
+              href="mailto:hello@vibeit-intel.net?subject=Entry%20package"
+              >Choose Entry</a
+            >
           </article>
-          <article class="card">
-            <h3>Fleet &amp; live operations</h3>
-            <p>
-              Real-time vehicle intelligence, routing context, and operational
-              visibility so dispatch, drivers, and management see the same
-              picture.
+
+          <article class="pack pack-mid">
+            <p class="pack-badge">Most loved</p>
+            <p class="pack-kicker">Intermediate</p>
+            <h3>Get booked &amp; paid</h3>
+            <p class="pack-for">Best for salons and shops that want customers to book themselves.</p>
+            <p class="pack-price">
+              <span class="pack-from">From</span>
+              <span class="pack-amount">R2,500</span>
             </p>
+            <ul class="pack-list">
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Everything in Entry</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>A booking page so clients can pick a time</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>A private page for you to run the day — bookings, clients, the lot</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Take payments on your site</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Set up so people can find you on Google</span>
+              </li>
+            </ul>
+            <a
+              class="pack-cta pack-cta-hot"
+              href="mailto:hello@vibeit-intel.net?subject=Intermediate%20package"
+              >Choose Intermediate</a
+            >
           </article>
-          <article class="card">
-            <h3>Field capture &amp; CCTV</h3>
-            <p>
-              On-site evidence, camera workflows, and compliance-ready records
-              for teams that work away from the desk.
+
+          <article class="pack pack-pro">
+            <p class="pack-kicker">Advance</p>
+            <h3>Your own system</h3>
+            <p class="pack-for">Best when you are ready for logins, an app, and a bigger setup.</p>
+            <p class="pack-price">
+              <span class="pack-amount pack-ask">On request</span>
             </p>
-          </article>
-          <article class="card">
-            <h3>Community &amp; public portals</h3>
-            <p>
-              Reporting, case handling, and access-controlled portals for
-              schools, municipalities, and community programmes.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Rapid product builds</h3>
-            <p>
-              Idea to working product without a bloated process — MVPs, brand
-              sites, and operational apps shipped at the speed of the brief.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Support that stays</h3>
-            <p>
-              We don’t vanish after launch. Hosting, updates, and hands-on
-              support so the system keeps matching how the team actually works.
-            </p>
+            <ul class="pack-list">
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Customer login and sign-up</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Your own app</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Tools to manage your users</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Connect the other tools you already use</span>
+              </li>
+              <li>
+                <span class="tick" aria-hidden="true"></span>
+                <span>Reminders and alerts for your customers</span>
+              </li>
+            </ul>
+            <a
+              class="pack-cta"
+              href="mailto:hello@vibeit-intel.net?subject=Advance%20package"
+              >Tell us what you need</a
+            >
           </article>
         </div>
       </section>
 
       <section class="contact">
-        <h2>Let’s build</h2>
+        <h2>Not sure which one?</h2>
         <p>
-          Tell us what you need running. We’ll come back with a clear next step.
+          Send a message. Say what kind of shop you have. We will point you to
+          the right package — in plain English.
         </p>
         <a class="cta" href="mailto:hello@vibeit-intel.net">hello@vibeit-intel.net</a>
       </section>
     </main>
 
     <footer class="foot">
-      <p>VibeIt-Intel · vibeit-intel.net</p>
+      <p>VibeIt-Intel · Prices in South African Rand · vibeit-intel.net</p>
     </footer>
   </body>
 </html>
