@@ -337,6 +337,7 @@ html.from-it .foot {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 6vw;
+  min-width: 0;
 }
 
 .brand {
@@ -765,19 +766,34 @@ html.from-it .foot {
   background: linear-gradient(135deg, var(--teal), #2f8fff 42%, var(--purple));
 }
 
-.pack-wa {
-  display: block;
-  margin-top: 0.7rem;
-  color: var(--purple);
-  font-size: 0.85rem;
+.pack-wa,
+.pack-wa:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.72rem 1rem;
+  border-radius: 999px;
+  background: #128c7e;
+  color: #fff;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-align: center;
   text-decoration: none;
 }
 
+.pack-wa svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+}
+
 .pack-wa:hover {
-  color: var(--teal);
+  background: #25d366;
+  color: #fff;
 }
 
 .contact {
@@ -787,19 +803,21 @@ html.from-it .foot {
 
 .reach {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.85rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
   margin-top: 1.4rem;
 }
 
-.reach-card {
+.reach-card,
+.reach-card:visited {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.95rem;
-  min-height: 6.1rem;
-  padding: 1.05rem 1.1rem;
+  gap: 0.9rem;
+  min-height: 4.6rem;
+  padding: 0.85rem 1rem;
   border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 1.2rem;
+  border-radius: 1.1rem;
   background: rgb(255 255 255 / 8%);
   color: #fff;
   text-decoration: none;
@@ -819,13 +837,17 @@ html.from-it .foot {
 .reach-icon {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 3.6rem;
-  height: 3.6rem;
+  flex: 0 0 3.1rem;
+  width: 3.1rem;
+  height: 3.1rem;
+  min-width: 3.1rem;
+  min-height: 3.1rem;
+  max-width: 3.1rem;
+  max-height: 3.1rem;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 0.85rem;
   background: #fff;
-  box-shadow: 0 8px 18px rgb(0 0 0 / 32%);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 28%);
 }
 
 .reach-hot .reach-icon {
@@ -835,8 +857,8 @@ html.from-it .foot {
 
 .reach-icon svg {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 3.1rem;
+  height: 3.1rem;
 }
 
 .reach-copy {
@@ -893,6 +915,53 @@ html.from-it .foot {
 }
 
 @media (max-width: 900px) {
+  .topbar {
+    gap: 0.55rem;
+    padding: 0.75rem 4.5vw;
+  }
+
+  .brand {
+    min-width: 0;
+    flex: 1;
+    gap: 0.45rem;
+  }
+
+  .brand img {
+    width: 4.5rem;
+    flex-shrink: 0;
+  }
+
+  .brand span {
+    font-size: 0.98rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .back-copy {
+    display: none;
+  }
+
+  .back-orb {
+    width: 2.55rem;
+    height: 2.55rem;
+  }
+
+  .back-orb svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .intro h1 {
+    font-size: clamp(1.7rem, 8vw, 2.4rem);
+  }
+
+  .for-who {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    line-height: 1.5;
+  }
+
   .steps,
   .packs {
     grid-template-columns: 1fr;
@@ -902,11 +971,40 @@ html.from-it .foot {
     transform: none;
     order: -1;
   }
+
+  .intro,
+  .path,
+  .services,
+  .contact {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
 }
 
 @media (min-width: 901px) {
   .reach {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .reach-card,
+  .reach-card:visited {
+    min-height: 5.4rem;
+    padding: 1.05rem 1.1rem;
+  }
+
+  .reach-icon {
+    flex-basis: 3.4rem;
+    width: 3.4rem;
+    height: 3.4rem;
+    min-width: 3.4rem;
+    min-height: 3.4rem;
+    max-width: 3.4rem;
+    max-height: 3.4rem;
+  }
+
+  .reach-icon svg {
+    width: 3.4rem;
+    height: 3.4rem;
   }
 }
 
