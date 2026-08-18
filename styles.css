@@ -785,10 +785,13 @@ html.from-it .foot {
   text-decoration: none;
 }
 
-.pack-wa svg {
+.pack-wa svg,
+.pack-wa img {
   width: 1.35rem;
   height: 1.35rem;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: #fff;
 }
 
 .pack-wa:hover {
@@ -852,13 +855,15 @@ html.from-it .foot {
 
 .reach-hot .reach-icon {
   border-radius: 50%;
-  background: #25d366;
+  background: #fff;
 }
 
-.reach-icon svg {
+.reach-icon svg,
+.reach-icon img {
   display: block;
   width: 3.1rem;
   height: 3.1rem;
+  object-fit: contain;
 }
 
 .reach-copy {
@@ -993,18 +998,19 @@ html.from-it .foot {
   }
 
   .reach-icon {
-    flex-basis: 3.4rem;
-    width: 3.4rem;
-    height: 3.4rem;
-    min-width: 3.4rem;
-    min-height: 3.4rem;
-    max-width: 3.4rem;
-    max-height: 3.4rem;
+    flex-basis: 3.75rem;
+    width: 3.75rem;
+    height: 3.75rem;
+    min-width: 3.75rem;
+    min-height: 3.75rem;
+    max-width: 3.75rem;
+    max-height: 3.75rem;
   }
 
-  .reach-icon svg {
-    width: 3.4rem;
-    height: 3.4rem;
+  .reach-icon svg,
+  .reach-icon img {
+    width: 3.75rem;
+    height: 3.75rem;
   }
 }
 
