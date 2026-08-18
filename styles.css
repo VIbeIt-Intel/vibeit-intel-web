@@ -258,15 +258,21 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.55rem;
   color: #fff;
   font-weight: 700;
   text-decoration: none;
 }
 
+.brand span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .brand img {
   display: block;
-  width: 3.55rem;
+  width: 5.1rem;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 14px rgb(0 0 0 / 32%));
