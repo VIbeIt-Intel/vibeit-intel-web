@@ -833,14 +833,12 @@ html.from-it .foot {
 
 .wa-hero-mark {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: block;
   width: 56px;
   height: 56px;
   flex-shrink: 0;
   overflow: hidden;
   isolation: isolate;
-  padding: 3px;
   border-radius: 50%;
   background: #25d366;
   box-shadow: 0 0 18px rgb(0 200 201 / 45%);
@@ -882,13 +880,15 @@ html.from-it .foot {
 }
 
 .wa-hero-mark img {
-  position: relative;
+  position: absolute;
   z-index: 1;
-  display: block;
+  inset: 0;
   width: 100%;
   height: 100%;
+  display: block;
   border-radius: 50%;
   object-fit: cover;
+  transform: scale(1.14) translate(0.5px, 1px);
 }
 
 .wa-hero-copy {
