@@ -456,6 +456,8 @@ html.from-it .foot {
 .back:focus-visible,
 .pack-jump:focus-visible,
 .pack-cta:focus-visible,
+.pack-wa:focus-visible,
+.reach-card:focus-visible,
 .cta:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 3px;
@@ -763,8 +765,100 @@ html.from-it .foot {
   background: linear-gradient(135deg, var(--teal), #2f8fff 42%, var(--purple));
 }
 
+.pack-wa {
+  display: block;
+  margin-top: 0.7rem;
+  color: var(--purple);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-decoration: none;
+}
+
+.pack-wa:hover {
+  color: var(--teal);
+}
+
 .contact {
   padding-bottom: 3rem;
+  scroll-margin-top: 1.25rem;
+}
+
+.reach {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  margin-top: 1.4rem;
+}
+
+.reach-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 5.4rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.2rem;
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+  text-decoration: none;
+  backdrop-filter: blur(14px);
+}
+
+.reach-card:hover {
+  border-color: rgb(0 200 201 / 45%);
+  background: rgb(255 255 255 / 12%);
+}
+
+.reach-hot {
+  border-color: rgb(0 200 201 / 40%);
+  box-shadow: 0 10px 28px rgb(0 200 201 / 16%);
+}
+
+.reach-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.85rem;
+  color: #160c22;
+  background: linear-gradient(135deg, var(--teal), var(--orange));
+}
+
+.reach-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.reach-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.reach-kicker {
+  color: var(--teal);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.reach-name {
+  margin-top: 0.12rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.reach-value {
+  margin-top: 0.12rem;
+  overflow: hidden;
+  color: rgb(246 241 251 / 70%);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cta {
@@ -800,6 +894,12 @@ html.from-it .foot {
   .pack-mid {
     transform: none;
     order: -1;
+  }
+}
+
+@media (min-width: 901px) {
+  .reach {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
