@@ -6,6 +6,12 @@
   --orange: #ff8a1a;
   --purple: #4a1f7a;
   --paper: #f7f4f0;
+  --vibe-wash:
+    radial-gradient(1200px 700px at 8% -10%, rgb(0 200 201 / 42%), transparent 52%),
+    radial-gradient(900px 620px at 100% 0%, rgb(255 138 26 / 38%), transparent 48%),
+    radial-gradient(800px 700px at 90% 110%, rgb(74 31 122 / 85%), transparent 55%),
+    radial-gradient(700px 500px at 0% 90%, rgb(0 200 201 / 22%), transparent 50%),
+    #160c22;
 }
 
 * {
@@ -163,6 +169,88 @@ body {
   }
 }
 
+.it-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--vibe-wash);
+  clip-path: circle(0px at var(--it-x, 50%) var(--it-y, 50%));
+}
+
+body.is-opening .it-portal {
+  opacity: 1;
+  clip-path: circle(var(--it-r, 1800px) at var(--it-x, 50%) var(--it-y, 50%));
+  transition:
+    clip-path 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.12s linear;
+}
+
+body.is-opening .overlay {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+body.is-opening .hero {
+  filter: saturate(1.15) brightness(0.82);
+  transition: filter 0.55s ease;
+}
+
+.it-link.is-opening {
+  z-index: 14;
+}
+
+.it-link.is-opening .it-face {
+  animation: none;
+  transform: scale(1.4);
+  opacity: 0;
+  filter:
+    drop-shadow(0 0 16px rgb(0 240 242 / 95%))
+    drop-shadow(0 0 36px rgb(255 138 26 / 55%));
+  transition:
+    transform 0.4s ease,
+    filter 0.4s ease,
+    opacity 0.4s ease 0.4s;
+}
+
+.arrive {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  opacity: 0;
+  background: var(--vibe-wash);
+}
+
+html.from-it .arrive {
+  opacity: 1;
+  animation: arrive-fade 0.9s ease 0.08s forwards;
+}
+
+html.from-it .topbar,
+html.from-it main,
+html.from-it .foot {
+  animation: arrive-rise 0.85s ease both;
+}
+
+@keyframes arrive-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes arrive-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 
 .site {
   position: relative;
@@ -178,12 +266,7 @@ body {
   inset: 0;
   z-index: -1;
   overflow: hidden;
-  background:
-    radial-gradient(1200px 700px at 8% -10%, rgb(0 200 201 / 42%), transparent 52%),
-    radial-gradient(900px 620px at 100% 0%, rgb(255 138 26 / 38%), transparent 48%),
-    radial-gradient(800px 700px at 90% 110%, rgb(74 31 122 / 85%), transparent 55%),
-    radial-gradient(700px 500px at 0% 90%, rgb(0 200 201 / 22%), transparent 50%),
-    #160c22;
+  background: var(--vibe-wash);
 }
 
 .vibe-blob {
@@ -727,7 +810,19 @@ body {
 
   .vibe-blob,
   .back-orb,
-  .pack-jump {
+  .pack-jump,
+  .it-link.is-opening .it-face,
+  html.from-it .arrive,
+  html.from-it .topbar,
+  html.from-it main,
+  html.from-it .foot {
     animation: none;
+  }
+
+  body.is-opening .it-portal,
+  html.from-it .arrive {
+    opacity: 0;
+    clip-path: none;
+    transition: none;
   }
 }

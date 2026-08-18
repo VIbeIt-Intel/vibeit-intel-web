@@ -16,8 +16,17 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      if (
+        /(?:^|[?&])from=it(?:&|$)/.test(location.search) &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        document.documentElement.classList.add("from-it");
+      }
+    </script>
   </head>
   <body class="site">
+    <div class="arrive" aria-hidden="true"></div>
     <div class="vibe" aria-hidden="true">
       <span class="vibe-blob vibe-blob-teal"></span>
       <span class="vibe-blob vibe-blob-orange"></span>
@@ -216,5 +225,21 @@
     <footer class="foot">
       <p>VibeIt-Intel · Prices in South African Rand · vibeit-intel.net</p>
     </footer>
+    <script>
+      (function () {
+        if (/(?:^|[?&])from=it(?:&|$)/.test(location.search)) {
+          history.replaceState(null, "", "services.html");
+        }
+        if (!document.documentElement.classList.contains("from-it")) return;
+        const veil = document.querySelector(".arrive");
+        function clear() {
+          document.documentElement.classList.remove("from-it");
+        }
+        if (veil) {
+          veil.addEventListener("animationend", clear, { once: true });
+        }
+        window.setTimeout(clear, 1200);
+      })();
+    </script>
   </body>
 </html>

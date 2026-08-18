@@ -33,4 +33,39 @@
   img.addEventListener("load", place);
   window.addEventListener("resize", place);
   if (img.complete) place();
+
+  link.addEventListener("click", function (event) {
+    if (
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button
+    ) {
+      return;
+    }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+    if (document.body.classList.contains("is-opening")) {
+      event.preventDefault();
+      return;
+    }
+
+    event.preventDefault();
+    const box = link.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    const y = box.top + box.height / 2;
+    const radius = Math.hypot(window.innerWidth, window.innerHeight) * 1.2;
+    document.body.style.setProperty("--it-x", x + "px");
+    document.body.style.setProperty("--it-y", y + "px");
+    document.body.style.setProperty("--it-r", radius + "px");
+    link.classList.add("is-opening");
+    void document.body.offsetWidth;
+    document.body.classList.add("is-opening");
+
+    window.setTimeout(function () {
+      window.location.href = "services.html?from=it";
+    }, 920);
+  });
 })();
