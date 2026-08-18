@@ -424,22 +424,12 @@ body {
 }
 
 .for-who {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  margin-top: 1.4rem;
-  list-style: none;
-}
-
-.for-who li {
-  padding: 0.4rem 0.85rem;
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 8%);
-  color: #fff;
-  font-size: 0.88rem;
+  margin-top: 1.25rem;
+  color: rgb(246 241 251 / 70%);
+  font-size: 0.92rem;
   font-weight: 600;
-  backdrop-filter: blur(8px);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .path {
