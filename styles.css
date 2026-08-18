@@ -265,11 +265,11 @@ body {
 }
 
 .brand img {
-  width: 3.4rem;
-  height: 3.4rem;
-  object-fit: cover;
-  border-radius: 0.85rem;
-  box-shadow: 0 0 0 2px rgb(0 200 201 / 45%), 0 8px 24px rgb(0 0 0 / 28%);
+  display: block;
+  width: 3.55rem;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / 32%));
 }
 
 .back {
