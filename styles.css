@@ -832,21 +832,61 @@ html.from-it .foot {
 }
 
 .wa-hero-mark {
+  position: relative;
   display: grid;
   place-items: center;
   width: 56px;
   height: 56px;
   flex-shrink: 0;
   overflow: hidden;
+  isolation: isolate;
   border-radius: 50%;
-  background: #25d366;
-  box-shadow: 0 0 18px rgb(37 211 102 / 55%);
+  background: #1a1026;
+  box-shadow: 0 0 18px rgb(0 200 201 / 45%);
+  animation: wa-mark-glow 5s ease-in-out infinite;
+}
+
+.wa-hero-mark::before,
+.wa-hero-mark::after {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  border-radius: 40%;
+  pointer-events: none;
+}
+
+.wa-hero-mark::before {
+  background:
+    conic-gradient(
+      from 0deg,
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      #25d366,
+      var(--teal)
+    );
+  filter: blur(10px) saturate(1.25);
+  animation: wa-water-spin 9s linear infinite;
+}
+
+.wa-hero-mark::after {
+  background:
+    radial-gradient(circle at 28% 30%, var(--teal) 0 32%, transparent 58%),
+    radial-gradient(circle at 76% 22%, var(--orange) 0 28%, transparent 54%),
+    radial-gradient(circle at 70% 78%, var(--purple) 0 34%, transparent 60%),
+    radial-gradient(circle at 22% 74%, #25d366 0 26%, transparent 52%);
+  filter: blur(8px);
+  mix-blend-mode: screen;
+  animation: wa-water-drift 7s ease-in-out infinite;
 }
 
 .wa-hero-mark svg {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 56px;
   height: 56px;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 35%));
 }
 
 .wa-hero-copy {
@@ -897,6 +937,38 @@ html.from-it .foot {
       0 0 0 1px rgb(255 255 255 / 12%),
       0 18px 48px rgb(255 138 26 / 28%),
       0 0 36px rgb(0 200 201 / 30%);
+  }
+}
+
+@keyframes wa-water-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes wa-water-drift {
+  0%,
+  100% {
+    transform: translate3d(-6%, 4%, 0) scale(1.05);
+  }
+  33% {
+    transform: translate3d(10%, -8%, 0) scale(1.18);
+  }
+  66% {
+    transform: translate3d(-8%, -6%, 0) scale(1.12);
+  }
+}
+
+@keyframes wa-mark-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgb(0 200 201 / 45%);
+  }
+  33% {
+    box-shadow: 0 0 22px rgb(255 138 26 / 48%);
+  }
+  66% {
+    box-shadow: 0 0 22px rgb(74 31 122 / 55%);
   }
 }
 
@@ -1059,6 +1131,9 @@ html.from-it .foot {
   .back-orb,
   .pack-jump,
   .wa-hero,
+  .wa-hero-mark,
+  .wa-hero-mark::before,
+  .wa-hero-mark::after,
   .it-link.is-opening .it-face,
   html.from-it .arrive,
   html.from-it .topbar,
