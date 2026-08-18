@@ -16,6 +16,7 @@
 
 html {
   min-height: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -370,6 +371,7 @@ body {
 
 .brand:focus-visible,
 .back:focus-visible,
+.pack-jump:focus-visible,
 .pack-cta:focus-visible,
 .cta:focus-visible {
   outline: 2px solid var(--teal);
@@ -383,6 +385,10 @@ body {
   padding: 2rem 6vw 1rem;
   max-width: 72rem;
   margin: 0 auto;
+}
+
+.services {
+  scroll-margin-top: 1.25rem;
 }
 
 .eyebrow {
@@ -421,6 +427,30 @@ body {
   color: rgb(246 241 251 / 78%);
   font-size: 1.08rem;
   line-height: 1.65;
+}
+
+.pack-jump {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+  animation: pack-jump-pulse 2.8s ease-in-out infinite;
+}
+
+.pack-jump:hover,
+.pack-jump:focus-visible {
+  color: #fff;
+}
+
+@keyframes pack-jump-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 14px rgb(0 200 201 / 75%);
+  }
 }
 
 .for-who {
@@ -691,8 +721,13 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .vibe-blob,
-  .back-orb {
+  .back-orb,
+  .pack-jump {
     animation: none;
   }
 }
