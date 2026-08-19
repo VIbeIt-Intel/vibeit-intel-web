@@ -677,6 +677,7 @@ html.from-it .foot {
 
 .pack-price {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.4rem;
   margin: 1rem 0 1.05rem;
@@ -684,7 +685,8 @@ html.from-it .foot {
   border-bottom: 1px solid rgb(43 36 48 / 10%);
 }
 
-.pack-from {
+.pack-from,
+.pack-once {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 600;
