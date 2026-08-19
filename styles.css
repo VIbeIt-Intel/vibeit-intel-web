@@ -560,43 +560,102 @@ html.from-it .foot {
 }
 
 .steps {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-top: 1.2rem;
+  gap: 1.6rem;
+  margin-top: 1.8rem;
   list-style: none;
 }
 
+.steps::before {
+  content: "";
+  position: absolute;
+  top: 27px;
+  left: 16.66%;
+  right: 16.66%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--teal),
+    var(--orange),
+    var(--purple),
+    var(--teal)
+  );
+  background-size: 200% 100%;
+  animation: step-line 8s linear infinite;
+  pointer-events: none;
+}
+
 .steps li {
-  padding: 1.2rem 1.15rem 1.3rem;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 1.2rem;
-  background: rgb(255 255 255 / 8%);
-  backdrop-filter: blur(14px);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  text-align: center;
 }
 
 .step-num {
   display: grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  margin-bottom: 0.75rem;
-  border-radius: 0.7rem;
-  background: linear-gradient(135deg, var(--teal), var(--orange));
-  color: #160c22;
-  font-size: 0.95rem;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 1rem;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background:
+    linear-gradient(#1a1026, #1a1026) padding-box,
+    conic-gradient(
+      from var(--wa-spin),
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      var(--teal)
+    ) border-box;
+  box-shadow: 0 0 18px rgb(0 200 201 / 40%);
+  color: #fff;
+  font-size: 1.2rem;
   font-weight: 800;
+  animation:
+    wa-border-flow 6s linear infinite,
+    wa-mark-glow 5s ease-in-out infinite;
+}
+
+.steps li:nth-child(2) .step-num {
+  animation-delay: -2s, -1.6s;
+}
+
+.steps li:nth-child(3) .step-num {
+  animation-delay: -4s, -3.2s;
 }
 
 .steps h3 {
   margin-bottom: 0.4rem;
-  font-size: 1.05rem;
+  font-size: 1.12rem;
 }
 
 .steps p {
+  max-width: 18rem;
   color: rgb(246 241 251 / 72%);
   font-size: 0.92rem;
   line-height: 1.55;
+}
+
+@keyframes step-line {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes step-line-vert {
+  to {
+    background-position: 0 200%;
+  }
 }
 
 .pack-hint {
@@ -1144,6 +1203,46 @@ html.from-it .foot {
     grid-template-columns: 1fr;
   }
 
+  .steps {
+    gap: 1.5rem;
+  }
+
+  .steps::before {
+    top: 1.6rem;
+    bottom: 1.6rem;
+    left: 27px;
+    right: auto;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(
+      180deg,
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      var(--teal)
+    );
+    background-size: 100% 200%;
+    animation-name: step-line-vert;
+  }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 1.1rem;
+    align-items: start;
+    text-align: left;
+  }
+
+  .step-num {
+    grid-row: 1 / span 2;
+    margin-bottom: 0;
+  }
+
+  .steps p {
+    max-width: none;
+  }
+
   .pack-mid {
     transform: none;
     order: -1;
@@ -1177,6 +1276,8 @@ html.from-it .foot {
   .wa-hero-mark::before,
   .wa-hero-mark::after,
   .dock-orb,
+  .step-num,
+  .steps::before,
   .it-link.is-opening .it-face,
   html.from-it .arrive,
   html.from-it .topbar,
