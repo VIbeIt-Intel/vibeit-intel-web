@@ -8,7 +8,7 @@
       name="description"
       content="Websites and digital systems for small and medium businesses."
     />
-    <link rel="icon" href="assets/logo-v-it.png" type="image/png" />
+    <link rel="icon" href="assets/favicon.png" type="image/png" />
     <link rel="prefetch" href="services.html" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,17 +23,24 @@
       <picture class="hero">
         <source
           media="(orientation: portrait)"
+          type="image/webp"
+          srcset="assets/hero-no-it-portrait.webp"
+        />
+        <source type="image/webp" srcset="assets/hero-no-it.webp" />
+        <source
+          media="(orientation: portrait)"
           srcset="assets/hero-no-it-portrait.png"
         />
         <img
           class="hero-image"
           src="assets/hero-no-it.png"
           alt="Vibe INTEL"
+          fetchpriority="high"
         />
       </picture>
 
       <a class="it-link" href="services.html" aria-label="Open VibeIt-Intel packages">
-        <img class="it-face" src="assets/it-button.png" alt="It" width="80" height="80" />
+        <img class="it-face" src="assets/it-button.webp" alt="It" width="80" height="80" />
       </a>
 
       <div class="overlay">
