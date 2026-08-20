@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool14" />
+    <link rel="stylesheet" href="styles.css?v=cool15" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -108,7 +108,10 @@
           <legend>2. Logo</legend>
           <label class="brief-file">
             <span>Upload your logo if you have one</span>
-            <input type="file" name="Logo" accept="image/*,.svg,.pdf" />
+            <span class="brief-pick">
+              <input type="file" name="Logo" accept="image/*,.svg,.pdf" />
+              <span class="brief-pick-label">Choose file</span>
+            </span>
           </label>
         </fieldset>
 
@@ -161,7 +164,10 @@
           </div>
           <label class="brief-file">
             <span>A photo of your vibe</span>
-            <input type="file" name="Vibe photo" accept="image/*" />
+            <span class="brief-pick">
+              <input type="file" name="Vibe photo" accept="image/*" />
+              <span class="brief-pick-label">Choose file</span>
+            </span>
           </label>
         </fieldset>
 
@@ -195,7 +201,10 @@
           <legend>7. Extra photos and notes</legend>
           <label class="brief-file">
             <span>More photos</span>
-            <input type="file" name="Extra photos" accept="image/*" multiple />
+            <span class="brief-pick">
+              <input type="file" name="Extra photos" accept="image/*" multiple />
+              <span class="brief-pick-label">Choose files</span>
+            </span>
           </label>
           <label class="brief-field">
             Notes
@@ -229,6 +238,21 @@
         }
         radios.forEach(function (radio) {
           radio.addEventListener("change", sync);
+        });
+        document.querySelectorAll(".brief-pick input[type=file]").forEach(function (input) {
+          input.addEventListener("change", function () {
+            const label = input.parentElement.querySelector(".brief-pick-label");
+            if (!label) return;
+            if (!input.files || !input.files.length) {
+              label.textContent = input.multiple ? "Choose files" : "Choose file";
+              return;
+            }
+            label.textContent = Array.from(input.files)
+              .map(function (file) {
+                return file.name;
+              })
+              .join(", ");
+          });
         });
       })();
     </script>
