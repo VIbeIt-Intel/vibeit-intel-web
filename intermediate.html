@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intermediate brief — VibeIt-Intel</title>
+    <meta
+      name="description"
+      content="Send the details we need to build your Bookings and payments website. From R2,500 once-off."
+    />
+    <link rel="icon" href="assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=cool19" />
+  </head>
+  <body class="site">
+    <div class="vibe" aria-hidden="true">
+      <span class="vibe-blob vibe-blob-teal"></span>
+      <span class="vibe-blob vibe-blob-orange"></span>
+      <span class="vibe-blob vibe-blob-purple"></span>
+      <span class="vibe-blob vibe-blob-mix"></span>
+      <span class="vibe-grain"></span>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <img src="assets/v-it-mark.png" alt="" width="164" height="154" />
+        <span>VibeIt-Intel</span>
+      </a>
+      <a class="back" href="services.html" aria-label="Back to packages">
+        <span class="back-orb" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M14 5 7 12l7 7"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M8 12h10"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+            />
+          </svg>
+        </span>
+        <span class="back-copy">
+          <span class="back-kicker">Packages</span>
+          <span class="back-label">Back</span>
+        </span>
+      </a>
+    </header>
+
+    <main class="brief">
+      <p class="eyebrow">Intermediate · from R2,500 once-off</p>
+      <h1>Bookings and payments.</h1>
+      <p class="lead">
+        Everything in Entry, plus bookings, a private admin, payments, and
+        Google. Files come through with this form, to support@vibeit-intel.net.
+      </p>
+
+      <form
+        class="brief-form"
+        action="https://formsubmit.co/support@vibeit-intel.net"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <input type="hidden" name="_subject" value="Intermediate package brief" />
+        <input type="hidden" name="_template" value="table" />
+        <input
+          type="hidden"
+          name="_next"
+          value="https://vibeit-intel.net/entry-sent.html"
+        />
+        <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" />
+        <input
+          type="hidden"
+          name="Package"
+          value="Intermediate — Bookings and payments — from R2,500 once-off"
+        />
+        <input
+          type="hidden"
+          name="Revision rounds"
+          value="Two after the first draft. Extra changes are quoted first."
+        />
+
+        <div class="brief-block">
+          <p class="brief-kicker">1. Domain</p>
+          <p class="brief-help">Do you already have a web address?</p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I already have a domain" required />
+              Yes, I have one
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I need a domain" />
+              No, I need one
+            </label>
+          </div>
+          <label class="brief-field" id="domain-name-wrap" hidden>
+            Domain or the name you want
+            <input
+              type="text"
+              name="Domain name"
+              placeholder="e.g. mybusiness.co.za"
+              autocomplete="off"
+            />
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">2. Logo</p>
+          <label class="brief-file">
+            <span>Upload your logo if you have one</span>
+            <span class="brief-pick">
+              <input type="file" name="Logo" accept="image/*,.svg,.pdf" />
+              <span class="brief-pick-label">Choose file</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">3. About</p>
+          <label class="brief-field">
+            Business name
+            <input type="text" name="Business name" required autocomplete="organization" />
+          </label>
+          <label class="brief-field">
+            Registration number
+            <input type="text" name="Registration number" autocomplete="off" />
+          </label>
+          <label class="brief-field">
+            Business address
+            <textarea name="Business address" rows="3" autocomplete="street-address"></textarea>
+          </label>
+          <div class="brief-row">
+            <label class="brief-field">
+              Phone
+              <input type="tel" name="Phone" autocomplete="tel" />
+            </label>
+            <label class="brief-field">
+              WhatsApp
+              <input type="tel" name="WhatsApp" autocomplete="tel" />
+            </label>
+          </div>
+          <label class="brief-field">
+            Email
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">4. Colours and vibe</p>
+          <p class="brief-help">Pick three colours that feel like your business.</p>
+          <div class="brief-colours">
+            <label class="brief-swatch">
+              Colour 1
+              <input type="color" name="Colour 1" value="#00c8c9" />
+            </label>
+            <label class="brief-swatch">
+              Colour 2
+              <input type="color" name="Colour 2" value="#ff8a1a" />
+            </label>
+            <label class="brief-swatch">
+              Colour 3
+              <input type="color" name="Colour 3" value="#4a1f7a" />
+            </label>
+          </div>
+          <label class="brief-file">
+            <span>A photo of your vibe</span>
+            <span class="brief-pick">
+              <input type="file" name="Vibe photo" accept="image/*" />
+              <span class="brief-pick-label">Choose file</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">5. What you do</p>
+          <label class="brief-field">
+            Description of your business
+            <textarea
+              name="Business description"
+              rows="5"
+              required
+              placeholder="Who you serve, and what you want customers to do."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">6. Products or services</p>
+          <label class="brief-field">
+            List
+            <textarea
+              name="Products or services"
+              rows="5"
+              required
+              placeholder="One per line is fine."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">7. Extra photos and notes</p>
+          <label class="brief-file">
+            <span>More photos — up to 10, compressed before sending</span>
+            <span class="brief-pick">
+              <input
+                id="extra-photos"
+                type="file"
+                name="Extra photos"
+                accept="image/*"
+                multiple
+              />
+              <span class="brief-pick-label">Choose files</span>
+            </span>
+          </label>
+          <label class="brief-field">
+            Notes
+            <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">8. Bookings</p>
+          <p class="brief-help">
+            What should customers be able to book on the site?
+          </p>
+          <label class="brief-field">
+            Services, time slots, and staff
+            <textarea
+              name="What customers can book"
+              rows="5"
+              required
+              placeholder="e.g. haircut 45 min with any stylist, or a 2-hour consult with Nomsa only. List each service, how long it takes, and who does it if that matters."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">9. When you take bookings</p>
+          <label class="brief-field">
+            Typical hours and days
+            <textarea
+              name="Booking hours"
+              rows="4"
+              required
+              placeholder="e.g. Tue–Sat 9:00–17:00, closed Sunday and Monday. Lunch 13:00–14:00."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">10. Who manages bookings</p>
+          <p class="brief-help">
+            This person will use the private admin to see and manage bookings.
+          </p>
+          <div class="brief-row">
+            <label class="brief-field">
+              Name
+              <input type="text" name="Booking admin name" required autocomplete="name" />
+            </label>
+            <label class="brief-field">
+              Role
+              <input
+                type="text"
+                name="Booking admin role"
+                required
+                placeholder="e.g. owner, receptionist"
+                autocomplete="organization-title"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">11. How you get paid</p>
+          <p class="brief-help">Tick every way customers should be able to pay.</p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with EFT" value="Yes" />
+              EFT / bank transfer
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with card" value="Yes" />
+              Card
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with SnapScan" value="Yes" />
+              SnapScan
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with PayFast" value="Yes" />
+              PayFast
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with cash" value="Yes" />
+              Cash
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with other" value="Yes" id="pay-other" />
+              Other
+            </label>
+          </div>
+          <label class="brief-field" id="pay-other-wrap" hidden>
+            Other payment method
+            <input
+              type="text"
+              name="Other payment method"
+              placeholder="e.g. Ozow, Zapper"
+              autocomplete="off"
+            />
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">12. Google</p>
+          <p class="brief-help">
+            Do you already have a Google Business profile so people can find you
+            in search and Maps?
+          </p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input
+                type="radio"
+                name="Google profile"
+                value="I already have a Google Business profile"
+                required
+              />
+              Yes, I have one
+            </label>
+            <label class="brief-choice">
+              <input
+                type="radio"
+                name="Google profile"
+                value="I need a Google Business profile"
+              />
+              No, I need one
+            </label>
+          </div>
+          <label class="brief-field" id="google-url-wrap" hidden>
+            Link to your Google profile
+            <input
+              type="url"
+              name="Google profile URL"
+              placeholder="https://maps.google.com/… or paste the link"
+              autocomplete="off"
+            />
+          </label>
+        </div>
+
+        <button class="pack-cta pack-cta-hot brief-submit" type="submit">
+          Send us your <span class="brief-vibe">Vibe</span>
+        </button>
+        <p class="brief-foot">
+          This package includes two revision rounds after the first draft. Extra
+          changes are quoted first. We’ll reply from support@vibeit-intel.net.
+          Photos are compressed on this page so the email can take several at
+          once (max 10 extras).
+        </p>
+      </form>
+    </main>
+    <script>
+      (function () {
+        const MAX_EXTRA = 10;
+        const MAX_EDGE = 1600;
+        const QUALITY = 0.72;
+        const wrap = document.getElementById("domain-name-wrap");
+        const input = wrap.querySelector("input");
+        const radios = document.querySelectorAll('input[name="Domain"]');
+        const googleWrap = document.getElementById("google-url-wrap");
+        const googleInput = googleWrap.querySelector("input");
+        const googleRadios = document.querySelectorAll('input[name="Google profile"]');
+        const payOther = document.getElementById("pay-other");
+        const payOtherWrap = document.getElementById("pay-other-wrap");
+        const payOtherInput = payOtherWrap.querySelector("input");
+        const form = document.querySelector(".brief-form");
+        const submit = form.querySelector(".brief-submit");
+        const submitLabel =
+          'Send us your <span class="brief-vibe">Vibe</span>';
+        const extra = document.getElementById("extra-photos");
+
+        function sync() {
+          const picked = document.querySelector('input[name="Domain"]:checked');
+          wrap.hidden = !picked;
+          if (!picked) return;
+          const need = picked.value === "I need a domain";
+          input.required = need;
+          input.placeholder = need
+            ? "the name you want, e.g. mybusiness"
+            : "e.g. mybusiness.co.za";
+        }
+        radios.forEach(function (radio) {
+          radio.addEventListener("change", sync);
+        });
+
+        function syncGoogle() {
+          const picked = document.querySelector('input[name="Google profile"]:checked');
+          googleWrap.hidden = !picked || picked.value !== "I already have a Google Business profile";
+          googleInput.required = Boolean(picked) && picked.value === "I already have a Google Business profile";
+        }
+        googleRadios.forEach(function (radio) {
+          radio.addEventListener("change", syncGoogle);
+        });
+
+        function syncPayOther() {
+          payOtherWrap.hidden = !payOther.checked;
+          payOtherInput.required = payOther.checked;
+        }
+        payOther.addEventListener("change", syncPayOther);
+
+        function setFiles(fileInput, files) {
+          const data = new DataTransfer();
+          files.forEach(function (file) {
+            data.items.add(file);
+          });
+          fileInput.files = data.files;
+        }
+
+        function labelFor(fileInput, files) {
+          const label = fileInput.parentElement.querySelector(".brief-pick-label");
+          if (!label) return;
+          if (!files.length) {
+            label.textContent = fileInput.multiple ? "Choose files" : "Choose file";
+            return;
+          }
+          if (fileInput.multiple) {
+            label.textContent = files.length + " of " + MAX_EXTRA + " photos";
+            return;
+          }
+          label.textContent = files[0].name;
+        }
+
+        function compressOne(file) {
+          return new Promise(function (resolve) {
+            if (!file.type || file.type.indexOf("image/") !== 0 || file.type === "image/svg+xml") {
+              resolve(file);
+              return;
+            }
+            const image = new Image();
+            const url = URL.createObjectURL(file);
+            image.onload = function () {
+              const scale = Math.min(1, MAX_EDGE / image.width, MAX_EDGE / image.height);
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.max(1, Math.round(image.width * scale));
+              canvas.height = Math.max(1, Math.round(image.height * scale));
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(
+                function (blob) {
+                  URL.revokeObjectURL(url);
+                  if (!blob) {
+                    resolve(file);
+                    return;
+                  }
+                  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+                  resolve(new File([blob], name, { type: "image/jpeg" }));
+                },
+                "image/jpeg",
+                QUALITY
+              );
+            };
+            image.onerror = function () {
+              URL.revokeObjectURL(url);
+              resolve(file);
+            };
+            image.src = url;
+          });
+        }
+
+        extra.addEventListener("change", function () {
+          let files = Array.from(extra.files || []);
+          if (files.length > MAX_EXTRA) {
+            files = files.slice(0, MAX_EXTRA);
+            setFiles(extra, files);
+          }
+          labelFor(extra, files);
+        });
+
+        document.querySelectorAll(".brief-pick input[type=file]").forEach(function (fileInput) {
+          if (fileInput === extra) return;
+          fileInput.addEventListener("change", function () {
+            labelFor(fileInput, Array.from(fileInput.files || []));
+          });
+        });
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
+          if ((extra.files || []).length > MAX_EXTRA) {
+            setFiles(extra, extras);
+          }
+          submit.disabled = true;
+          submit.textContent = extras.length ? "Compressing photos…" : "Sending…";
+
+          const logoInput = form.querySelector('input[name="Logo"]');
+          const vibeInput = form.querySelector('input[name="Vibe photo"]');
+          const jobs = [];
+          if (logoInput.files[0]) jobs.push(compressOne(logoInput.files[0]).then(function (file) { return ["Logo", file]; }));
+          if (vibeInput.files[0]) jobs.push(compressOne(vibeInput.files[0]).then(function (file) { return ["Vibe photo", file]; }));
+          extras.forEach(function (file, i) {
+            jobs.push(compressOne(file).then(function (out) { return ["Extra photo " + (i + 1), out]; }));
+          });
+
+          Promise.all(jobs)
+            .then(function (packed) {
+              const body = new FormData(form);
+              body.delete("Logo");
+              body.delete("Vibe photo");
+              body.delete("Extra photos");
+              packed.forEach(function (item) {
+                body.append(item[0], item[1]);
+              });
+              return fetch("https://formsubmit.co/ajax/support@vibeit-intel.net", {
+                method: "POST",
+                body: body,
+              });
+            })
+            .then(function (res) {
+              if (!res.ok) throw new Error("send failed");
+              return res.json();
+            })
+            .then(function () {
+              window.location.href = "entry-sent.html";
+            })
+            .catch(function () {
+              submit.disabled = false;
+              submit.innerHTML = submitLabel;
+              window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>
