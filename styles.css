@@ -1193,12 +1193,17 @@ html.from-it .foot {
     linear-gradient(120deg, var(--teal), var(--orange), var(--purple)) border-box;
 }
 
+.brief .eyebrow {
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+}
+
 .brief-kicker {
   margin: 0 0 0.75rem;
   color: var(--teal);
-  font-size: 0.78rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
