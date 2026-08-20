@@ -200,9 +200,15 @@
         <div class="brief-block">
           <p class="brief-kicker">7. Extra photos and notes</p>
           <label class="brief-file">
-            <span>More photos</span>
+            <span>More photos — up to 10, compressed before sending</span>
             <span class="brief-pick">
-              <input type="file" name="Extra photos" accept="image/*" multiple />
+              <input
+                id="extra-photos"
+                type="file"
+                name="Extra photos"
+                accept="image/*"
+                multiple
+              />
               <span class="brief-pick-label">Choose files</span>
             </span>
           </label>
@@ -216,16 +222,23 @@
           Send brief
         </button>
         <p class="brief-foot">
-          We’ll reply from support@vibeit-intel.net. Keep photo files small where
-          you can.
+          We’ll reply from support@vibeit-intel.net. Photos are compressed on
+          this page so the email can take several at once (max 10 extras).
         </p>
       </form>
     </main>
     <script>
       (function () {
+        const MAX_EXTRA = 10;
+        const MAX_EDGE = 1600;
+        const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
         const input = wrap.querySelector("input");
         const radios = document.querySelectorAll('input[name="Domain"]');
+        const form = document.querySelector(".brief-form");
+        const submit = form.querySelector(".brief-submit");
+        const extra = document.getElementById("extra-photos");
+
         function sync() {
           const picked = document.querySelector('input[name="Domain"]:checked');
           wrap.hidden = !picked;
@@ -239,20 +252,126 @@
         radios.forEach(function (radio) {
           radio.addEventListener("change", sync);
         });
-        document.querySelectorAll(".brief-pick input[type=file]").forEach(function (input) {
-          input.addEventListener("change", function () {
-            const label = input.parentElement.querySelector(".brief-pick-label");
-            if (!label) return;
-            if (!input.files || !input.files.length) {
-              label.textContent = input.multiple ? "Choose files" : "Choose file";
+
+        function setFiles(fileInput, files) {
+          const data = new DataTransfer();
+          files.forEach(function (file) {
+            data.items.add(file);
+          });
+          fileInput.files = data.files;
+        }
+
+        function labelFor(fileInput, files) {
+          const label = fileInput.parentElement.querySelector(".brief-pick-label");
+          if (!label) return;
+          if (!files.length) {
+            label.textContent = fileInput.multiple ? "Choose files" : "Choose file";
+            return;
+          }
+          if (fileInput.multiple) {
+            label.textContent = files.length + " of " + MAX_EXTRA + " photos";
+            return;
+          }
+          label.textContent = files[0].name;
+        }
+
+        function compressOne(file) {
+          return new Promise(function (resolve) {
+            if (!file.type || file.type.indexOf("image/") !== 0 || file.type === "image/svg+xml") {
+              resolve(file);
               return;
             }
-            label.textContent = Array.from(input.files)
-              .map(function (file) {
-                return file.name;
-              })
-              .join(", ");
+            const image = new Image();
+            const url = URL.createObjectURL(file);
+            image.onload = function () {
+              const scale = Math.min(1, MAX_EDGE / image.width, MAX_EDGE / image.height);
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.max(1, Math.round(image.width * scale));
+              canvas.height = Math.max(1, Math.round(image.height * scale));
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(
+                function (blob) {
+                  URL.revokeObjectURL(url);
+                  if (!blob) {
+                    resolve(file);
+                    return;
+                  }
+                  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+                  resolve(new File([blob], name, { type: "image/jpeg" }));
+                },
+                "image/jpeg",
+                QUALITY
+              );
+            };
+            image.onerror = function () {
+              URL.revokeObjectURL(url);
+              resolve(file);
+            };
+            image.src = url;
           });
+        }
+
+        extra.addEventListener("change", function () {
+          let files = Array.from(extra.files || []);
+          if (files.length > MAX_EXTRA) {
+            files = files.slice(0, MAX_EXTRA);
+            setFiles(extra, files);
+          }
+          labelFor(extra, files);
+        });
+
+        document.querySelectorAll(".brief-pick input[type=file]").forEach(function (fileInput) {
+          if (fileInput === extra) return;
+          fileInput.addEventListener("change", function () {
+            labelFor(fileInput, Array.from(fileInput.files || []));
+          });
+        });
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
+          if ((extra.files || []).length > MAX_EXTRA) {
+            setFiles(extra, extras);
+          }
+          submit.disabled = true;
+          submit.textContent = extras.length ? "Compressing photos…" : "Sending…";
+
+          const logoInput = form.querySelector('input[name="Logo"]');
+          const vibeInput = form.querySelector('input[name="Vibe photo"]');
+          const jobs = [];
+          if (logoInput.files[0]) jobs.push(compressOne(logoInput.files[0]).then(function (file) { return ["Logo", file]; }));
+          if (vibeInput.files[0]) jobs.push(compressOne(vibeInput.files[0]).then(function (file) { return ["Vibe photo", file]; }));
+          extras.forEach(function (file, i) {
+            jobs.push(compressOne(file).then(function (out) { return ["Extra photo " + (i + 1), out]; }));
+          });
+
+          Promise.all(jobs)
+            .then(function (packed) {
+              const body = new FormData(form);
+              body.delete("Logo");
+              body.delete("Vibe photo");
+              body.delete("Extra photos");
+              packed.forEach(function (item) {
+                body.append(item[0], item[1]);
+              });
+              return fetch("https://formsubmit.co/ajax/support@vibeit-intel.net", {
+                method: "POST",
+                body: body,
+              });
+            })
+            .then(function (res) {
+              if (!res.ok) throw new Error("send failed");
+              return res.json();
+            })
+            .then(function () {
+              window.location.href = "entry-sent.html";
+            })
+            .catch(function () {
+              submit.disabled = false;
+              submit.textContent = "Send brief";
+              window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
+            });
         });
       })();
     </script>
