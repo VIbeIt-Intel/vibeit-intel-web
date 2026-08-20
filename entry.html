@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entry brief — VibeIt-Intel</title>
+    <meta
+      name="description"
+      content="Send the details we need to build your Entry website. Once-off R1,105."
+    />
+    <link rel="icon" href="assets/favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=cool14" />
+  </head>
+  <body class="site">
+    <div class="vibe" aria-hidden="true">
+      <span class="vibe-blob vibe-blob-teal"></span>
+      <span class="vibe-blob vibe-blob-orange"></span>
+      <span class="vibe-blob vibe-blob-purple"></span>
+      <span class="vibe-blob vibe-blob-mix"></span>
+      <span class="vibe-grain"></span>
+    </div>
+
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <img src="assets/v-it-mark.png" alt="" width="164" height="154" />
+        <span>VibeIt-Intel</span>
+      </a>
+      <a class="back" href="services.html" aria-label="Back to packages">
+        <span class="back-orb" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M14 5 7 12l7 7"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M8 12h10"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+            />
+          </svg>
+        </span>
+        <span class="back-copy">
+          <span class="back-kicker">Packages</span>
+          <span class="back-label">Back</span>
+        </span>
+      </a>
+    </header>
+
+    <main class="brief">
+      <p class="eyebrow">Entry · R1,105 once-off</p>
+      <h1>Your business online.</h1>
+      <p class="lead">
+        A few details so we can build the right site. Files come through with
+        this form, to support@vibeit-intel.net.
+      </p>
+
+      <form
+        class="brief-form"
+        action="https://formsubmit.co/support@vibeit-intel.net"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <input type="hidden" name="_subject" value="Entry package brief" />
+        <input type="hidden" name="_template" value="table" />
+        <input
+          type="hidden"
+          name="_next"
+          value="https://vibeit-intel.net/entry-sent.html"
+        />
+        <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" />
+        <input type="hidden" name="Package" value="Entry — Your business online — R1,105 once-off" />
+
+        <fieldset>
+          <legend>1. Domain</legend>
+          <p class="brief-help">Do you already have a web address?</p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I already have a domain" required />
+              Yes, I have one
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I need a domain" />
+              No, I need one
+            </label>
+          </div>
+          <label class="brief-field" id="domain-name-wrap" hidden>
+            Domain or the name you want
+            <input
+              type="text"
+              name="Domain name"
+              placeholder="e.g. mybusiness.co.za"
+              autocomplete="off"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Logo</legend>
+          <label class="brief-file">
+            <span>Upload your logo if you have one</span>
+            <input type="file" name="Logo" accept="image/*,.svg,.pdf" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. About</legend>
+          <label class="brief-field">
+            Business name
+            <input type="text" name="Business name" required autocomplete="organization" />
+          </label>
+          <label class="brief-field">
+            Registration number
+            <input type="text" name="Registration number" autocomplete="off" />
+          </label>
+          <label class="brief-field">
+            Business address
+            <textarea name="Business address" rows="3" autocomplete="street-address"></textarea>
+          </label>
+          <div class="brief-row">
+            <label class="brief-field">
+              Phone
+              <input type="tel" name="Phone" autocomplete="tel" />
+            </label>
+            <label class="brief-field">
+              WhatsApp
+              <input type="tel" name="WhatsApp" autocomplete="tel" />
+            </label>
+          </div>
+          <label class="brief-field">
+            Email
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>4. Colours and vibe</legend>
+          <p class="brief-help">Pick three colours that feel like your business.</p>
+          <div class="brief-colours">
+            <label class="brief-swatch">
+              Colour 1
+              <input type="color" name="Colour 1" value="#00c8c9" />
+            </label>
+            <label class="brief-swatch">
+              Colour 2
+              <input type="color" name="Colour 2" value="#ff8a1a" />
+            </label>
+            <label class="brief-swatch">
+              Colour 3
+              <input type="color" name="Colour 3" value="#4a1f7a" />
+            </label>
+          </div>
+          <label class="brief-file">
+            <span>A photo of your vibe</span>
+            <input type="file" name="Vibe photo" accept="image/*" />
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>5. What you do</legend>
+          <label class="brief-field">
+            Description of your business
+            <textarea
+              name="Business description"
+              rows="5"
+              required
+              placeholder="Who you serve, and what you want customers to do."
+            ></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>6. Products or services</legend>
+          <label class="brief-field">
+            List
+            <textarea
+              name="Products or services"
+              rows="5"
+              required
+              placeholder="One per line is fine."
+            ></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>7. Extra photos and notes</legend>
+          <label class="brief-file">
+            <span>More photos</span>
+            <input type="file" name="Extra photos" accept="image/*" multiple />
+          </label>
+          <label class="brief-field">
+            Notes
+            <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
+          </label>
+        </fieldset>
+
+        <button class="pack-cta pack-cta-hot brief-submit" type="submit">
+          Send brief
+        </button>
+        <p class="brief-foot">
+          We’ll reply from support@vibeit-intel.net. Keep photo files small where
+          you can.
+        </p>
+      </form>
+    </main>
+    <script>
+      (function () {
+        const wrap = document.getElementById("domain-name-wrap");
+        const input = wrap.querySelector("input");
+        const radios = document.querySelectorAll('input[name="Domain"]');
+        function sync() {
+          const picked = document.querySelector('input[name="Domain"]:checked');
+          wrap.hidden = !picked;
+          if (!picked) return;
+          const need = picked.value === "I need a domain";
+          input.required = need;
+          input.placeholder = need
+            ? "the name you want, e.g. mybusiness"
+            : "e.g. mybusiness.co.za";
+        }
+        radios.forEach(function (radio) {
+          radio.addEventListener("change", sync);
+        });
+      })();
+    </script>
+  </body>
+</html>
