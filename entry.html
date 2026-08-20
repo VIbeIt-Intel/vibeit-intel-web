@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool15" />
+    <link rel="stylesheet" href="styles.css?v=cool16" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -80,8 +80,8 @@
         <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" />
         <input type="hidden" name="Package" value="Entry — Your business online — R1,105 once-off" />
 
-        <fieldset>
-          <legend>1. Domain</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">1. Domain</p>
           <p class="brief-help">Do you already have a web address?</p>
           <div class="brief-choices">
             <label class="brief-choice">
@@ -102,10 +102,10 @@
               autocomplete="off"
             />
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>2. Logo</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">2. Logo</p>
           <label class="brief-file">
             <span>Upload your logo if you have one</span>
             <span class="brief-pick">
@@ -113,10 +113,10 @@
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>3. About</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">3. About</p>
           <label class="brief-field">
             Business name
             <input type="text" name="Business name" required autocomplete="organization" />
@@ -143,10 +143,10 @@
             Email
             <input type="email" name="email" required autocomplete="email" />
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>4. Colours and vibe</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">4. Colours and vibe</p>
           <p class="brief-help">Pick three colours that feel like your business.</p>
           <div class="brief-colours">
             <label class="brief-swatch">
@@ -169,10 +169,10 @@
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>5. What you do</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">5. What you do</p>
           <label class="brief-field">
             Description of your business
             <textarea
@@ -182,10 +182,10 @@
               placeholder="Who you serve, and what you want customers to do."
             ></textarea>
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>6. Products or services</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">6. Products or services</p>
           <label class="brief-field">
             List
             <textarea
@@ -195,10 +195,10 @@
               placeholder="One per line is fine."
             ></textarea>
           </label>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend>7. Extra photos and notes</legend>
+        <div class="brief-block">
+          <p class="brief-kicker">7. Extra photos and notes</p>
           <label class="brief-file">
             <span>More photos</span>
             <span class="brief-pick">
@@ -210,7 +210,7 @@
             Notes
             <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
           </label>
-        </fieldset>
+        </div>
 
         <button class="pack-cta pack-cta-hot brief-submit" type="submit">
           Send brief

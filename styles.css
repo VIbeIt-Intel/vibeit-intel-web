@@ -1172,6 +1172,7 @@ html.from-it .foot {
   display: grid;
   gap: 1rem;
   margin-top: 1.8rem;
+  min-width: 0;
 }
 
 .brief-honey {
@@ -1182,8 +1183,8 @@ html.from-it .foot {
   overflow: hidden;
 }
 
-.brief-form fieldset {
-  margin: 0;
+.brief-block {
+  min-width: 0;
   padding: 1.15rem 1.15rem 1.25rem;
   border: 2px solid transparent;
   border-radius: 1.35rem;
@@ -1192,8 +1193,8 @@ html.from-it .foot {
     linear-gradient(120deg, var(--teal), var(--orange), var(--purple)) border-box;
 }
 
-.brief-form legend {
-  padding: 0 0.35rem;
+.brief-kicker {
+  margin: 0 0 0.75rem;
   color: var(--teal);
   font-size: 0.78rem;
   font-weight: 700;
@@ -1234,10 +1235,20 @@ html.from-it .foot {
 .brief-swatch {
   display: grid;
   gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
   margin-top: 0.85rem;
   color: rgb(246 241 251 / 82%);
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.brief-file:first-of-type,
+.brief-help + .brief-choices,
+.brief-kicker + .brief-help,
+.brief-kicker + .brief-field,
+.brief-kicker + .brief-file {
+  margin-top: 0;
 }
 
 .brief-field input,
@@ -1287,19 +1298,22 @@ html.from-it .foot {
 
 .brief-pick {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
   width: 100%;
-  min-height: 3.2rem;
-  border: 1px dashed rgb(0 200 201 / 45%);
+  min-width: 0;
+  min-height: 3.05rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 0.8rem;
   background: #12091a;
+  box-sizing: border-box;
 }
 
 .brief-pick-label {
-  color: rgb(246 241 251 / 78%);
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: rgb(246 241 251 / 72%);
+  font-size: 1rem;
+  font-weight: 500;
   pointer-events: none;
 }
 
