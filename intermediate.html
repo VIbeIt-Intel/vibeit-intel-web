@@ -70,7 +70,7 @@
         method="POST"
         enctype="multipart/form-data"
       >
-        <input type="hidden" name="_subject" value="Intermediate package brief" />
+        <input type="hidden" name="_subject" value="VibeIt brief — Intermediate" />
         <input type="hidden" name="_template" value="box" />
         <input type="hidden" name="_captcha" value="false" />
         <input
@@ -79,9 +79,14 @@
           value="https://vibeit-intel.net/entry-sent.html"
         />
         <input type="hidden" name="_replyto" id="brief-replyto" value="" />
+        <input
+          type="hidden"
+          name="_autoresponse"
+          value="Thanks for your VibeIt brief. We received it and will reply from support@vibeit-intel.net."
+        />
         <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <textarea
-          name="00 Readable brief"
+          name="Readable brief"
           id="readable-brief"
           class="brief-honey"
           tabindex="-1"
@@ -89,12 +94,12 @@
         ></textarea>
         <input
           type="hidden"
-          name="01 Package"
+          name="Package"
           value="Intermediate — Bookings and payments — from R2,500 once-off"
         />
         <input
           type="hidden"
-          name="32 Revision rounds"
+          name="Revision rounds"
           value="Two after the first draft. Extra changes are quoted first."
         />
 
@@ -103,11 +108,11 @@
           <p class="brief-help">Do you already have a web address?</p>
           <div class="brief-choices">
             <label class="brief-choice">
-              <input type="radio" name="02 Domain" value="I already have a domain" required />
+              <input type="radio" name="Domain" value="I already have a domain" required />
               Yes, I have one
             </label>
             <label class="brief-choice">
-              <input type="radio" name="02 Domain" value="I need a domain" />
+              <input type="radio" name="Domain" value="I need a domain" />
               No, I need one
             </label>
           </div>
@@ -115,7 +120,7 @@
             Domain or the name you want
             <input
               type="text"
-              name="03 Domain name"
+              name="Domain name"
               placeholder="e.g. mybusiness.co.za"
               autocomplete="off"
             />
@@ -127,7 +132,7 @@
           <label class="brief-file">
             <span>Upload your logo if you have one</span>
             <span class="brief-pick">
-              <input type="file" name="04 Logo" accept="image/*,.svg,.pdf" />
+              <input id="logo-file" type="file" accept="image/*,.svg,.pdf" />
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
@@ -137,29 +142,29 @@
           <p class="brief-kicker">3. About</p>
           <label class="brief-field">
             Business name
-            <input type="text" name="05 Business name" required autocomplete="organization" />
+            <input type="text" name="Business name" required autocomplete="organization" />
           </label>
           <label class="brief-field">
             Registration number
-            <input type="text" name="06 Registration number" autocomplete="off" />
+            <input type="text" name="Registration number" autocomplete="off" />
           </label>
           <label class="brief-field">
             Business address
-            <textarea name="07 Business address" rows="3" autocomplete="street-address"></textarea>
+            <textarea name="Business address" rows="3" autocomplete="street-address"></textarea>
           </label>
           <div class="brief-row">
             <label class="brief-field">
               Phone
-              <input type="tel" name="08 Phone" autocomplete="tel" />
+              <input type="tel" name="Phone" autocomplete="tel" />
             </label>
             <label class="brief-field">
               WhatsApp
-              <input type="tel" name="09 WhatsApp" autocomplete="tel" />
+              <input type="tel" name="WhatsApp" autocomplete="tel" />
             </label>
           </div>
           <label class="brief-field">
             Email
-            <input type="email" name="10 Email" required autocomplete="email" />
+            <input type="email" name="email" required autocomplete="email" />
           </label>
         </div>
 
@@ -169,21 +174,21 @@
           <div class="brief-colours">
             <label class="brief-swatch">
               Colour 1
-              <input type="color" name="11 Colour 1" value="#00c8c9" />
+              <input type="color" name="Colour 1" value="#00c8c9" />
             </label>
             <label class="brief-swatch">
               Colour 2
-              <input type="color" name="12 Colour 2" value="#ff8a1a" />
+              <input type="color" name="Colour 2" value="#ff8a1a" />
             </label>
             <label class="brief-swatch">
               Colour 3
-              <input type="color" name="13 Colour 3" value="#4a1f7a" />
+              <input type="color" name="Colour 3" value="#4a1f7a" />
             </label>
           </div>
           <label class="brief-file">
             <span>A photo of your vibe</span>
             <span class="brief-pick">
-              <input type="file" name="14 Vibe photo" accept="image/*" />
+              <input id="vibe-file" type="file" accept="image/*" />
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
@@ -194,7 +199,7 @@
           <label class="brief-field">
             Description of your business
             <textarea
-              name="15 Business description"
+              name="Business description"
               rows="5"
               required
               placeholder="Who you serve, and what you want customers to do."
@@ -207,7 +212,7 @@
           <label class="brief-field">
             List
             <textarea
-              name="16 Products or services"
+              name="Products or services"
               rows="5"
               required
               placeholder="One per line is fine."
@@ -223,7 +228,6 @@
               <input
                 id="extra-photos"
                 type="file"
-                name="Extra photos"
                 accept="image/*"
                 multiple
               />
@@ -232,7 +236,7 @@
           </label>
           <label class="brief-field">
             Notes
-            <textarea name="18 Notes" rows="4" placeholder="Anything else we should know."></textarea>
+            <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
           </label>
         </div>
 
@@ -244,7 +248,7 @@
           <label class="brief-field">
             Services, time slots, and staff
             <textarea
-              name="19 What customers can book"
+              name="What customers can book"
               rows="5"
               required
               placeholder="e.g. haircut 45 min with any stylist, or a 2-hour consult with Nomsa only. List each service, how long it takes, and who does it if that matters."
@@ -257,7 +261,7 @@
           <label class="brief-field">
             Typical hours and days
             <textarea
-              name="20 Booking hours"
+              name="Booking hours"
               rows="4"
               required
               placeholder="e.g. Tue–Sat 9:00–17:00, closed Sunday and Monday. Lunch 13:00–14:00."
@@ -273,13 +277,13 @@
           <div class="brief-row">
             <label class="brief-field">
               Name
-              <input type="text" name="21 Booking admin name" required autocomplete="name" />
+              <input type="text" name="Booking admin name" required autocomplete="name" />
             </label>
             <label class="brief-field">
               Role
               <input
                 type="text"
-                name="22 Booking admin role"
+                name="Booking admin role"
                 required
                 placeholder="e.g. owner, receptionist"
                 autocomplete="organization-title"
@@ -293,27 +297,27 @@
           <p class="brief-help">Tick every way customers should be able to pay.</p>
           <div class="brief-choices">
             <label class="brief-choice">
-              <input type="checkbox" name="23 Pay with EFT" value="Yes" />
+              <input type="checkbox" name="Pay with EFT" value="Yes" />
               EFT / bank transfer
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="24 Pay with card" value="Yes" />
+              <input type="checkbox" name="Pay with card" value="Yes" />
               Card
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="25 Pay with SnapScan" value="Yes" />
+              <input type="checkbox" name="Pay with SnapScan" value="Yes" />
               SnapScan
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="26 Pay with PayFast" value="Yes" />
+              <input type="checkbox" name="Pay with PayFast" value="Yes" />
               PayFast
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="27 Pay with cash" value="Yes" />
+              <input type="checkbox" name="Pay with cash" value="Yes" />
               Cash
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="28 Pay with other" value="Yes" id="pay-other" />
+              <input type="checkbox" name="Pay with other" value="Yes" id="pay-other" />
               Other
             </label>
           </div>
@@ -321,7 +325,7 @@
             Other payment method
             <input
               type="text"
-              name="29 Other payment method"
+              name="Other payment method"
               placeholder="e.g. Ozow, Zapper"
               autocomplete="off"
             />
@@ -338,7 +342,7 @@
             <label class="brief-choice">
               <input
                 type="radio"
-                name="30 Google profile"
+                name="Google profile"
                 value="I already have a Google Business profile"
                 required
               />
@@ -347,7 +351,7 @@
             <label class="brief-choice">
               <input
                 type="radio"
-                name="30 Google profile"
+                name="Google profile"
                 value="I need a Google Business profile"
               />
               No, I need one
@@ -357,7 +361,7 @@
             Link to your Google profile
             <input
               type="url"
-              name="31 Google profile URL"
+              name="Google profile URL"
               placeholder="https://maps.google.com/… or paste the link"
               autocomplete="off"
             />
@@ -382,10 +386,10 @@
         const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
         const input = wrap.querySelector("input");
-        const radios = document.querySelectorAll('input[name="02 Domain"]');
+        const radios = document.querySelectorAll('input[name="Domain"]');
         const googleWrap = document.getElementById("google-url-wrap");
         const googleInput = googleWrap.querySelector("input");
-        const googleRadios = document.querySelectorAll('input[name="30 Google profile"]');
+        const googleRadios = document.querySelectorAll('input[name="Google profile"]');
         const payOther = document.getElementById("pay-other");
         const payOtherWrap = document.getElementById("pay-other-wrap");
         const payOtherInput = payOtherWrap.querySelector("input");
@@ -396,12 +400,12 @@
         const extra = document.getElementById("extra-photos");
         const briefBox = document.getElementById("readable-brief");
         const replyTo = document.getElementById("brief-replyto");
-        const logoInput = form.querySelector('input[name="04 Logo"]');
-        const vibeInput = form.querySelector('input[name="14 Vibe photo"]');
+        const logoInput = document.getElementById("logo-file");
+        const vibeInput = document.getElementById("vibe-file");
         let nativeSend = false;
 
         function sync() {
-          const picked = document.querySelector('input[name="02 Domain"]:checked');
+          const picked = document.querySelector('input[name="Domain"]:checked');
           wrap.hidden = !picked;
           if (!picked) return;
           const need = picked.value === "I need a domain";
@@ -415,7 +419,7 @@
         });
 
         function syncGoogle() {
-          const picked = document.querySelector('input[name="30 Google profile"]:checked');
+          const picked = document.querySelector('input[name="Google profile"]:checked');
           googleWrap.hidden = !picked || picked.value !== "I already have a Google Business profile";
           googleInput.required = Boolean(picked) && picked.value === "I already have a Google Business profile";
         }
@@ -522,61 +526,61 @@
 
         function paymentList() {
           const picked = [];
-          if (val("23 Pay with EFT")) picked.push("EFT");
-          if (val("24 Pay with card")) picked.push("Card");
-          if (val("25 Pay with SnapScan")) picked.push("SnapScan");
-          if (val("26 Pay with PayFast")) picked.push("PayFast");
-          if (val("27 Pay with cash")) picked.push("Cash");
-          if (val("28 Pay with other")) picked.push(val("29 Other payment method") || "Other");
+          if (val("Pay with EFT")) picked.push("EFT");
+          if (val("Pay with card")) picked.push("Card");
+          if (val("Pay with SnapScan")) picked.push("SnapScan");
+          if (val("Pay with PayFast")) picked.push("PayFast");
+          if (val("Pay with cash")) picked.push("Cash");
+          if (val("Pay with other")) picked.push(val("Other payment method") || "Other");
           return picked.join(", ");
         }
 
-        function fillReadableBrief(extraCount) {
+        function fillReadableBrief(attached) {
           const lines = [];
           const subject = form.querySelector('input[name="_subject"]');
-          lines.push(subject ? subject.value : "Intermediate package brief");
-          add(lines, "Package", val("01 Package"));
-          add(lines, "Revisions", val("32 Revision rounds"));
+          lines.push(subject ? subject.value : "VibeIt brief — Intermediate");
+          add(lines, "Package", val("Package"));
+          add(lines, "Revisions", val("Revision rounds"));
           lines.push("");
-          add(lines, "Business", val("05 Business name"));
-          add(lines, "Registration", val("06 Registration number"));
-          add(lines, "Address", val("07 Business address"));
+          add(lines, "Business", val("Business name"));
+          add(lines, "Registration", val("Registration number"));
+          add(lines, "Address", val("Business address"));
           lines.push("");
-          add(lines, "Phone", val("08 Phone"));
-          add(lines, "WhatsApp", val("09 WhatsApp"));
-          add(lines, "Email", val("10 Email"));
+          add(lines, "Phone", val("Phone"));
+          add(lines, "WhatsApp", val("WhatsApp"));
+          add(lines, "Email", val("email"));
           lines.push("");
-          add(lines, "Domain", val("02 Domain"));
-          add(lines, "Domain name", val("03 Domain name"));
+          add(lines, "Domain", val("Domain"));
+          add(lines, "Domain name", val("Domain name"));
           lines.push("");
-          const colours = [val("11 Colour 1"), val("12 Colour 2"), val("13 Colour 3")].filter(Boolean);
+          const colours = [val("Colour 1"), val("Colour 2"), val("Colour 3")].filter(Boolean);
           if (colours.length) lines.push("Colours: " + colours.join(" "));
-          const desc = val("15 Business description");
+          const desc = val("Business description");
           if (desc) {
             lines.push("");
             lines.push("What they do");
             lines.push(desc);
           }
-          const products = val("16 Products or services");
+          const products = val("Products or services");
           if (products) {
             lines.push("");
             lines.push("Products or services");
             lines.push(products);
           }
-          const book = val("19 What customers can book");
+          const book = val("What customers can book");
           if (book) {
             lines.push("");
             lines.push("Bookings");
             lines.push(book);
           }
-          const hours = val("20 Booking hours");
+          const hours = val("Booking hours");
           if (hours) {
             lines.push("");
             lines.push("Hours");
             lines.push(hours);
           }
-          const adminName = val("21 Booking admin name");
-          const adminRole = val("22 Booking admin role");
+          const adminName = val("Booking admin name");
+          const adminRole = val("Booking admin role");
           if (adminName || adminRole) {
             lines.push("");
             add(
@@ -586,23 +590,27 @@
             );
           }
           add(lines, "Payments", paymentList());
-          add(lines, "Google", val("30 Google profile"));
-          add(lines, "Google profile", val("31 Google profile URL"));
-          const notes = val("18 Notes");
+          add(lines, "Google", val("Google profile"));
+          add(lines, "Google profile", val("Google profile URL"));
+          const notes = val("Notes");
           if (notes) {
             lines.push("");
             lines.push("Notes");
             lines.push(notes);
           }
-          const attach = [];
-          if (logoInput.files[0]) attach.push("logo");
-          if (vibeInput.files[0]) attach.push("vibe photo");
-          if (extraCount) {
-            attach.push(extraCount + (extraCount === 1 ? " extra photo" : " extra photos"));
-          }
-          if (attach.length) {
+          if (attached.length) {
             lines.push("");
-            lines.push("Photos attached: " + attach.join(", "));
+            lines.push(
+              "Files attached: " +
+                attached
+                  .map(function (item) {
+                    return item.file.name;
+                  })
+                  .join(", ")
+            );
+            attached.forEach(function (item) {
+              if (item.url) add(lines, item.label, item.url);
+            });
           }
           briefBox.value = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
         }
@@ -610,17 +618,80 @@
         function disableEmptyOptional() {
           Array.prototype.forEach.call(form.querySelectorAll("input, textarea"), function (el) {
             if (el.disabled || el.required) return;
+            if (el.name === "_honey") {
+              if (!String(el.value || "").trim()) el.disabled = true;
+              return;
+            }
             if (el.type === "hidden" || el.type === "radio" || el.type === "checkbox") return;
             if (el.type === "color") return;
             if (el.name.charAt(0) === "_") return;
             if (el.id === "readable-brief") return;
-            if (el.getAttribute("data-extra-photo")) return;
+            if (el.getAttribute("data-brief-attachment")) return;
             if (el.type === "file") {
               if (!el.files || !el.files.length) el.disabled = true;
               return;
             }
             if (!String(el.value || "").trim()) el.disabled = true;
           });
+        }
+
+        function clearAttachments() {
+          form.querySelectorAll("input[data-brief-attachment]").forEach(function (el) {
+            el.remove();
+          });
+        }
+
+        function addAttachment(file) {
+          const inputEl = document.createElement("input");
+          inputEl.type = "file";
+          inputEl.name = "attachment";
+          inputEl.setAttribute("data-brief-attachment", "1");
+          inputEl.className = "brief-honey";
+          inputEl.tabIndex = -1;
+          inputEl.setAttribute("aria-hidden", "true");
+          setFiles(inputEl, [file]);
+          form.appendChild(inputEl);
+        }
+
+        function publicImageUrl(file) {
+          const data = new FormData();
+          data.append("reqtype", "fileupload");
+          data.append("fileToUpload", file);
+          const upload = fetch("https://catbox.moe/user/api.php", {
+            method: "POST",
+            body: data,
+          }).then(function (res) {
+            if (!res.ok) throw new Error("upload failed");
+            return res.text();
+          }).then(function (text) {
+            const url = String(text || "").trim();
+            if (!/^https:\/\/[^\s]+$/i.test(url)) throw new Error("bad url");
+            return url;
+          });
+          return Promise.race([
+            upload,
+            new Promise(function (_, reject) {
+              setTimeout(function () {
+                reject(new Error("timeout"));
+              }, 8000);
+            }),
+          ]);
+        }
+
+        function tryPublicLinks(attached) {
+          return Promise.all(
+            attached.map(function (item) {
+              return publicImageUrl(item.file)
+                .then(function (url) {
+                  item.url = url;
+                  return item;
+                })
+                .catch(function () {
+                  item.url = "";
+                  return item;
+                });
+            })
+          );
         }
 
         extra.addEventListener("change", function () {
@@ -675,41 +746,43 @@
 
           Promise.all(jobs)
             .then(function (packed) {
-              packed.forEach(function (item) {
-                if (item.kind === "logo") setFiles(logoInput, [namedFile(item.file, "logo")]);
-                if (item.kind === "vibe") setFiles(vibeInput, [namedFile(item.file, "vibe-photo")]);
-              });
-
-              form.querySelectorAll("input[data-extra-photo]").forEach(function (el) {
-                el.remove();
-              });
-              extra.removeAttribute("name");
+              logoInput.disabled = true;
+              vibeInput.disabled = true;
               extra.disabled = true;
+              extra.removeAttribute("name");
+              clearAttachments();
 
-              const extraItems = packed.filter(function (item) {
-                return item.kind === "extra";
-              });
-              extraItems.forEach(function (item) {
-                const n = item.index + 1;
-                const inputEl = document.createElement("input");
-                inputEl.type = "file";
-                inputEl.name = "17 Extra photo " + n;
-                inputEl.setAttribute("data-extra-photo", "1");
-                inputEl.className = "brief-honey";
-                inputEl.tabIndex = -1;
-                setFiles(inputEl, [namedFile(item.file, "extra-photo-" + n)]);
-                form.appendChild(inputEl);
+              const attached = packed.map(function (item) {
+                let file = item.file;
+                let label = "File";
+                if (item.kind === "logo") {
+                  file = namedFile(item.file, "logo");
+                  label = "Logo";
+                } else if (item.kind === "vibe") {
+                  file = namedFile(item.file, "vibe-photo");
+                  label = "Vibe photo";
+                } else {
+                  file = namedFile(item.file, "extra-photo-" + (item.index + 1));
+                  label = "Extra photo " + (item.index + 1);
+                }
+                addAttachment(file);
+                return { kind: item.kind, label: label, file: file, url: "" };
               });
 
-              replyTo.value = val("10 Email");
-              fillReadableBrief(extraItems.length);
+              return tryPublicLinks(attached);
+            })
+            .then(function (attached) {
+              replyTo.value = val("email");
+              fillReadableBrief(attached || []);
               disableEmptyOptional();
               nativeSend = true;
               form.submit();
             })
             .catch(function () {
               extra.disabled = false;
-              extra.name = "Extra photos";
+              logoInput.disabled = false;
+              vibeInput.disabled = false;
+              clearAttachments();
               submit.disabled = false;
               submit.innerHTML = submitLabel;
               window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
