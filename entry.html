@@ -71,25 +71,34 @@
         enctype="multipart/form-data"
       >
         <input type="hidden" name="_subject" value="Entry package brief" />
-        <input type="hidden" name="_template" value="table" />
+        <input type="hidden" name="_template" value="box" />
+        <input type="hidden" name="_captcha" value="false" />
         <input
           type="hidden"
           name="_next"
           value="https://vibeit-intel.net/entry-sent.html"
         />
-        <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" />
-        <input type="hidden" name="Package" value="Entry — Your business online — R1,105 once-off" />
+        <input type="hidden" name="_replyto" id="brief-replyto" value="" />
+        <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <textarea
+          name="00 Readable brief"
+          id="readable-brief"
+          class="brief-honey"
+          tabindex="-1"
+          aria-hidden="true"
+        ></textarea>
+        <input type="hidden" name="01 Package" value="Entry — Your business online — R1,105 once-off" />
 
         <div class="brief-block">
           <p class="brief-kicker">1. Domain</p>
           <p class="brief-help">Do you already have a web address?</p>
           <div class="brief-choices">
             <label class="brief-choice">
-              <input type="radio" name="Domain" value="I already have a domain" required />
+              <input type="radio" name="02 Domain" value="I already have a domain" required />
               Yes, I have one
             </label>
             <label class="brief-choice">
-              <input type="radio" name="Domain" value="I need a domain" />
+              <input type="radio" name="02 Domain" value="I need a domain" />
               No, I need one
             </label>
           </div>
@@ -97,7 +106,7 @@
             Domain or the name you want
             <input
               type="text"
-              name="Domain name"
+              name="03 Domain name"
               placeholder="e.g. mybusiness.co.za"
               autocomplete="off"
             />
@@ -109,7 +118,7 @@
           <label class="brief-file">
             <span>Upload your logo if you have one</span>
             <span class="brief-pick">
-              <input type="file" name="Logo" accept="image/*,.svg,.pdf" />
+              <input type="file" name="04 Logo" accept="image/*,.svg,.pdf" />
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
@@ -119,29 +128,29 @@
           <p class="brief-kicker">3. About</p>
           <label class="brief-field">
             Business name
-            <input type="text" name="Business name" required autocomplete="organization" />
+            <input type="text" name="05 Business name" required autocomplete="organization" />
           </label>
           <label class="brief-field">
             Registration number
-            <input type="text" name="Registration number" autocomplete="off" />
+            <input type="text" name="06 Registration number" autocomplete="off" />
           </label>
           <label class="brief-field">
             Business address
-            <textarea name="Business address" rows="3" autocomplete="street-address"></textarea>
+            <textarea name="07 Business address" rows="3" autocomplete="street-address"></textarea>
           </label>
           <div class="brief-row">
             <label class="brief-field">
               Phone
-              <input type="tel" name="Phone" autocomplete="tel" />
+              <input type="tel" name="08 Phone" autocomplete="tel" />
             </label>
             <label class="brief-field">
               WhatsApp
-              <input type="tel" name="WhatsApp" autocomplete="tel" />
+              <input type="tel" name="09 WhatsApp" autocomplete="tel" />
             </label>
           </div>
           <label class="brief-field">
             Email
-            <input type="email" name="email" required autocomplete="email" />
+            <input type="email" name="10 Email" required autocomplete="email" />
           </label>
         </div>
 
@@ -151,21 +160,21 @@
           <div class="brief-colours">
             <label class="brief-swatch">
               Colour 1
-              <input type="color" name="Colour 1" value="#00c8c9" />
+              <input type="color" name="11 Colour 1" value="#00c8c9" />
             </label>
             <label class="brief-swatch">
               Colour 2
-              <input type="color" name="Colour 2" value="#ff8a1a" />
+              <input type="color" name="12 Colour 2" value="#ff8a1a" />
             </label>
             <label class="brief-swatch">
               Colour 3
-              <input type="color" name="Colour 3" value="#4a1f7a" />
+              <input type="color" name="13 Colour 3" value="#4a1f7a" />
             </label>
           </div>
           <label class="brief-file">
             <span>A photo of your vibe</span>
             <span class="brief-pick">
-              <input type="file" name="Vibe photo" accept="image/*" />
+              <input type="file" name="14 Vibe photo" accept="image/*" />
               <span class="brief-pick-label">Choose file</span>
             </span>
           </label>
@@ -176,7 +185,7 @@
           <label class="brief-field">
             Description of your business
             <textarea
-              name="Business description"
+              name="15 Business description"
               rows="5"
               required
               placeholder="Who you serve, and what you want customers to do."
@@ -189,7 +198,7 @@
           <label class="brief-field">
             List
             <textarea
-              name="Products or services"
+              name="16 Products or services"
               rows="5"
               required
               placeholder="One per line is fine."
@@ -214,7 +223,7 @@
           </label>
           <label class="brief-field">
             Notes
-            <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
+            <textarea name="18 Notes" rows="4" placeholder="Anything else we should know."></textarea>
           </label>
         </div>
 
@@ -234,15 +243,20 @@
         const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
         const input = wrap.querySelector("input");
-        const radios = document.querySelectorAll('input[name="Domain"]');
+        const radios = document.querySelectorAll('input[name="02 Domain"]');
         const form = document.querySelector(".brief-form");
         const submit = form.querySelector(".brief-submit");
         const submitLabel =
           'Send us your <span class="brief-vibe">Vibe</span>';
         const extra = document.getElementById("extra-photos");
+        const briefBox = document.getElementById("readable-brief");
+        const replyTo = document.getElementById("brief-replyto");
+        const logoInput = form.querySelector('input[name="04 Logo"]');
+        const vibeInput = form.querySelector('input[name="14 Vibe photo"]');
+        let nativeSend = false;
 
         function sync() {
-          const picked = document.querySelector('input[name="Domain"]:checked');
+          const picked = document.querySelector('input[name="02 Domain"]:checked');
           wrap.hidden = !picked;
           if (!picked) return;
           const need = picked.value === "I need a domain";
@@ -275,6 +289,20 @@
             return;
           }
           label.textContent = files[0].name;
+        }
+
+        function namedFile(file, base) {
+          const orig = file.name || base;
+          const dot = orig.lastIndexOf(".");
+          const ext =
+            dot >= 0
+              ? orig.slice(dot)
+              : file.type === "image/jpeg"
+                ? ".jpg"
+                : "";
+          return new File([file], base + ext, {
+            type: file.type || "application/octet-stream",
+          });
         }
 
         function compressOne(file) {
@@ -314,6 +342,90 @@
           });
         }
 
+        function val(name) {
+          const first = form.querySelector('[name="' + name + '"]');
+          if (!first) return "";
+          if (first.type === "radio") {
+            const picked = form.querySelector('input[name="' + name + '"]:checked');
+            return picked ? String(picked.value || "").trim() : "";
+          }
+          if (first.type === "checkbox") {
+            return first.checked ? String(first.value || "Yes").trim() : "";
+          }
+          return String(first.value || "").trim();
+        }
+
+        function add(lines, label, value) {
+          if (!value) return;
+          lines.push(label + ": " + value);
+        }
+
+        function fillReadableBrief(extraCount) {
+          const lines = [];
+          const subject = form.querySelector('input[name="_subject"]');
+          lines.push(subject ? subject.value : "Entry package brief");
+          add(lines, "Package", val("01 Package"));
+          lines.push("");
+          add(lines, "Business", val("05 Business name"));
+          add(lines, "Registration", val("06 Registration number"));
+          add(lines, "Address", val("07 Business address"));
+          lines.push("");
+          add(lines, "Phone", val("08 Phone"));
+          add(lines, "WhatsApp", val("09 WhatsApp"));
+          add(lines, "Email", val("10 Email"));
+          lines.push("");
+          add(lines, "Domain", val("02 Domain"));
+          add(lines, "Domain name", val("03 Domain name"));
+          lines.push("");
+          const colours = [val("11 Colour 1"), val("12 Colour 2"), val("13 Colour 3")].filter(Boolean);
+          if (colours.length) lines.push("Colours: " + colours.join(" "));
+          const desc = val("15 Business description");
+          if (desc) {
+            lines.push("");
+            lines.push("What they do");
+            lines.push(desc);
+          }
+          const products = val("16 Products or services");
+          if (products) {
+            lines.push("");
+            lines.push("Products or services");
+            lines.push(products);
+          }
+          const notes = val("18 Notes");
+          if (notes) {
+            lines.push("");
+            lines.push("Notes");
+            lines.push(notes);
+          }
+          const attach = [];
+          if (logoInput.files[0]) attach.push("logo");
+          if (vibeInput.files[0]) attach.push("vibe photo");
+          if (extraCount) {
+            attach.push(extraCount + (extraCount === 1 ? " extra photo" : " extra photos"));
+          }
+          if (attach.length) {
+            lines.push("");
+            lines.push("Photos attached: " + attach.join(", "));
+          }
+          briefBox.value = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+        }
+
+        function disableEmptyOptional() {
+          Array.prototype.forEach.call(form.querySelectorAll("input, textarea"), function (el) {
+            if (el.disabled || el.required) return;
+            if (el.type === "hidden" || el.type === "radio" || el.type === "checkbox") return;
+            if (el.type === "color") return;
+            if (el.name.charAt(0) === "_") return;
+            if (el.id === "readable-brief") return;
+            if (el.getAttribute("data-extra-photo")) return;
+            if (el.type === "file") {
+              if (!el.files || !el.files.length) el.disabled = true;
+              return;
+            }
+            if (!String(el.value || "").trim()) el.disabled = true;
+          });
+        }
+
         extra.addEventListener("change", function () {
           let files = Array.from(extra.files || []);
           if (files.length > MAX_EXTRA) {
@@ -331,45 +443,76 @@
         });
 
         form.addEventListener("submit", function (event) {
+          if (nativeSend) return;
           event.preventDefault();
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
           if ((extra.files || []).length > MAX_EXTRA) {
             setFiles(extra, extras);
           }
           submit.disabled = true;
-          submit.textContent = extras.length ? "Compressing photos…" : "Sending…";
+          const hasFiles = extras.length || (logoInput.files && logoInput.files[0]) || (vibeInput.files && vibeInput.files[0]);
+          submit.textContent = hasFiles ? "Compressing photos…" : "Sending…";
 
-          const logoInput = form.querySelector('input[name="Logo"]');
-          const vibeInput = form.querySelector('input[name="Vibe photo"]');
           const jobs = [];
-          if (logoInput.files[0]) jobs.push(compressOne(logoInput.files[0]).then(function (file) { return ["Logo", file]; }));
-          if (vibeInput.files[0]) jobs.push(compressOne(vibeInput.files[0]).then(function (file) { return ["Vibe photo", file]; }));
+          if (logoInput.files[0]) {
+            jobs.push(
+              compressOne(logoInput.files[0]).then(function (file) {
+                return { kind: "logo", file: file };
+              })
+            );
+          }
+          if (vibeInput.files[0]) {
+            jobs.push(
+              compressOne(vibeInput.files[0]).then(function (file) {
+                return { kind: "vibe", file: file };
+              })
+            );
+          }
           extras.forEach(function (file, i) {
-            jobs.push(compressOne(file).then(function (out) { return ["Extra photo " + (i + 1), out]; }));
+            jobs.push(
+              compressOne(file).then(function (out) {
+                return { kind: "extra", index: i, file: out };
+              })
+            );
           });
 
           Promise.all(jobs)
             .then(function (packed) {
-              const body = new FormData(form);
-              body.delete("Logo");
-              body.delete("Vibe photo");
-              body.delete("Extra photos");
               packed.forEach(function (item) {
-                body.append(item[0], item[1]);
+                if (item.kind === "logo") setFiles(logoInput, [namedFile(item.file, "logo")]);
+                if (item.kind === "vibe") setFiles(vibeInput, [namedFile(item.file, "vibe-photo")]);
               });
-              return fetch("https://formsubmit.co/ajax/support@vibeit-intel.net", {
-                method: "POST",
-                body: body,
+
+              form.querySelectorAll("input[data-extra-photo]").forEach(function (el) {
+                el.remove();
               });
-            })
-            .then(function (res) {
-              if (!res.ok) throw new Error("send failed");
-              return res.json();
-            })
-            .then(function () {
-              window.location.href = "entry-sent.html";
+              extra.removeAttribute("name");
+              extra.disabled = true;
+
+              const extraItems = packed.filter(function (item) {
+                return item.kind === "extra";
+              });
+              extraItems.forEach(function (item) {
+                const n = item.index + 1;
+                const inputEl = document.createElement("input");
+                inputEl.type = "file";
+                inputEl.name = "17 Extra photo " + n;
+                inputEl.setAttribute("data-extra-photo", "1");
+                inputEl.className = "brief-honey";
+                inputEl.tabIndex = -1;
+                setFiles(inputEl, [namedFile(item.file, "extra-photo-" + n)]);
+                form.appendChild(inputEl);
+              });
+
+              replyTo.value = val("10 Email");
+              fillReadableBrief(extraItems.length);
+              disableEmptyOptional();
+              nativeSend = true;
+              form.submit();
             })
             .catch(function () {
+              extra.disabled = false;
+              extra.name = "Extra photos";
               submit.disabled = false;
               submit.innerHTML = submitLabel;
               window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
