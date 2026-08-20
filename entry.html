@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool17" />
+    <link rel="stylesheet" href="styles.css?v=cool18" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -219,7 +219,7 @@
         </div>
 
         <button class="pack-cta pack-cta-hot brief-submit" type="submit">
-          Send brief
+          Send us your <span class="brief-vibe">Vibe</span>
         </button>
         <p class="brief-foot">
           We’ll reply from support@vibeit-intel.net. Photos are compressed on
@@ -237,6 +237,8 @@
         const radios = document.querySelectorAll('input[name="Domain"]');
         const form = document.querySelector(".brief-form");
         const submit = form.querySelector(".brief-submit");
+        const submitLabel =
+          'Send us your <span class="brief-vibe">Vibe</span>';
         const extra = document.getElementById("extra-photos");
 
         function sync() {
@@ -369,7 +371,7 @@
             })
             .catch(function () {
               submit.disabled = false;
-              submit.textContent = "Send brief";
+              submit.innerHTML = submitLabel;
               window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
             });
         });

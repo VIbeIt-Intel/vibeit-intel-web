@@ -1339,6 +1339,17 @@ html.from-it .foot {
   font: inherit;
 }
 
+.brief-vibe {
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.04em;
+  background: linear-gradient(120deg, #fff 10%, var(--teal) 45%, var(--orange) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px rgb(0 200 201 / 70%)) drop-shadow(0 0 16px rgb(255 138 26 / 45%));
+}
+
 .brief-foot {
   margin-top: 0.85rem;
   color: rgb(246 241 251 / 62%);
