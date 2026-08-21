@@ -21,10 +21,14 @@
     const ox = (rw - shownW) / 2;
     const oy = (rh - shownH) / 2;
 
-    const width = spot.w * shownW;
-    const height = spot.h * shownH;
-    link.style.left = ox + spot.x * shownW + "px";
-    link.style.top = oy + spot.y * shownH + "px";
+    // Cover the painted wordmark It fully so the lure ring cannot
+    // reveal a duplicate (navy I-stem) around the rounded tile.
+    const extraW = spot.w * shownW * 0.1;
+    const extraH = spot.h * shownH * 0.08;
+    const width = spot.w * shownW + extraW;
+    const height = spot.h * shownH + extraH;
+    link.style.left = ox + spot.x * shownW - extraW * 0.7 + "px";
+    link.style.top = oy + spot.y * shownH - extraH / 2 + "px";
     link.style.width = width + "px";
     link.style.height = height + "px";
     link.classList.add("is-ready");
