@@ -98,6 +98,36 @@ body {
   animation: it-button-pulse 1.25s ease-in-out infinite;
 }
 
+.it-link.is-lure::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  pointer-events: none;
+  border: 2px solid transparent;
+  border-radius: calc(22% + 3px);
+  background:
+    linear-gradient(#0000, #0000) padding-box,
+    conic-gradient(
+      from var(--wa-spin),
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      var(--teal),
+      var(--orange),
+      var(--purple),
+      var(--teal)
+    ) border-box;
+  opacity: 0;
+  animation:
+    it-lure-fade 0.7s ease forwards,
+    wa-border-flow 6s linear infinite;
+}
+
+.it-link.is-lure .it-face {
+  animation: it-button-pulse-lure 1.1s ease-in-out infinite;
+}
+
 .it-link:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 4px;
@@ -166,6 +196,29 @@ body {
   }
 }
 
+@keyframes it-button-pulse-lure {
+  0%,
+  100% {
+    transform: scale(1);
+    filter:
+      drop-shadow(0 0 8px rgb(0 220 221 / 85%))
+      drop-shadow(0 0 18px rgb(255 138 26 / 45%));
+  }
+  50% {
+    transform: scale(1.14);
+    filter:
+      drop-shadow(0 0 14px rgb(0 240 242 / 100%))
+      drop-shadow(0 0 28px rgb(0 200 201 / 85%))
+      drop-shadow(0 0 36px rgb(255 138 26 / 55%));
+  }
+}
+
+@keyframes it-lure-fade {
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 45%, transparent);
@@ -205,6 +258,11 @@ body.is-opening .hero {
 
 .it-link.is-opening {
   z-index: 14;
+}
+
+.it-link.is-opening::before {
+  opacity: 0;
+  animation: none;
 }
 
 .it-link.is-opening .it-face {
@@ -1541,6 +1599,8 @@ html.from-it .foot {
   .step-num,
   .steps::before,
   .brief-vibe,
+  .it-link.is-lure::before,
+  .it-link.is-lure .it-face,
   .it-link.is-opening .it-face,
   html.from-it .arrive,
   html.from-it .topbar,
@@ -1554,6 +1614,15 @@ html.from-it .foot {
     filter:
       drop-shadow(0 0 7px rgb(0 200 201 / 85%))
       drop-shadow(0 0 12px rgb(255 138 26 / 45%));
+  }
+
+  .it-link.is-lure::before {
+    opacity: 0.75;
+    --wa-spin: 120deg;
+  }
+
+  .it-link.is-lure .it-face {
+    animation: it-button-pulse 1.25s ease-in-out infinite;
   }
 
   body.is-opening .it-portal,

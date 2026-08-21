@@ -34,6 +34,11 @@
   window.addEventListener("resize", place);
   if (img.complete) place();
 
+  window.setTimeout(function () {
+    if (document.body.classList.contains("is-opening")) return;
+    link.classList.add("is-lure");
+  }, 4000);
+
   link.addEventListener("click", function (event) {
     if (
       event.metaKey ||
