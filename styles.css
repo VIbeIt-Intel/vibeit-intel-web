@@ -76,48 +76,17 @@ body {
   height: 80px;
   overflow: hidden;
   visibility: hidden;
-  isolation: isolate;
-  border-radius: 22%;
-  background-color: #4a1f7a;
-  background-image: linear-gradient(135deg, #ff8a1a 12%, #4a1f7a 88%);
+  background: none;
   border: 0;
   text-decoration: none;
   cursor: pointer;
+  transform-origin: center;
 }
 
 .it-link.is-ready {
   visibility: visible;
   overflow: visible;
-}
-
-.it-plate {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  border-radius: 22%;
-  background-color: #4a1f7a;
-  background-image: linear-gradient(135deg, #ff8a1a 12%, #4a1f7a 88%);
-  transform-origin: center;
   animation: it-button-pulse 1.25s ease-in-out infinite;
-}
-
-.it-back {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: 22%;
-  background-color: #4a1f7a;
-  background-image: linear-gradient(135deg, #ff8a1a 12%, #4a1f7a 88%);
-  pointer-events: none;
-}
-
-.it-plate > picture {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 .it-face {
@@ -126,9 +95,8 @@ body {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 22%;
-  background-color: #4a1f7a;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .it-link.is-lure::before {
@@ -157,7 +125,7 @@ body {
     wa-border-flow 6s linear infinite;
 }
 
-.it-link.is-lure .it-plate {
+.it-link.is-lure {
   animation: it-button-pulse-lure 1.1s ease-in-out infinite;
 }
 
@@ -291,6 +259,12 @@ body.is-opening .hero {
 
 .it-link.is-opening {
   z-index: 14;
+  animation: none;
+  transform: none;
+  opacity: 1;
+  filter:
+    drop-shadow(0 0 16px rgb(0 240 242 / 95%))
+    drop-shadow(0 0 36px rgb(255 138 26 / 55%));
 }
 
 .it-link.is-opening::before {
@@ -298,17 +272,8 @@ body.is-opening .hero {
   animation: none;
 }
 
-.it-link.is-opening .it-plate {
-  animation: none;
-  transform: scale(1.4);
-  opacity: 0;
-  filter:
-    drop-shadow(0 0 16px rgb(0 240 242 / 95%))
-    drop-shadow(0 0 36px rgb(255 138 26 / 55%));
-  transition:
-    transform 0.4s ease,
-    filter 0.4s ease,
-    opacity 0.4s ease 0.4s;
+.it-link.is-opening .it-face {
+  opacity: 1;
 }
 
 .arrive {
@@ -1633,8 +1598,8 @@ html.from-it .foot {
   .steps::before,
   .brief-vibe,
   .it-link.is-lure::before,
-  .it-link.is-lure .it-plate,
-  .it-link.is-opening .it-plate,
+  .it-link.is-lure,
+  .it-link.is-opening,
   html.from-it .arrive,
   html.from-it .topbar,
   html.from-it main,
@@ -1654,7 +1619,7 @@ html.from-it .foot {
     --wa-spin: 120deg;
   }
 
-  .it-link.is-lure .it-plate {
+  .it-link.is-lure {
     animation: it-button-pulse 1.25s ease-in-out infinite;
   }
 
