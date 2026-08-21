@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=it-cover" />
+    <link rel="stylesheet" href="styles.css?v=it-hide" />
   </head>
   <body class="splash">
     <main class="page">
@@ -24,23 +24,24 @@
         <source
           media="(orientation: portrait)"
           type="image/webp"
-          srcset="assets/hero-no-it-portrait.webp"
+          srcset="assets/hero-no-it-portrait.webp?v=it-hide"
         />
-        <source type="image/webp" srcset="assets/hero-no-it.webp" />
+        <source type="image/webp" srcset="assets/hero-no-it.webp?v=it-hide" />
         <source
           media="(orientation: portrait)"
-          srcset="assets/hero-no-it-portrait.png"
+          srcset="assets/hero-no-it-portrait.png?v=it-hide"
         />
         <img
           class="hero-image"
-          src="assets/hero-no-it.png"
+          src="assets/hero-no-it.png?v=it-hide"
           alt="Vibe INTEL"
           fetchpriority="high"
         />
       </picture>
 
       <a class="it-link" href="services.html" aria-label="Open VibeIt-Intel packages">
-        <img class="it-face" src="assets/it-button.webp" alt="It" width="80" height="80" />
+        <span class="it-back" aria-hidden="true"></span>
+        <img class="it-face" src="assets/it-button.webp?v=it-hide" alt="It" width="80" height="80" />
       </a>
 
       <div class="overlay">
@@ -48,6 +49,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=it-cover"></script>
+    <script src="it-hotspot.js?v=it-hide"></script>
   </body>
 </html>
