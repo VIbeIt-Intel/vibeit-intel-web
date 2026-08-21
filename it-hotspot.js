@@ -10,7 +10,7 @@
     portrait: { x: 0.593, y: 0.506, w: 0.12, h: 0.08 },
   };
 
-  const IDLE_MS = 9000;
+  const IDLE_MS = 5000;
   let lureTimer = 0;
   let goTimer = 0;
   let idleTimer = 0;
