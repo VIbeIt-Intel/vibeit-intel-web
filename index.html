@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=it-gone" />
+    <link rel="stylesheet" href="styles.css?v=splash-back" />
   </head>
   <body class="splash">
     <main class="page">
@@ -24,16 +24,16 @@
         <source
           media="(orientation: portrait)"
           type="image/webp"
-          srcset="assets/hero-no-it-portrait.webp?v=it-gone"
+          srcset="assets/hero-no-it-portrait.webp?v=splash-back"
         />
-        <source type="image/webp" srcset="assets/hero-no-it.webp?v=it-gone" />
+        <source type="image/webp" srcset="assets/hero-no-it.webp?v=splash-back" />
         <source
           media="(orientation: portrait)"
-          srcset="assets/hero-no-it-portrait.png?v=it-gone"
+          srcset="assets/hero-no-it-portrait.png?v=splash-back"
         />
         <img
           class="hero-image"
-          src="assets/hero-no-it.png?v=it-gone"
+          src="assets/hero-no-it.png?v=splash-back"
           alt="Vibe INTEL"
           fetchpriority="high"
         />
@@ -42,13 +42,16 @@
       <a class="it-link" href="services.html" aria-label="Open VibeIt-Intel packages">
         <span class="it-plate">
           <span class="it-back" aria-hidden="true"></span>
-          <img
-            class="it-face"
-            src="assets/it-button.png?v=it-gone"
-            alt="It"
-            width="1024"
-            height="1024"
-          />
+          <picture>
+            <source type="image/webp" srcset="assets/it-button.webp?v=splash-back" />
+            <img
+              class="it-face"
+              src="assets/it-button.png?v=splash-back"
+              alt="It"
+              width="1024"
+              height="1024"
+            />
+          </picture>
         </span>
       </a>
 
@@ -57,6 +60,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=it-gone"></script>
+    <script src="it-hotspot.js?v=splash-back"></script>
   </body>
 </html>

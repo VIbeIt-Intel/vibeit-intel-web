@@ -10,6 +10,9 @@
     portrait: { x: 0.593, y: 0.506, w: 0.12, h: 0.08 },
   };
 
+  let lureTimer = 0;
+  let goTimer = 0;
+
   function place() {
     const portrait = window.matchMedia("(orientation: portrait)").matches;
     const spot = portrait ? spots.portrait : spots.landscape;
@@ -32,14 +35,44 @@
     link.classList.add("is-ready");
   }
 
+  function resetOpening() {
+    document.body.classList.remove("is-opening");
+    link.classList.remove("is-opening");
+    document.body.style.removeProperty("--it-x");
+    document.body.style.removeProperty("--it-y");
+    document.body.style.removeProperty("--it-r");
+  }
+
+  function startLure() {
+    link.classList.remove("is-lure");
+    if (lureTimer) {
+      window.clearTimeout(lureTimer);
+    }
+    lureTimer = window.setTimeout(function () {
+      lureTimer = 0;
+      if (document.body.classList.contains("is-opening")) return;
+      link.classList.add("is-lure");
+    }, 4000);
+  }
+
+  function restoreSplash() {
+    resetOpening();
+    startLure();
+    place();
+  }
+
   img.addEventListener("load", place);
+  img.addEventListener("error", place);
   window.addEventListener("resize", place);
   if (img.complete) place();
 
-  window.setTimeout(function () {
-    if (document.body.classList.contains("is-opening")) return;
-    link.classList.add("is-lure");
-  }, 4000);
+  // pagehide clears the portal before bfcache freezes this document,
+  // so Back cannot restore a mid-open splash. pageshow / popstate
+  // cover persisted restores and same-document history moves.
+  window.addEventListener("pagehide", resetOpening);
+  window.addEventListener("pageshow", restoreSplash);
+  window.addEventListener("popstate", restoreSplash);
+  startLure();
 
   link.addEventListener("click", function (event) {
     if (
@@ -71,8 +104,12 @@
     void document.body.offsetWidth;
     document.body.classList.add("is-opening");
 
-    window.setTimeout(function () {
-      window.location.href = "services.html?from=it";
+    if (goTimer) {
+      window.clearTimeout(goTimer);
+    }
+    goTimer = window.setTimeout(function () {
+      goTimer = 0;
+      window.location.assign("services.html?from=it");
     }, 920);
   });
 })();
