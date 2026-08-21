@@ -3,9 +3,11 @@
   const link = document.querySelector(".it-link");
   if (!img || !link) return;
 
+  // Pixel box of the painted It on the 1536x1024 / 1024x1536 art,
+  // grown into a square so stems cannot peek past the rounded tile.
   const spots = {
-    landscape: { x: 0.56, y: 0.5361, w: 0.0527, h: 0.0791 },
-    portrait: { x: 0.584, y: 0.5104, w: 0.085, h: 0.0566 },
+    landscape: { x: 0.554, y: 0.525, w: 0.081, h: 0.121 },
+    portrait: { x: 0.58, y: 0.506, w: 0.12, h: 0.08 },
   };
 
   function place() {
@@ -21,14 +23,10 @@
     const ox = (rw - shownW) / 2;
     const oy = (rh - shownH) / 2;
 
-    // Cover the painted wordmark It fully so the lure ring cannot
-    // reveal a duplicate (navy I-stem) around the rounded tile.
-    const extraW = spot.w * shownW * 0.1;
-    const extraH = spot.h * shownH * 0.08;
-    const width = spot.w * shownW + extraW;
-    const height = spot.h * shownH + extraH;
-    link.style.left = ox + spot.x * shownW - extraW * 0.7 + "px";
-    link.style.top = oy + spot.y * shownH - extraH / 2 + "px";
+    const width = spot.w * shownW;
+    const height = spot.h * shownH;
+    link.style.left = ox + spot.x * shownW + "px";
+    link.style.top = oy + spot.y * shownH + "px";
     link.style.width = width + "px";
     link.style.height = height + "px";
     link.classList.add("is-ready");

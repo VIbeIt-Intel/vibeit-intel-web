@@ -90,6 +90,18 @@ body {
   overflow: visible;
 }
 
+.it-plate {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 22%;
+  background-color: #4a1f7a;
+  background-image: linear-gradient(135deg, #ff8a1a 12%, #4a1f7a 88%);
+  transform-origin: center;
+  animation: it-button-pulse 1.25s ease-in-out infinite;
+}
+
 .it-back {
   position: absolute;
   inset: 0;
@@ -109,9 +121,6 @@ body {
   object-fit: cover;
   border-radius: 22%;
   background-color: #4a1f7a;
-  background-image: linear-gradient(135deg, #ff8a1a 12%, #4a1f7a 88%);
-  transform-origin: center;
-  animation: it-button-pulse 1.25s ease-in-out infinite;
 }
 
 .it-link.is-lure::before {
@@ -140,7 +149,7 @@ body {
     wa-border-flow 6s linear infinite;
 }
 
-.it-link.is-lure .it-face {
+.it-link.is-lure .it-plate {
   animation: it-button-pulse-lure 1.1s ease-in-out infinite;
 }
 
@@ -281,7 +290,7 @@ body.is-opening .hero {
   animation: none;
 }
 
-.it-link.is-opening .it-face {
+.it-link.is-opening .it-plate {
   animation: none;
   transform: scale(1.4);
   opacity: 0;
@@ -1616,8 +1625,8 @@ html.from-it .foot {
   .steps::before,
   .brief-vibe,
   .it-link.is-lure::before,
-  .it-link.is-lure .it-face,
-  .it-link.is-opening .it-face,
+  .it-link.is-lure .it-plate,
+  .it-link.is-opening .it-plate,
   html.from-it .arrive,
   html.from-it .topbar,
   html.from-it main,
@@ -1637,7 +1646,7 @@ html.from-it .foot {
     --wa-spin: 120deg;
   }
 
-  .it-link.is-lure .it-face {
+  .it-link.is-lure .it-plate {
     animation: it-button-pulse 1.25s ease-in-out infinite;
   }
 
