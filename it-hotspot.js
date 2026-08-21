@@ -10,8 +10,13 @@
     portrait: { x: 0.593, y: 0.506, w: 0.12, h: 0.08 },
   };
 
+  const IDLE_MS = 9000;
   let lureTimer = 0;
   let goTimer = 0;
+  let idleTimer = 0;
+  let idleOn = false;
+  let idleRemain = IDLE_MS;
+  let idleTick = 0;
 
   function place() {
     const portrait = window.matchMedia("(orientation: portrait)").matches;
@@ -41,6 +46,10 @@
     document.body.style.removeProperty("--it-x");
     document.body.style.removeProperty("--it-y");
     document.body.style.removeProperty("--it-r");
+    if (goTimer) {
+      window.clearTimeout(goTimer);
+      goTimer = 0;
+    }
   }
 
   function startLure() {
@@ -55,9 +64,36 @@
     }, 4000);
   }
 
+  function stopIdle() {
+    idleOn = false;
+    if (idleTimer) {
+      window.clearTimeout(idleTimer);
+      idleTimer = 0;
+    }
+  }
+
+  function armIdle() {
+    if (!idleOn || document.hidden) return;
+    idleTick = Date.now();
+    idleTimer = window.setTimeout(function () {
+      idleTimer = 0;
+      idleOn = false;
+      if (document.body.classList.contains("is-opening")) return;
+      link.click();
+    }, idleRemain);
+  }
+
+  function startIdle() {
+    stopIdle();
+    idleOn = true;
+    idleRemain = IDLE_MS;
+    armIdle();
+  }
+
   function restoreSplash() {
     resetOpening();
     startLure();
+    startIdle();
     place();
   }
 
@@ -72,9 +108,23 @@
   window.addEventListener("pagehide", resetOpening);
   window.addEventListener("pageshow", restoreSplash);
   window.addEventListener("popstate", restoreSplash);
+  document.addEventListener("visibilitychange", function () {
+    if (!idleOn) return;
+    if (document.hidden) {
+      if (idleTimer) {
+        idleRemain = Math.max(0, idleRemain - (Date.now() - idleTick));
+        window.clearTimeout(idleTimer);
+        idleTimer = 0;
+      }
+    } else {
+      armIdle();
+    }
+  });
   startLure();
+  startIdle();
 
   link.addEventListener("click", function (event) {
+    stopIdle();
     if (
       event.metaKey ||
       event.ctrlKey ||
