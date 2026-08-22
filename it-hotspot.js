@@ -21,8 +21,8 @@
   function place() {
     const portrait = window.matchMedia("(orientation: portrait)").matches;
     const spot = portrait ? spots.portrait : spots.landscape;
-    const nw = img.naturalWidth || 1536;
-    const nh = img.naturalHeight || 1024;
+    const nw = img.naturalWidth || (portrait ? 1024 : 1536);
+    const nh = img.naturalHeight || (portrait ? 1536 : 1024);
     const rw = img.clientWidth;
     const rh = img.clientHeight;
     const scale = Math.max(rw / nw, rh / nh);
@@ -100,7 +100,7 @@
   img.addEventListener("load", place);
   img.addEventListener("error", place);
   window.addEventListener("resize", place);
-  if (img.complete) place();
+  place();
 
   // pagehide clears the portal before bfcache freezes this document,
   // so Back cannot restore a mid-open splash. pageshow / popstate

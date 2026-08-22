@@ -52,7 +52,14 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=seo-text1" />
+    <link
+      rel="preload"
+      as="image"
+      href="assets/it-button.webp?v=it-soon1"
+      type="image/webp"
+      fetchpriority="high"
+    />
+    <link rel="stylesheet" href="styles.css?v=it-soon1" />
   </head>
   <body class="splash">
     <main class="page">
@@ -76,13 +83,17 @@
       </picture>
 
       <a class="it-link" href="services.html" aria-label="Open VibeIt-Intel packages">
-        <img
-          class="it-face"
-          src="assets/it-button.png?v=it-keep-face"
-          alt="It"
-          width="1024"
-          height="1024"
-        />
+        <picture>
+          <source type="image/webp" srcset="assets/it-button.webp?v=it-soon1" />
+          <img
+            class="it-face"
+            src="assets/it-button.png?v=it-soon1"
+            alt="It"
+            width="640"
+            height="640"
+            fetchpriority="high"
+          />
+        </picture>
       </a>
 
       <h1 class="sr-only">VibeIt-Intel</h1>
@@ -95,6 +106,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=idle-5s"></script>
+    <script src="it-hotspot.js?v=it-soon1"></script>
   </body>
 </html>
