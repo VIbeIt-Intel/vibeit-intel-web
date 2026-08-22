@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /favicon.ico
+Allow: /assets/favicon-48.png
+Allow: /assets/favicon-192.png
+Allow: /assets/apple-touch-icon.png
 
 Sitemap: https://vibeit-intel.net/sitemap.xml
