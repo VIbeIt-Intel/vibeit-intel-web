@@ -49,20 +49,22 @@ body {
   border: 0;
 }
 
-.splash,
-.splash html {
+html:has(body.splash) {
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+body.splash {
   height: 100%;
   overflow: hidden;
 }
 
-.splash {
-  height: 100%;
-}
-
 .page {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
+  height: 100svh;
   height: 100dvh;
 }
 
@@ -158,16 +160,19 @@ body {
 
 .overlay {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 1.4rem;
+  left: 50%;
+  bottom: max(0.9rem, calc(env(safe-area-inset-bottom, 0px) + 0.55rem));
   z-index: 2;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0 1rem;
+  justify-content: center;
+  width: min(
+    calc(100% - 1.4rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)),
+    44rem
+  );
+  padding: 0;
+  pointer-events: none;
   text-align: center;
+  transform: translateX(-50%);
 }
 
 .status {
@@ -195,11 +200,31 @@ body {
 }
 
 .note {
-  max-width: 26rem;
-  color: color-mix(in srgb, var(--charcoal) 78%, white);
-  font-size: 0.92rem;
+  max-width: none;
+  padding: 0.42rem 0.95rem;
+  border-radius: 999px;
+  background: rgb(22 12 34 / 58%);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 16%),
+    0 0 0 2px color-mix(in srgb, var(--teal) 30%, transparent);
+  color: #f6f1fb;
+  font-size: clamp(0.7rem, 2.15vw, 0.92rem);
   font-weight: 500;
-  text-shadow: 0 1px 8px rgb(255 255 255 / 70%);
+  letter-spacing: 0.012em;
+  line-height: 1.35;
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
+}
+
+@media (max-height: 430px) {
+  .overlay {
+    bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .note {
+    padding: 0.28rem 0.75rem;
+    font-size: clamp(0.64rem, 2vw, 0.8rem);
+  }
 }
 
 @keyframes it-button-pulse {
