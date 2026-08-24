@@ -1,0 +1,4 @@
+SESSION_SECRET=change-me-to-a-long-random-string
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+ADMIN_PASSWORD=

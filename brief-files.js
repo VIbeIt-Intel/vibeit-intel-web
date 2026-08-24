@@ -121,5 +121,26 @@
   global.VibeBriefFiles = {
     setFiles: setFiles,
     bind: bind,
+    storeBrief: function (formEl) {
+      const endpoint =
+        (formEl && formEl.getAttribute("data-store")) ||
+        "https://vibeit-admin.vibeit-intel.workers.dev/api/briefs";
+      const data = new FormData(formEl);
+      const ctrl = new AbortController();
+      const timer = setTimeout(function () {
+        ctrl.abort();
+      }, 20000);
+      return fetch(endpoint, {
+        method: "POST",
+        body: data,
+        signal: ctrl.signal,
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("store failed");
+        })
+        .finally(function () {
+          clearTimeout(timer);
+        });
+    },
   };
 })(window);

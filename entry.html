@@ -105,6 +105,7 @@
         action="https://formsubmit.co/support@vibeit-intel.net"
         method="POST"
         enctype="multipart/form-data"
+        data-store="https://vibeit-admin.vibeit-intel.workers.dev/api/briefs"
       >
         <input type="hidden" name="_subject" value="VibeIt brief — Entry" />
         <input type="hidden" name="_template" value="basic" />
@@ -279,7 +280,7 @@
         </p>
         </form>
     </main>
-    <script src="brief-files.js?v=files1"></script>
+    <script src="brief-files.js?v=files2"></script>
     <script>
       (function () {
         const MAX_EXTRA = 10;
@@ -572,6 +573,12 @@
               replyTo.value = val("email");
               fillReadableBrief(attached);
               keepOnlyMailFields();
+              submit.textContent = "Sending…";
+              return VibeBriefFiles.storeBrief(form).catch(function () {
+                return null;
+              });
+            })
+            .then(function () {
               nativeSend = true;
               form.submit();
             })

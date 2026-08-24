@@ -1,0 +1,28 @@
+name = "vibeit-admin"
+main = "src/worker.js"
+compatibility_date = "2026-08-24"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Replace database_id after: npx wrangler d1 create vibeit-briefs
+[[d1_databases]]
+binding = "DB"
+database_name = "vibeit-briefs"
+database_id = "e3e2b931-8f97-440f-9563-a2ae5b9374f6"
+
+[[kv_namespaces]]
+binding = "FILES"
+id = "bd5f61cc63294ebf884d66350b6935ee"
+
+[vars]
+ALLOWED_EMAILS = "support@vibeit-intel.net"
+ALLOWED_ORIGINS = "https://vibeit-intel.net,https://www.vibeit-intel.net,https://vibeit-admin.vibeit-intel.workers.dev,http://127.0.0.1:8787,http://localhost:8787"
+
+# Optional once the zone is on Cloudflare:
+# [[routes]]
+# pattern = "admin.vibeit-intel.net/*"
+# zone_name = "vibeit-intel.net"

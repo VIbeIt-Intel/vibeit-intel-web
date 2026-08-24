@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeIt requests</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="https://vibeit-intel.net/favicon.ico" sizes="any" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body>
+    <div class="vibe" aria-hidden="true">
+      <span class="blob teal"></span>
+      <span class="blob orange"></span>
+      <span class="blob purple"></span>
+    </div>
+
+    <div id="login" class="screen hidden">
+      <header class="top">
+        <img src="https://vibeit-intel.net/assets/v-it-mark.png" alt="" width="72" height="68" />
+        <p>VibeIt-Intel</p>
+      </header>
+      <main class="card">
+        <p class="kicker">Admin</p>
+        <h1>Requests</h1>
+        <p class="lead">Sign in to see new briefs, files, and job status. Client emails still go to support@vibeit-intel.net.</p>
+        <p id="login-msg" class="note hidden"></p>
+        <a id="google" class="btn btn-hot hidden" href="/auth/login">Sign in with Google</a>
+        <form id="password-form" class="hidden">
+          <label>
+            Email
+            <input name="email" type="email" value="support@vibeit-intel.net" autocomplete="username" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn btn-hot" type="submit">Sign in</button>
+        </form>
+        <p id="setup" class="note hidden">
+          Login is not live yet. Add <code>SESSION_SECRET</code> and either Google or
+          <code>ADMIN_PASSWORD</code> in Cloudflare, then refresh.
+        </p>
+      </main>
+    </div>
+
+    <div id="app" class="screen hidden">
+      <header class="bar">
+        <div class="brand">
+          <img src="https://vibeit-intel.net/assets/v-it-mark.png" alt="" width="46" height="43" />
+          <div>
+            <p class="kicker">Admin</p>
+            <p>Requests</p>
+          </div>
+        </div>
+        <div class="who">
+          <span id="who"></span>
+          <button id="out" class="btn btn-ghost" type="button">Sign out</button>
+        </div>
+      </header>
+      <nav class="filters" aria-label="Status">
+        <button type="button" data-status="" class="chip on">All</button>
+        <button type="button" data-status="new" class="chip">New</button>
+        <button type="button" data-status="in_progress" class="chip">In progress</button>
+        <button type="button" data-status="done" class="chip">Done</button>
+      </nav>
+      <p id="empty" class="note hidden">No requests yet. New briefs will land here and still email you.</p>
+      <ul id="list" class="list"></ul>
+    </div>
+
+    <div id="detail" class="screen hidden">
+      <header class="bar">
+        <button id="back" class="btn btn-ghost" type="button">Back</button>
+        <div class="who">
+          <span id="d-status"></span>
+        </div>
+      </header>
+      <article class="card detail">
+        <p class="kicker" id="d-package"></p>
+        <h1 id="d-name"></h1>
+        <p class="meta" id="d-meta"></p>
+        <div class="status-row">
+          <button type="button" class="chip" data-set="new">New</button>
+          <button type="button" class="chip" data-set="in_progress">In progress</button>
+          <button type="button" class="chip" data-set="done">Done</button>
+        </div>
+        <p class="contact" id="d-contact"></p>
+        <pre id="d-brief" class="brief"></pre>
+        <div id="d-files" class="files"></div>
+      </article>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>
