@@ -107,7 +107,7 @@
         enctype="multipart/form-data"
       >
         <input type="hidden" name="_subject" value="VibeIt brief — Entry" />
-        <input type="hidden" name="_template" value="box" />
+        <input type="hidden" name="_template" value="basic" />
         <input type="hidden" name="_captcha" value="false" />
         <input
           type="hidden"
@@ -122,7 +122,7 @@
         />
         <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <textarea
-          name="Readable brief"
+          name="Brief"
           id="readable-brief"
           class="brief-honey"
           tabindex="-1"
@@ -293,6 +293,8 @@
         const replyTo = document.getElementById("brief-replyto");
         const logoInput = document.getElementById("logo-file");
         const vibeInput = document.getElementById("vibe-file");
+        const subjectEl = form.querySelector('input[name="_subject"]');
+        const subjectBase = subjectEl ? subjectEl.value : "VibeIt brief — Entry";
         let nativeSend = false;
 
         function sync() {
@@ -400,77 +402,79 @@
           lines.push(label + ": " + value);
         }
 
+        function section(lines, title, bodyFn) {
+          const start = lines.length;
+          bodyFn();
+          if (lines.length === start) return;
+          lines.splice(start, 0, title);
+          lines.push("");
+        }
+
         function fillReadableBrief(attached) {
           const lines = [];
-          const subject = form.querySelector('input[name="_subject"]');
-          lines.push(subject ? subject.value : "VibeIt brief — Entry");
-          add(lines, "Package", val("Package"));
+          const business = val("Business name") || "New client";
+          lines.push(business);
+          lines.push(val("Package") || subjectBase);
           lines.push("");
-          add(lines, "Business", val("Business name"));
-          add(lines, "Registration", val("Registration number"));
-          add(lines, "Address", val("Business address"));
-          lines.push("");
-          add(lines, "Phone", val("Phone"));
-          add(lines, "WhatsApp", val("WhatsApp"));
-          add(lines, "Email", val("email"));
-          lines.push("");
-          add(lines, "Domain", val("Domain"));
-          add(lines, "Domain name", val("Domain name"));
-          lines.push("");
-          const colours = [val("Colour 1"), val("Colour 2"), val("Colour 3")].filter(Boolean);
-          if (colours.length) lines.push("Colours: " + colours.join(" "));
+
+          section(lines, "CONTACT", function () {
+            add(lines, "Name", business);
+            add(lines, "Registration", val("Registration number"));
+            add(lines, "Address", val("Business address"));
+            add(lines, "Phone", val("Phone"));
+            add(lines, "WhatsApp", val("WhatsApp"));
+            add(lines, "Email", val("email"));
+          });
+
+          section(lines, "WEBSITE", function () {
+            add(lines, "Domain", val("Domain"));
+            add(lines, "Domain name", val("Domain name"));
+            const colours = [val("Colour 1"), val("Colour 2"), val("Colour 3")].filter(Boolean);
+            if (colours.length) add(lines, "Colours", colours.join("   "));
+          });
+
           const desc = val("Business description");
           if (desc) {
-            lines.push("");
-            lines.push("What they do");
+            lines.push("WHAT THEY DO");
             lines.push(desc);
+            lines.push("");
           }
           const products = val("Products or services");
           if (products) {
-            lines.push("");
-            lines.push("Products or services");
+            lines.push("PRODUCTS OR SERVICES");
             lines.push(products);
+            lines.push("");
           }
           const notes = val("Notes");
           if (notes) {
-            lines.push("");
-            lines.push("Notes");
+            lines.push("NOTES");
             lines.push(notes);
-          }
-          if (attached.length) {
             lines.push("");
-            lines.push(
-              "Files attached: " +
-                attached
-                  .map(function (item) {
-                    return item.file.name;
-                  })
-                  .join(", ")
-            );
+          }
+
+          lines.push("FILES (" + attached.length + ")");
+          if (!attached.length) {
+            lines.push("None attached");
+          } else {
             attached.forEach(function (item) {
-              if (item.url) add(lines, item.label, item.url);
+              lines.push("• " + item.label + " — " + item.file.name);
             });
           }
+
           briefBox.value = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
         }
 
-        function disableEmptyOptional() {
-          Array.prototype.forEach.call(form.querySelectorAll("input, textarea"), function (el) {
-            if (el.disabled || el.required) return;
-            if (el.name === "_honey") {
-              if (!String(el.value || "").trim()) el.disabled = true;
+        function keepOnlyMailFields() {
+          Array.prototype.forEach.call(form.querySelectorAll("input, textarea, select"), function (el) {
+            const name = el.name || "";
+            if (name.charAt(0) === "_") {
+              if (name === "_honey" && !String(el.value || "").trim()) el.disabled = true;
               return;
             }
-            if (el.type === "hidden" || el.type === "radio" || el.type === "checkbox") return;
-            if (el.type === "color") return;
-            if (el.name.charAt(0) === "_") return;
             if (el.id === "readable-brief") return;
+            if (name === "email") return;
             if (el.getAttribute("data-brief-attachment")) return;
-            if (el.type === "file") {
-              if (!el.files || !el.files.length) el.disabled = true;
-              return;
-            }
-            if (!String(el.value || "").trim()) el.disabled = true;
+            el.disabled = true;
           });
         }
 
@@ -480,57 +484,16 @@
           });
         }
 
-        function addAttachment(file) {
+        function addAttachment(file, fieldName) {
           const inputEl = document.createElement("input");
           inputEl.type = "file";
-          inputEl.name = "attachment";
+          inputEl.name = fieldName;
           inputEl.setAttribute("data-brief-attachment", "1");
           inputEl.className = "brief-honey";
           inputEl.tabIndex = -1;
           inputEl.setAttribute("aria-hidden", "true");
           setFiles(inputEl, [file]);
           form.appendChild(inputEl);
-        }
-
-        function publicImageUrl(file) {
-          const data = new FormData();
-          data.append("reqtype", "fileupload");
-          data.append("fileToUpload", file);
-          const upload = fetch("https://catbox.moe/user/api.php", {
-            method: "POST",
-            body: data,
-          }).then(function (res) {
-            if (!res.ok) throw new Error("upload failed");
-            return res.text();
-          }).then(function (text) {
-            const url = String(text || "").trim();
-            if (!/^https:\/\/[^\s]+$/i.test(url)) throw new Error("bad url");
-            return url;
-          });
-          return Promise.race([
-            upload,
-            new Promise(function (_, reject) {
-              setTimeout(function () {
-                reject(new Error("timeout"));
-              }, 8000);
-            }),
-          ]);
-        }
-
-        function tryPublicLinks(attached) {
-          return Promise.all(
-            attached.map(function (item) {
-              return publicImageUrl(item.file)
-                .then(function (url) {
-                  item.url = url;
-                  return item;
-                })
-                .catch(function () {
-                  item.url = "";
-                  return item;
-                });
-            })
-          );
         }
 
         extra.addEventListener("change", function () {
@@ -594,26 +557,32 @@
               const attached = packed.map(function (item) {
                 let file = item.file;
                 let label = "File";
+                let fieldName = "File";
                 if (item.kind === "logo") {
                   file = namedFile(item.file, "logo");
                   label = "Logo";
+                  fieldName = "Logo";
                 } else if (item.kind === "vibe") {
                   file = namedFile(item.file, "vibe-photo");
                   label = "Vibe photo";
+                  fieldName = "Vibe photo";
                 } else {
-                  file = namedFile(item.file, "extra-photo-" + (item.index + 1));
-                  label = "Extra photo " + (item.index + 1);
+                  const n = item.index + 1;
+                  file = namedFile(item.file, "extra-photo-" + n);
+                  label = "Extra photo " + n;
+                  fieldName = "Extra photo " + n;
                 }
-                addAttachment(file);
-                return { kind: item.kind, label: label, file: file, url: "" };
+                addAttachment(file, fieldName);
+                return { kind: item.kind, label: label, file: file };
               });
 
-              return tryPublicLinks(attached);
-            })
-            .then(function (attached) {
+              if (subjectEl) {
+                const business = val("Business name");
+                subjectEl.value = business ? subjectBase + " — " + business : subjectBase;
+              }
               replyTo.value = val("email");
-              fillReadableBrief(attached || []);
-              disableEmptyOptional();
+              fillReadableBrief(attached);
+              keepOnlyMailFields();
               nativeSend = true;
               form.submit();
             })
@@ -621,6 +590,9 @@
               extra.disabled = false;
               logoInput.disabled = false;
               vibeInput.disabled = false;
+              Array.prototype.forEach.call(form.querySelectorAll("input, textarea, select"), function (el) {
+                el.disabled = false;
+              });
               clearAttachments();
               submit.disabled = false;
               submit.innerHTML = submitLabel;
