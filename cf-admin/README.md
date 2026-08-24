@@ -59,3 +59,14 @@ npx wrangler dev
 ```
 
 Open http://127.0.0.1:8787
+
+## 5. Start website (Cursor)
+
+The request page creates a GitHub repo and launches a Cursor cloud agent with the brief and logos already attached.
+
+Create a Cursor API key. Create a GitHub token that can make repos in `VIbeIt-Intel`, and install the Cursor GitHub app on that org (all repositories).
+
+```bash
+npx wrangler secret put CURSOR_API_KEY
+npx wrangler secret put GITHUB_TOKEN
+```

@@ -1,0 +1,194 @@
+:root {
+  --c1: __C1__;
+  --c2: __C2__;
+  --c3: __C3__;
+  --ink: #161018;
+  --paper: #f6f1ea;
+  --muted: rgb(22 16 24 / 68%);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: Outfit, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.5;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: var(--c1);
+  text-decoration: none;
+}
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.1rem;
+  background: rgb(246 241 234 / 92%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgb(22 16 24 / 8%);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.brand img {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.top nav {
+  display: none;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.top nav a {
+  color: var(--muted);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.05rem;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--c1);
+  font-weight: 700;
+}
+
+main {
+  width: min(980px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.4rem 0 3rem;
+}
+
+section {
+  padding: 2.2rem 0;
+  border-top: 1px solid rgb(22 16 24 / 8%);
+}
+
+.hero {
+  border-top: 0;
+  padding-top: 1.4rem;
+}
+
+.eyebrow {
+  color: var(--c2);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin-top: 0.35rem;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+h2 {
+  margin-bottom: 0.8rem;
+  font-size: 1.35rem;
+}
+
+.lede,
+#about p,
+#contact p,
+.hours {
+  max-width: 38rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.hero .cta {
+  margin-top: 1.1rem;
+}
+
+.cards {
+  display: grid;
+  gap: 0.8rem;
+  list-style: none;
+}
+
+.cards li {
+  padding: 1rem 1.05rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 1px 0 rgb(22 16 24 / 6%);
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.65rem;
+}
+
+.gallery img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  background: #fff;
+}
+
+.pack-entry .bookings,
+.pack-entry nav a[href="#bookings"] {
+  display: none;
+}
+
+footer {
+  padding: 1.4rem 1.1rem 5rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.wa {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  color: #fff;
+  background: #128c7e;
+  font-weight: 700;
+}
+
+@media (min-width: 800px) {
+  .top nav {
+    display: flex;
+  }
+
+  .cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

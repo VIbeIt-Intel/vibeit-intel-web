@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin.css" />
+    <link rel="stylesheet" href="/admin.css?v=5" />
   </head>
   <body>
     <div class="vibe" aria-hidden="true">
@@ -74,28 +74,99 @@
       <ul id="list" class="list"></ul>
     </div>
 
-    <div id="detail" class="screen hidden">
+    <div id="detail" class="screen screen-wide hidden">
       <header class="bar">
         <button id="back" class="btn btn-ghost" type="button">Back</button>
         <div class="who">
           <span id="d-status"></span>
         </div>
       </header>
-      <article class="card detail">
-        <p class="kicker" id="d-package"></p>
-        <h1 id="d-name"></h1>
-        <p class="meta" id="d-meta"></p>
-        <div class="status-row">
-          <button type="button" class="chip" data-set="new">New</button>
-          <button type="button" class="chip" data-set="in_progress">In progress</button>
-          <button type="button" class="chip" data-set="done">Done</button>
+      <article class="dossier">
+        <header class="dossier-head">
+          <p class="kicker" id="d-package"></p>
+          <h1 id="d-name"></h1>
+          <p class="meta" id="d-meta"></p>
+          <p class="facts" id="d-facts"></p>
+          <div class="status-row">
+            <button type="button" class="chip" data-set="new">New</button>
+            <button type="button" class="chip" data-set="in_progress">In progress</button>
+            <button type="button" class="chip" data-set="done">Done</button>
+          </div>
+          <div class="quick-links" id="d-links"></div>
+          <div class="palette" id="d-palette" hidden></div>
+          <div class="build-row">
+            <select id="d-type" aria-label="Business type">
+              <option value="">Business type</option>
+              <option>Hair or beauty salon</option>
+              <option>Nail salon</option>
+              <option>Barber</option>
+              <option>Mechanic or panel beater</option>
+              <option>Plumber, electrician or other trade</option>
+              <option>Restaurant, cafe or takeaway</option>
+              <option>Medical, dental or physio</option>
+              <option>Gym or fitness</option>
+              <option>Retail shop</option>
+              <option>Professional services</option>
+              <option>Cleaning or home services</option>
+              <option>Events or photography</option>
+              <option>Other</option>
+            </select>
+            <select id="d-action" aria-label="Customer action">
+              <option value="">Customer action</option>
+              <option>Call</option>
+              <option>WhatsApp</option>
+              <option>Book</option>
+              <option>Get a quote</option>
+              <option>Buy</option>
+            </select>
+            <button id="d-build" class="btn btn-hot" type="button">Start website</button>
+            <a id="d-cursor-link" class="btn btn-ghost hidden" target="_blank" rel="noopener">Open in Cursor</a>
+          </div>
+          <p id="d-build-msg" class="note hidden"></p>
+        </header>
+        <div class="dossier-grid">
+          <section class="panel" id="d-contact-panel" hidden>
+            <h2>Contact</h2>
+            <dl id="d-contact-fields"></dl>
+          </section>
+          <section class="panel" id="d-web-panel" hidden>
+            <h2>Website</h2>
+            <dl id="d-web-fields"></dl>
+          </section>
         </div>
-        <p class="contact" id="d-contact"></p>
-        <pre id="d-brief" class="brief"></pre>
-        <div id="d-files" class="files"></div>
+        <div class="dossier-grid">
+          <section class="panel" id="d-do-panel" hidden>
+            <h2>What they do</h2>
+            <p id="d-do" class="copy"></p>
+          </section>
+          <section class="panel" id="d-products-panel" hidden>
+            <h2>Products or services</h2>
+            <p id="d-products" class="copy"></p>
+          </section>
+        </div>
+        <section class="panel" id="d-book-panel" hidden>
+          <h2>Bookings</h2>
+          <p id="d-book" class="copy"></p>
+        </section>
+        <section class="panel" id="d-hours-panel" hidden>
+          <h2>Hours</h2>
+          <p id="d-hours" class="copy"></p>
+        </section>
+        <section class="panel" id="d-admin-panel" hidden>
+          <h2>Admin and payments</h2>
+          <dl id="d-admin-fields"></dl>
+        </section>
+        <section class="panel" id="d-notes-panel" hidden>
+          <h2>Notes</h2>
+          <p id="d-notes" class="copy"></p>
+        </section>
+        <section class="panel">
+          <h2 id="d-files-title">Files</h2>
+          <div id="d-files" class="files"></div>
+        </section>
       </article>
     </div>
 
-    <script src="/admin.js"></script>
+    <script src="/admin.js?v=5"></script>
   </body>
 </html>

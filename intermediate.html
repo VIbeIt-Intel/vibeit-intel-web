@@ -54,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool20" />
+    <link rel="stylesheet" href="styles.css?v=cool21" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -238,6 +238,52 @@
 
         <div class="brief-block">
           <p class="brief-kicker">5. What you do</p>
+          <label class="brief-field">
+            What kind of business is this?
+            <select name="Business type" required>
+              <option value="" disabled selected>Choose one</option>
+              <option>Hair or beauty salon</option>
+              <option>Nail salon</option>
+              <option>Barber</option>
+              <option>Mechanic or panel beater</option>
+              <option>Plumber, electrician or other trade</option>
+              <option>Restaurant, cafe or takeaway</option>
+              <option>Medical, dental or physio</option>
+              <option>Gym or fitness</option>
+              <option>Retail shop</option>
+              <option>Professional services</option>
+              <option>Cleaning or home services</option>
+              <option>Events or photography</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="brief-field" id="business-type-other-wrap" hidden>
+            Tell us what you do
+            <input type="text" name="Business type other" autocomplete="off" />
+          </label>
+          <p class="brief-help">What should a customer do on the site?</p>
+          <div class="brief-choices brief-actions">
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Call" />
+              Call
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="WhatsApp" />
+              WhatsApp
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Book" required checked />
+              Book
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Get a quote" />
+              Get a quote
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Buy" />
+              Buy
+            </label>
+          </div>
           <label class="brief-field">
             Description of your business
             <textarea
@@ -465,6 +511,16 @@
           radio.addEventListener("change", sync);
         });
 
+        const typeSelect = form.querySelector('select[name="Business type"]');
+        const typeOtherWrap = document.getElementById("business-type-other-wrap");
+        const typeOtherInput = typeOtherWrap && typeOtherWrap.querySelector("input");
+        function syncTypeOther() {
+          const other = Boolean(typeSelect && typeSelect.value === "Other");
+          if (typeOtherWrap) typeOtherWrap.hidden = !other;
+          if (typeOtherInput) typeOtherInput.required = other;
+        }
+        if (typeSelect) typeSelect.addEventListener("change", syncTypeOther);
+
         function syncGoogle() {
           const picked = document.querySelector('input[name="Google profile"]:checked');
           googleWrap.hidden = !picked || picked.value !== "I already have a Google Business profile";
@@ -579,6 +635,16 @@
           lines.push(val("Package") || subjectBase);
           add(lines, "Revisions", val("Revision rounds"));
           lines.push("");
+
+          section(lines, "BUSINESS", function () {
+            const type = val("Business type");
+            add(
+              lines,
+              "Type",
+              type === "Other" ? val("Business type other") || "Other" : type
+            );
+            add(lines, "Customer action", val("Customer action"));
+          });
 
           section(lines, "CONTACT", function () {
             add(lines, "Name", business);

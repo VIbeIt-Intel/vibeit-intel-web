@@ -1321,6 +1321,12 @@ html.from-it .foot {
   gap: 0.55rem;
 }
 
+@media (min-width: 640px) {
+  .brief-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .brief-choice {
   display: flex;
   align-items: center;
@@ -1360,7 +1366,8 @@ html.from-it .foot {
 }
 
 .brief-field input,
-.brief-field textarea {
+.brief-field textarea,
+.brief-field select {
   width: 100%;
   padding: 0.75rem 0.85rem;
   border: 1px solid rgb(255 255 255 / 14%);
@@ -1377,7 +1384,8 @@ html.from-it .foot {
 }
 
 .brief-field input:focus,
-.brief-field textarea:focus {
+.brief-field textarea:focus,
+.brief-field select:focus {
   outline: 2px solid var(--teal);
   outline-offset: 2px;
 }

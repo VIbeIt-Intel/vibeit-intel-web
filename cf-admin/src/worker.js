@@ -1,3 +1,5 @@
+import { STARTER_FILES } from "./starterFiles.js";
+
 const COOKIE = "vibeit_admin";
 const WEEK = 60 * 60 * 24 * 7;
 const encoder = new TextEncoder();
@@ -43,6 +45,9 @@ async function handle(request, env, url) {
   const fileMatch = path.match(/^\/api\/briefs\/([^/]+)\/file\/(\d+)$/);
   if (fileMatch && method === "GET") return getFile(request, env, fileMatch[1], Number(fileMatch[2]));
 
+  const buildMatch = path.match(/^\/api\/briefs\/([^/]+)\/build$/);
+  if (buildMatch && method === "POST") return startBuild(request, env, buildMatch[1]);
+
   return json({ error: "Not found" }, 404);
 }
 
@@ -56,7 +61,13 @@ function authOptions(env) {
 async function me(request, env) {
   const email = await currentUser(request, env);
   if (!email) return json({ email: null }, 200);
-  return json({ email });
+  return json({
+    email,
+    build: {
+      cursor: Boolean(env.CURSOR_API_KEY),
+      github: Boolean(env.GITHUB_TOKEN),
+    },
+  });
 }
 
 async function startGoogle(request, env, url) {
@@ -245,6 +256,413 @@ async function getFile(request, env, id, index) {
   return new Response(object, { headers });
 }
 
+async function startBuild(request, env, id) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  if (!env.CURSOR_API_KEY) {
+    return json(
+      {
+        error:
+          "Add CURSOR_API_KEY in Cloudflare (Workers → vibeit-admin → Settings → Variables) so builds run on your Cursor account.",
+      },
+      501
+    );
+  }
+  if (!env.GITHUB_TOKEN) {
+    return json(
+      { error: "Add GITHUB_TOKEN in Cloudflare so we can create the client repo before Cursor builds." },
+      501
+    );
+  }
+
+  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return json({ error: "Not found" }, 404);
+  if (row.cursor_url) {
+    return json({
+      ok: true,
+      repoUrl: row.github_repo || "",
+      cursorUrl: row.cursor_url,
+      agentId: row.cursor_agent_id || "",
+    });
+  }
+
+  const body = await request.json().catch(function () {
+    return {};
+  });
+  const type = String(body.type || "").trim();
+  const action = String(body.action || "").trim();
+  if (!type || !action) return json({ error: "Pick a business type and customer action" }, 400);
+
+  const businessName = String(row.business_name || "client").trim();
+  let repoUrl = String(row.github_repo || "").trim();
+  if (!repoUrl) {
+    try {
+      repoUrl = await createGithubRepo(env, slugify(businessName), "VibeIt site for " + businessName);
+      await sleep(1200);
+      await seedClientRepo(env, repoUrl, row, type, action);
+    } catch (err) {
+      return json({ error: err.message || "Could not create the client repo" }, 502);
+    }
+  }
+
+  const images = await collectPromptImages(env, parseFiles(row.files));
+  const promptText = buildSitePrompt(row, type, action, repoUrl);
+  const agentRes = await fetch("https://api.cursor.com/v1/agents", {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + btoa(String(env.CURSOR_API_KEY) + ":"),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: ("VibeIt — " + businessName).slice(0, 100),
+      prompt: { text: promptText, images: images },
+      model: { id: "composer-2.5" },
+      repos: [{ url: repoUrl, startingRef: "main" }],
+      autoCreatePR: true,
+      skipReviewerRequest: true,
+    }),
+  });
+  const agentBody = await agentRes.json().catch(function () {
+    return {};
+  });
+  const agent = agentBody.agent || agentBody;
+  const cursorUrl = agent.url || "";
+  const agentId = agent.id || "";
+  if (!agentRes.ok || !cursorUrl) {
+    await saveBuild(env, id, repoUrl, "", "");
+    return json(
+      {
+        error:
+          (agentBody.error && agentBody.error.message) ||
+          agentBody.message ||
+          "Cursor did not start the agent. Check the API key and that the GitHub app can see this org.",
+        repoUrl: repoUrl,
+      },
+      502
+    );
+  }
+
+  await saveBuild(env, id, repoUrl, agentId, cursorUrl);
+  return json({ ok: true, repoUrl: repoUrl, cursorUrl: cursorUrl, agentId: agentId });
+}
+
+function buildSitePrompt(row, type, action, repoUrl) {
+  const pkg = String(row.package || "Entry").trim();
+  const name = String(row.business_name || "this business").trim();
+  return [
+    "You are building a production website for VibeIt-Intel, a South African studio that ships SME sites.",
+    "The client brief, logos, and photos are already in this repo. Do not ask anyone to paste or drag files.",
+    "",
+    "Business: " + name,
+    "Kind of business: " + type,
+    "Primary customer action: " + action,
+    "Package: " + pkg,
+    "Repo: " + repoUrl,
+    "",
+    "Hard rules:",
+    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md and assets/. Customize that starter. Do not throw the layout away and start from a blank page.",
+    "- This is a " + type + ". Layout, copy, services, photos, and CTAs must fit that trade. A nail salon is not a mechanic workshop.",
+    "- The main button and contact path must drive this action: " + action + ".",
+    "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
+    "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
+    "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
+    "- Entry hides bookings. Intermediate keeps and fills the bookings section.",
+    "- If the brief copy is placeholder junk (dddd, test, asdf), do not invent a fake brand story. Use honest generic copy for that trade and leave a short TODO comment.",
+    "- Open a PR when the first draft is ready.",
+    "",
+    "CLIENT BRIEF:",
+    String(row.brief_text || "").trim(),
+  ].join("\n");
+}
+
+async function collectPromptImages(env, files) {
+  const images = [];
+  for (let i = 0; i < files.length && images.length < 5; i++) {
+    const file = files[i];
+    const type = String(file.type || "");
+    if (type.indexOf("image/") !== 0 || type === "image/svg+xml") continue;
+    if (!file.key) continue;
+    const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
+    if (!object || object.byteLength > 2 * 1024 * 1024) continue;
+    images.push({
+      data: bytesToBase64(object),
+      mimeType: type,
+    });
+  }
+  return images;
+}
+
+async function createGithubRepo(env, name, description) {
+  const org = String(env.GITHUB_ORG || "").trim();
+  const endpoint = org
+    ? "https://api.github.com/orgs/" + encodeURIComponent(org) + "/repos"
+    : "https://api.github.com/user/repos";
+  let lastError = "GitHub could not create the repo";
+  const names = [name, name + "-site", name + "-" + new Date().getFullYear()];
+  for (let i = 0; i < names.length; i++) {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + env.GITHUB_TOKEN,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "vibeit-admin",
+      },
+      body: JSON.stringify({
+        name: names[i],
+        description: String(description || "").slice(0, 350),
+        private: true,
+        auto_init: false,
+      }),
+    });
+    const body = await res.json().catch(function () {
+      return {};
+    });
+    if (res.ok) return body.html_url || body.clone_url;
+    lastError = body.message || lastError;
+    if (res.status !== 422) break;
+  }
+  throw new Error(lastError);
+}
+
+async function seedClientRepo(env, repoUrl, row, type, action) {
+  const parts = String(repoUrl).replace(/\.git$/, "").split("/");
+  const repo = parts.pop();
+  const owner = parts.pop();
+  if (!owner || !repo) throw new Error("Bad repo URL");
+
+  const briefText = String(row.brief_text || "").trim();
+  const name = String(row.business_name || fieldFromBrief(briefText, "Name") || "Our business").trim();
+  const phone = String(row.phone || fieldFromBrief(briefText, "Phone") || "").trim();
+  const email = String(row.email || fieldFromBrief(briefText, "Email") || "").trim();
+  const address = fieldFromBrief(briefText, "Address");
+  const whatsapp = fieldFromBrief(briefText, "WhatsApp") || phone;
+  const about = blockFromBrief(briefText, "WHAT THEY DO") || "Tell people who you serve and what you want them to do.";
+  const hours = blockFromBrief(briefText, "HOURS") || "Hours to be confirmed.";
+  const colours = coloursFromBrief(briefText);
+  const pack = /intermediate|booking/i.test(String(row.package || "")) ? "pack-intermediate" : "pack-entry";
+  const cta = ctaFromAction(action, phone, email, whatsapp);
+  const waHref = whatsappHref(whatsapp);
+  const files = parseFiles(row.files);
+  const uploaded = [];
+  let extraCount = 0;
+  let logoSrc = "";
+  const gallery = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (!file.key) continue;
+    const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
+    if (!object || !object.byteLength) continue;
+    const label = String(file.label || file.name || "file").toLowerCase();
+    const ext = extFromFile(file);
+    let dest = "assets/file-" + (i + 1) + ext;
+    if (label.indexOf("logo") !== -1 && !logoSrc) {
+      dest = "assets/logo" + ext;
+      logoSrc = dest;
+    } else if (label.indexOf("vibe") !== -1) {
+      dest = "assets/vibe" + ext;
+      gallery.push(dest);
+    } else {
+      extraCount += 1;
+      dest = "assets/extra-" + extraCount + ext;
+      gallery.push(dest);
+    }
+    uploaded.push({ path: dest, bytes: object, message: "Add " + dest });
+  }
+
+  const values = {
+    PACKAGE_CLASS: pack,
+    NAME: name,
+    TYPE: type,
+    TAGLINE: about.split(/\n/)[0].slice(0, 140) || name,
+    ABOUT: about,
+    ADDRESS: address || "South Africa",
+    PHONE: phone || "Phone on request",
+    PHONE_HREF: phone.replace(/\s+/g, "") || "",
+    EMAIL: email || "",
+    CTA_HREF: cta.href,
+    CTA_LABEL: cta.label,
+    HOURS: hours,
+    WHATSAPP_HREF: waHref || "#contact",
+    WA_HIDDEN: waHref ? "" : "hidden",
+    LOGO_SRC: logoSrc || "assets/logo.jpg",
+    GALLERY: gallery
+      .map(function (src) {
+        return '<img src="' + src + '" alt="" />';
+      })
+      .join("\n          ") || "<p>Photos to come.</p>",
+    C1: colours[0] || "#c70000",
+    C2: colours[1] || "#161018",
+    C3: colours[2] || "#f6f1ea",
+  };
+
+  const textFiles = {
+    "index.html": fillTokens(STARTER_FILES["index.html"], values),
+    "styles.css": fillTokens(STARTER_FILES["styles.css"], values),
+    "README.md": fillTokens(STARTER_FILES["README.md"], values),
+    "BRIEF.md": [
+      "# " + name,
+      "",
+      "Type: " + type,
+      "Customer action: " + action,
+      "Package: " + String(row.package || ""),
+      "",
+      briefText,
+    ].join("\n"),
+  };
+
+  const names = Object.keys(textFiles);
+  for (let i = 0; i < names.length; i++) {
+    await putGithubFile(env, owner, repo, names[i], utf8ToBase64(textFiles[names[i]]), "Seed " + names[i]);
+  }
+  for (let i = 0; i < uploaded.length; i++) {
+    await putGithubFile(
+      env,
+      owner,
+      repo,
+      uploaded[i].path,
+      bytesToBase64(uploaded[i].bytes),
+      uploaded[i].message
+    );
+  }
+}
+
+async function putGithubFile(env, owner, repo, path, content, message) {
+  const res = await fetch(
+    "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path,
+    {
+      method: "PUT",
+      headers: githubHeaders(env),
+      body: JSON.stringify({
+        message: message,
+        content: content,
+      }),
+    }
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(function () {
+      return {};
+    });
+    throw new Error(body.message || "Could not write " + path);
+  }
+}
+
+function githubHeaders(env) {
+  return {
+    Authorization: "Bearer " + env.GITHUB_TOKEN,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "vibeit-admin",
+  };
+}
+
+function fillTokens(text, values) {
+  return String(text || "").replace(/__([A-Z0-9_]+)__/g, function (_, key) {
+    return values[key] != null ? String(values[key]) : "";
+  });
+}
+
+function fieldFromBrief(text, label) {
+  const match = String(text || "").match(new RegExp("^" + label + ":\\s*(.+)$", "im"));
+  return match ? match[1].trim() : "";
+}
+
+function blockFromBrief(text, heading) {
+  const lines = String(text || "").split(/\r?\n/);
+  const start = lines.findIndex(function (line) {
+    return line.trim() === heading;
+  });
+  if (start < 0) return "";
+  const out = [];
+  for (let i = start + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) {
+      if (out.length) break;
+      continue;
+    }
+    if (/^[A-Z][A-Z0-9 ]+$/.test(line)) break;
+    out.push(line);
+  }
+  return out.join("\n").trim();
+}
+
+function coloursFromBrief(text) {
+  const found = [];
+  String(text || "").replace(/#[0-9a-fA-F]{6}/g, function (hex) {
+    const value = hex.toLowerCase();
+    if (found.indexOf(value) === -1) found.push(value);
+  });
+  return found.slice(0, 3);
+}
+
+function ctaFromAction(action, phone, email, whatsapp) {
+  const label = action || "Contact";
+  if (action === "Call" && phone) return { label: label, href: "tel:" + phone.replace(/\s+/g, "") };
+  if (action === "WhatsApp" && whatsapp) return { label: label, href: whatsappHref(whatsapp) };
+  if (action === "Book") return { label: label, href: "#bookings" };
+  if (action === "Buy") return { label: label, href: "#services" };
+  if (email) return { label: label, href: "mailto:" + email };
+  return { label: label, href: "#contact" };
+}
+
+function whatsappHref(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.indexOf("0") === 0) digits = "27" + digits.slice(1);
+  return "https://wa.me/" + digits;
+}
+
+function extFromFile(file) {
+  const name = String(file.name || "");
+  const match = name.match(/\.(jpe?g|png|gif|webp)$/i);
+  if (match) return match[0].toLowerCase() === ".jpeg" ? ".jpg" : match[0].toLowerCase();
+  const type = String(file.type || "");
+  if (type.indexOf("png") !== -1) return ".png";
+  if (type.indexOf("webp") !== -1) return ".webp";
+  if (type.indexOf("gif") !== -1) return ".gif";
+  return ".jpg";
+}
+
+function utf8ToBase64(text) {
+  return bytesToBase64(encoder.encode(String(text || "")));
+}
+
+async function saveBuild(env, id, repo, agentId, cursorUrl) {
+  try {
+    await env.DB.prepare(
+      "UPDATE briefs SET github_repo = ?, cursor_agent_id = ?, cursor_url = ?, status = CASE WHEN status = 'new' THEN 'in_progress' ELSE status END WHERE id = ?"
+    )
+      .bind(repo || "", agentId || "", cursorUrl || "", id)
+      .run();
+  } catch (err) {}
+}
+
+function slugify(name) {
+  const slug = String(name || "client")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return slug || "client";
+}
+
+function bytesToBase64(buffer) {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const chunk = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
 function shapeBrief(row) {
   return {
     id: row.id,
@@ -257,6 +675,9 @@ function shapeBrief(row) {
     subject: row.subject,
     briefText: row.brief_text || "",
     files: parseFiles(row.files),
+    githubRepo: row.github_repo || "",
+    cursorAgentId: row.cursor_agent_id || "",
+    cursorUrl: row.cursor_url || "",
   };
 }
 

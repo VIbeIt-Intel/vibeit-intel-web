@@ -92,35 +92,268 @@
     });
   }
 
+  function normalizeHex(value) {
+    const hex = String(value || "").trim();
+    if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+      return (
+        "#" +
+        hex
+          .slice(1)
+          .split("")
+          .map(function (ch) {
+            return ch + ch;
+          })
+          .join("")
+      ).toLowerCase();
+    }
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex.toLowerCase();
+    return "";
+  }
+
+  function parseBrief(text) {
+    const fields = {};
+    const blocks = {};
+    const colours = [];
+    const names = {
+      CONTACT: "contact",
+      WEBSITE: "website",
+      BUSINESS: "business",
+      "WHAT THEY DO": "do",
+      "PRODUCTS OR SERVICES": "products",
+      NOTES: "notes",
+      BOOKINGS: "bookings",
+      HOURS: "hours",
+      "ADMIN AND PAYMENTS": "admin",
+    };
+    const prose = { do: 1, products: 1, notes: 1, bookings: 1, hours: 1 };
+    let current = "";
+    String(text || "")
+      .split(/\r?\n/)
+      .forEach(function (raw) {
+        const line = raw.trim();
+        if (!line) return;
+        if (names[line]) {
+          current = names[line];
+          if (!blocks[current]) blocks[current] = [];
+          return;
+        }
+        if (/^FILES\b/.test(line)) {
+          current = "";
+          return;
+        }
+        const pair = line.match(/^([^:]{1,40}):\s*(.+)$/);
+        if (pair && !prose[current]) {
+          const key = pair[1].trim();
+          const value = pair[2].trim();
+          fields[key] = value;
+          if (/^colou?rs$/i.test(key)) {
+            String(value).replace(/#[0-9a-fA-F]{3,8}/g, function (hit) {
+              const hex = normalizeHex(hit);
+              if (hex && colours.indexOf(hex) === -1) colours.push(hex);
+            });
+          }
+          return;
+        }
+        if (current) {
+          if (!blocks[current]) blocks[current] = [];
+          blocks[current].push(line);
+        }
+      });
+    return { fields: fields, blocks: blocks, colours: colours };
+  }
+
+  function clearNode(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function showPanel(id, on) {
+    document.getElementById(id).hidden = !on;
+  }
+
+  function addField(list, label, value, href) {
+    if (!value) return;
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    if (href) {
+      const link = document.createElement("a");
+      link.href = href;
+      link.textContent = value;
+      if (href.indexOf("http") === 0) {
+        link.target = "_blank";
+        link.rel = "noopener";
+      }
+      dd.appendChild(link);
+    } else {
+      dd.textContent = value;
+    }
+    list.appendChild(dt);
+    list.appendChild(dd);
+  }
+
+  function domainHref(value) {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    if (/\./.test(value) && value.indexOf(" ") === -1) return "https://" + value.replace(/^\/+/, "");
+    return "";
+  }
+
+  function fillCopy(id, lines) {
+    const text = (lines || []).join("\n").trim();
+    document.getElementById(id).textContent = text;
+    return Boolean(text);
+  }
+
   function openBrief(id) {
     currentId = id;
     return api("/api/briefs/" + id).then(function (body) {
       const brief = body.brief;
-      document.getElementById("d-package").textContent = brief.package || "Brief";
-      document.getElementById("d-name").textContent = brief.businessName || "New client";
+      const parsed = parseBrief(brief.briefText || "");
+      const fields = parsed.fields;
+      const blocks = parsed.blocks;
+      const colours = parsed.colours.slice(0, 3);
+
+      document.getElementById("d-package").textContent = brief.package || fields.Package || "Brief";
+      document.getElementById("d-name").textContent = brief.businessName || fields.Name || "New client";
       document.getElementById("d-meta").textContent = when(brief.createdAt);
+      const facts = document.getElementById("d-facts");
+      clearNode(facts);
+      const typeVal = fields.Type || "";
+      const actionVal = fields["Customer action"] || "";
+      [typeVal, actionVal].filter(Boolean).forEach(function (text) {
+        const pill = document.createElement("span");
+        pill.className = "fact";
+        pill.textContent = text;
+        facts.appendChild(pill);
+      });
+      const typeSelect = document.getElementById("d-type");
+      const actionSelect = document.getElementById("d-action");
+      typeSelect.value = typeVal;
+      if (typeVal && typeSelect.value !== typeVal) {
+        const opt = document.createElement("option");
+        opt.value = typeVal;
+        opt.textContent = typeVal;
+        typeSelect.appendChild(opt);
+        typeSelect.value = typeVal;
+      }
+      actionSelect.value = actionVal;
+      const cursorLink = document.getElementById("d-cursor-link");
+      const buildBtn = document.getElementById("d-build");
+      const buildMsg = document.getElementById("d-build-msg");
+      buildMsg.classList.add("hidden");
+      if (brief.cursorUrl) {
+        cursorLink.href = brief.cursorUrl;
+        cursorLink.classList.remove("hidden");
+        buildBtn.textContent = "Started";
+        buildBtn.disabled = true;
+      } else {
+        cursorLink.classList.add("hidden");
+        buildBtn.textContent = "Start website";
+        buildBtn.disabled = false;
+      }
       document.getElementById("d-status").textContent = labelStatus(brief.status);
-      const contact = [];
-      if (brief.email) contact.push(brief.email);
-      if (brief.phone) contact.push(brief.phone);
-      const contactEl = document.getElementById("d-contact");
-      contactEl.innerHTML = "";
-      if (brief.email) {
-        const mail = document.createElement("a");
-        mail.href = "mailto:" + brief.email;
-        mail.textContent = brief.email;
-        mail.style.color = "#00c8c9";
-        contactEl.appendChild(mail);
-      }
-      if (brief.phone) {
-        contactEl.appendChild(document.createTextNode((brief.email ? " · " : "") + brief.phone));
-      }
-      document.getElementById("d-brief").textContent = brief.briefText || "";
       document.querySelectorAll(".status-row .chip").forEach(function (chip) {
         chip.classList.toggle("on", chip.getAttribute("data-set") === brief.status);
       });
+
+      const links = document.getElementById("d-links");
+      clearNode(links);
+      const email = brief.email || fields.Email || "";
+      const phone = brief.phone || fields.Phone || "";
+      const whatsapp = fields.WhatsApp || "";
+      if (email) {
+        const mail = document.createElement("a");
+        mail.href = "mailto:" + email;
+        mail.textContent = "Email client";
+        links.appendChild(mail);
+      }
+      if (phone) {
+        const call = document.createElement("a");
+        call.className = "ghost";
+        call.href = "tel:" + phone.replace(/\s+/g, "");
+        call.textContent = "Call";
+        links.appendChild(call);
+      }
+      if (whatsapp) {
+        const wa = document.createElement("a");
+        wa.className = "ghost";
+        wa.href = "https://wa.me/" + whatsapp.replace(/\D/g, "");
+        wa.target = "_blank";
+        wa.rel = "noopener";
+        wa.textContent = "WhatsApp";
+        links.appendChild(wa);
+      }
+
+      const palette = document.getElementById("d-palette");
+      clearNode(palette);
+      if (colours.length) {
+        colours.forEach(function (hex, i) {
+          const swatch = document.createElement("div");
+          swatch.className = "swatch";
+          const chip = document.createElement("span");
+          chip.className = "swatch-chip";
+          chip.style.background = hex;
+          const meta = document.createElement("span");
+          meta.className = "swatch-meta";
+          const code = document.createElement("code");
+          code.textContent = hex;
+          const label = document.createElement("small");
+          label.textContent = ["Primary", "Secondary", "Accent"][i] || "Colour " + (i + 1);
+          meta.appendChild(code);
+          meta.appendChild(label);
+          swatch.appendChild(chip);
+          swatch.appendChild(meta);
+          palette.appendChild(swatch);
+        });
+        palette.hidden = false;
+      } else {
+        palette.hidden = true;
+      }
+
+      const contactList = document.getElementById("d-contact-fields");
+      clearNode(contactList);
+      addField(contactList, "Name", fields.Name || brief.businessName);
+      addField(contactList, "Registration", fields.Registration);
+      addField(contactList, "Address", fields.Address);
+      addField(contactList, "Phone", phone, phone ? "tel:" + phone.replace(/\s+/g, "") : "");
+      addField(contactList, "WhatsApp", whatsapp);
+      addField(contactList, "Email", email, email ? "mailto:" + email : "");
+      showPanel("d-contact-panel", contactList.childNodes.length > 0);
+
+      const webList = document.getElementById("d-web-fields");
+      clearNode(webList);
+      addField(webList, "Domain", fields.Domain);
+      addField(
+        webList,
+        "Domain name",
+        fields["Domain name"],
+        domainHref(fields["Domain name"])
+      );
+      showPanel("d-web-panel", webList.childNodes.length > 0);
+
+      showPanel("d-do-panel", fillCopy("d-do", blocks.do));
+      showPanel("d-products-panel", fillCopy("d-products", blocks.products));
+      showPanel("d-book-panel", fillCopy("d-book", blocks.bookings));
+      showPanel("d-hours-panel", fillCopy("d-hours", blocks.hours));
+      showPanel("d-notes-panel", fillCopy("d-notes", blocks.notes));
+
+      const adminList = document.getElementById("d-admin-fields");
+      clearNode(adminList);
+      addField(adminList, "Booking admin", fields["Booking admin"]);
+      addField(adminList, "Payments", fields.Payments);
+      addField(adminList, "Google", fields.Google);
+      addField(
+        adminList,
+        "Google profile",
+        fields["Google profile"],
+        domainHref(fields["Google profile"])
+      );
+      showPanel("d-admin-panel", adminList.childNodes.length > 0);
+
       const files = document.getElementById("d-files");
-      files.innerHTML = "";
+      clearNode(files);
+      document.getElementById("d-files-title").textContent =
+        "Files" + (brief.files && brief.files.length ? " (" + brief.files.length + ")" : "");
       (brief.files || []).forEach(function (file, index) {
         const link = document.createElement("a");
         link.className = "file";
@@ -168,6 +401,44 @@
         openBrief(currentId);
       });
     });
+  });
+
+  document.getElementById("d-build").addEventListener("click", function () {
+    const type = document.getElementById("d-type").value;
+    const action = document.getElementById("d-action").value;
+    const msg = document.getElementById("d-build-msg");
+    const btn = document.getElementById("d-build");
+    if (!type || !action) {
+      msg.textContent = "Pick the business type and what customers should do, then start.";
+      msg.classList.remove("hidden");
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Starting…";
+    msg.classList.add("hidden");
+    api("/api/briefs/" + currentId + "/build", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: type, action: action }),
+    })
+      .then(function (body) {
+        const link = document.getElementById("d-cursor-link");
+        if (body.cursorUrl) {
+          link.href = body.cursorUrl;
+          link.classList.remove("hidden");
+        }
+        btn.textContent = "Started";
+        msg.textContent = body.repoUrl
+          ? "Repo and Cursor agent are up. Open in Cursor to review the draft."
+          : "Cursor agent started.";
+        msg.classList.remove("hidden");
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = "Start website";
+        msg.textContent = err.message || "Could not start the website.";
+        msg.classList.remove("hidden");
+      });
   });
 
   document.getElementById("back").addEventListener("click", function () {

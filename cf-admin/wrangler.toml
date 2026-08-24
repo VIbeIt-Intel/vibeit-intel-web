@@ -3,6 +3,11 @@ main = "src/worker.js"
 compatibility_date = "2026-08-24"
 workers_dev = true
 
+[[rules]]
+type = "Text"
+globs = ["**/*.html", "**/*.css", "**/*.md"]
+fallthrough = true
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
@@ -21,6 +26,7 @@ id = "bd5f61cc63294ebf884d66350b6935ee"
 [vars]
 ALLOWED_EMAILS = "support@vibeit-intel.net"
 ALLOWED_ORIGINS = "https://vibeit-intel.net,https://www.vibeit-intel.net,https://vibeit-admin.vibeit-intel.workers.dev,http://127.0.0.1:8787,http://localhost:8787"
+GITHUB_ORG = "VIbeIt-Intel"
 
 # Optional once the zone is on Cloudflare:
 # [[routes]]
