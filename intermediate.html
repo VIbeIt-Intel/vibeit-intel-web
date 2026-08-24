@@ -54,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool19" />
+    <link rel="stylesheet" href="styles.css?v=cool20" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -168,13 +168,14 @@
 
         <div class="brief-block">
           <p class="brief-kicker">2. Logo</p>
-          <label class="brief-file">
-            <span>Upload your logo if you have one</span>
-            <span class="brief-pick">
-              <input id="logo-file" type="file" accept="image/*,.svg,.pdf" />
-              <span class="brief-pick-label">Choose file</span>
-            </span>
-          </label>
+          <div class="brief-file">
+            <span>Upload your logo if you have one — more than one is fine</span>
+            <label class="brief-pick">
+              <input id="logo-file" type="file" accept="image/*,.svg,.pdf" multiple />
+              <span class="brief-pick-label">Choose files</span>
+            </label>
+            <div class="brief-previews" id="logo-previews" role="list" hidden></div>
+          </div>
         </div>
 
         <div class="brief-block">
@@ -224,13 +225,14 @@
               <input type="color" name="Colour 3" value="#4a1f7a" />
             </label>
           </div>
-          <label class="brief-file">
+          <div class="brief-file">
             <span>A photo of your vibe</span>
-            <span class="brief-pick">
+            <label class="brief-pick">
               <input id="vibe-file" type="file" accept="image/*" />
               <span class="brief-pick-label">Choose file</span>
-            </span>
-          </label>
+            </label>
+            <div class="brief-previews" id="vibe-previews" role="list" hidden></div>
+          </div>
         </div>
 
         <div class="brief-block">
@@ -261,9 +263,9 @@
 
         <div class="brief-block">
           <p class="brief-kicker">7. Extra photos and notes</p>
-          <label class="brief-file">
+          <div class="brief-file">
             <span>More photos — up to 10, compressed before sending</span>
-            <span class="brief-pick">
+            <label class="brief-pick">
               <input
                 id="extra-photos"
                 type="file"
@@ -271,8 +273,9 @@
                 multiple
               />
               <span class="brief-pick-label">Choose files</span>
-            </span>
-          </label>
+            </label>
+            <div class="brief-previews" id="extra-previews" role="list" hidden></div>
+          </div>
           <label class="brief-field">
             Notes
             <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
@@ -418,9 +421,11 @@
         </p>
       </form>
     </main>
+    <script src="brief-files.js?v=files1"></script>
     <script>
       (function () {
         const MAX_EXTRA = 10;
+        const MAX_LOGO = 5;
         const MAX_EDGE = 1600;
         const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
@@ -475,25 +480,7 @@
         payOther.addEventListener("change", syncPayOther);
 
         function setFiles(fileInput, files) {
-          const data = new DataTransfer();
-          files.forEach(function (file) {
-            data.items.add(file);
-          });
-          fileInput.files = data.files;
-        }
-
-        function labelFor(fileInput, files) {
-          const label = fileInput.parentElement.querySelector(".brief-pick-label");
-          if (!label) return;
-          if (!files.length) {
-            label.textContent = fileInput.multiple ? "Choose files" : "Choose file";
-            return;
-          }
-          if (fileInput.multiple) {
-            label.textContent = files.length + " of " + MAX_EXTRA + " photos";
-            return;
-          }
-          label.textContent = files[0].name;
+          VibeBriefFiles.setFiles(fileInput, files);
         }
 
         function namedFile(file, base) {
@@ -697,41 +684,42 @@
           form.appendChild(inputEl);
         }
 
-        extra.addEventListener("change", function () {
-          let files = Array.from(extra.files || []);
-          if (files.length > MAX_EXTRA) {
-            files = files.slice(0, MAX_EXTRA);
-            setFiles(extra, files);
-          }
-          labelFor(extra, files);
+        VibeBriefFiles.bind(logoInput, {
+          max: MAX_LOGO,
+          nouns: "logos",
+          previews: document.getElementById("logo-previews"),
         });
-
-        document.querySelectorAll(".brief-pick input[type=file]").forEach(function (fileInput) {
-          if (fileInput === extra) return;
-          fileInput.addEventListener("change", function () {
-            labelFor(fileInput, Array.from(fileInput.files || []));
-          });
+        VibeBriefFiles.bind(vibeInput, {
+          max: 1,
+          nouns: "photo",
+          previews: document.getElementById("vibe-previews"),
+        });
+        VibeBriefFiles.bind(extra, {
+          max: MAX_EXTRA,
+          nouns: "photos",
+          previews: document.getElementById("extra-previews"),
         });
 
         form.addEventListener("submit", function (event) {
           if (nativeSend) return;
           event.preventDefault();
+          const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
           if ((extra.files || []).length > MAX_EXTRA) {
             setFiles(extra, extras);
           }
           submit.disabled = true;
-          const hasFiles = extras.length || (logoInput.files && logoInput.files[0]) || (vibeInput.files && vibeInput.files[0]);
+          const hasFiles = logos.length || extras.length || (vibeInput.files && vibeInput.files[0]);
           submit.textContent = hasFiles ? "Compressing photos…" : "Sending…";
 
           const jobs = [];
-          if (logoInput.files[0]) {
+          logos.forEach(function (file, i) {
             jobs.push(
-              compressOne(logoInput.files[0]).then(function (file) {
-                return { kind: "logo", file: file };
+              compressOne(file).then(function (out) {
+                return { kind: "logo", index: i, file: out };
               })
             );
-          }
+          });
           if (vibeInput.files[0]) {
             jobs.push(
               compressOne(vibeInput.files[0]).then(function (file) {
@@ -760,9 +748,10 @@
                 let label = "File";
                 let fieldName = "File";
                 if (item.kind === "logo") {
-                  file = namedFile(item.file, "logo");
-                  label = "Logo";
-                  fieldName = "Logo";
+                  const n = (item.index || 0) + 1;
+                  file = namedFile(item.file, n === 1 ? "logo" : "logo-" + n);
+                  label = n === 1 ? "Logo" : "Logo " + n;
+                  fieldName = label;
                 } else if (item.kind === "vibe") {
                   file = namedFile(item.file, "vibe-photo");
                   label = "Vibe photo";

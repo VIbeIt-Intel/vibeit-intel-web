@@ -1416,6 +1416,75 @@ html.from-it .foot {
   border-radius: 0.8rem;
   background: #12091a;
   box-sizing: border-box;
+  cursor: pointer;
+}
+
+.brief-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.2rem, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+.brief-preview {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  background: #12091a;
+}
+
+.brief-preview img,
+.brief-preview-fallback {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  object-fit: contain;
+  background: #0d0714;
+}
+
+.brief-preview-fallback {
+  display: grid;
+  place-items: center;
+  color: rgb(246 241 251 / 70%);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.brief-preview-name {
+  display: block;
+  padding: 0.35rem 0.45rem 0.45rem;
+  color: rgb(246 241 251 / 72%);
+  font-size: 0.68rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brief-preview-remove {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(18 9 26 / 82%);
+  color: #fff;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.brief-preview-remove:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
 }
 
 .brief-pick-label {
