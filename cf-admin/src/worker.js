@@ -396,6 +396,7 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
     "- If assets/ has a Word, Excel, PDF, CSV, or photo price list, use it for services and prices. Do not ignore it.",
+    "- Services and products are different. Treatments, repairs, and bookings go under Services. Items they sell (food, nail products, parts, merch) go under Shop. Hide Shop if they do not sell items.",
     "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
     "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
@@ -470,6 +471,8 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
   const about = blockFromBrief(briefText, "WHAT THEY DO") || "Tell people who you serve and what you want them to do.";
   const hours = blockFromBrief(briefText, "HOURS") || "Hours to be confirmed.";
   const colours = coloursFromBrief(briefText);
+  const items = blockFromBrief(briefText, "ITEMS FOR SALE");
+  const sellsItems = /^Sells products:\s*Yes/im.test(briefText) || Boolean(items);
   const pack = /intermediate|booking/i.test(String(row.package || "")) ? "pack-intermediate" : "pack-entry";
   const cta = ctaFromAction(action, phone, email, whatsapp);
   const waHref = whatsappHref(whatsapp);
@@ -522,6 +525,11 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
     WHATSAPP_HREF: waHref || "#contact",
     WA_HIDDEN: waHref ? "" : "hidden",
     LOGO_SRC: logoSrc || "assets/logo.jpg",
+    SHOP_CLASS: sellsItems ? "has-shop" : "no-shop",
+    PRODUCTS_INTRO: sellsItems
+      ? "Items you can buy. WhatsApp or visit to order."
+      : "",
+    PRODUCTS: productCards(items),
     GALLERY: gallery
       .map(function (src) {
         return '<img src="' + src + '" alt="" />';
@@ -598,6 +606,41 @@ function fillTokens(text, values) {
   return String(text || "").replace(/__([A-Z0-9_]+)__/g, function (_, key) {
     return values[key] != null ? String(values[key]) : "";
   });
+}
+
+function escapeHtml(text) {
+  return String(text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function productCards(text) {
+  const lines = String(text || "")
+    .split(/\r?\n/)
+    .map(function (line) {
+      return line.replace(/^[-•*]\s*/, "").trim();
+    })
+    .filter(function (line) {
+      return line && !/^Price list file:/i.test(line);
+    })
+    .slice(0, 9);
+  if (!lines.length) {
+    return [
+      "<li><h3>Item one</h3><p>Fill from the brief or uploaded catalogue.</p></li>",
+      "<li><h3>Item two</h3><p>Fill from the brief or uploaded catalogue.</p></li>",
+      "<li><h3>Item three</h3><p>Fill from the brief or uploaded catalogue.</p></li>",
+    ].join("\n          ");
+  }
+  return lines
+    .map(function (line) {
+      const parts = line.split(/\s[–—-]\s|\s:\s/);
+      const title = escapeHtml(parts[0].slice(0, 80));
+      const detail = parts.length > 1 ? escapeHtml(parts.slice(1).join(" — ").slice(0, 160)) : "";
+      return "<li><h3>" + title + "</h3><p>" + detail + "</p></li>";
+    })
+    .join("\n          ");
 }
 
 function fieldFromBrief(text, label) {

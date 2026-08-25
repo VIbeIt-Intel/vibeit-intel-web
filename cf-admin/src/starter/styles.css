@@ -166,6 +166,11 @@ h2 {
   display: none;
 }
 
+.no-shop #products,
+.no-shop nav a[href="#products"] {
+  display: none;
+}
+
 footer {
   padding: 1.4rem 1.1rem 5rem;
   color: var(--muted);

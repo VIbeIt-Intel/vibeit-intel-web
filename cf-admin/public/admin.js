@@ -214,12 +214,13 @@
       BUSINESS: "business",
       "WHAT THEY DO": "do",
       "PRODUCTS OR SERVICES": "products",
+      "ITEMS FOR SALE": "shop",
       NOTES: "notes",
       BOOKINGS: "bookings",
       HOURS: "hours",
       "ADMIN AND PAYMENTS": "admin",
     };
-    const prose = { do: 1, products: 1, notes: 1, bookings: 1, hours: 1 };
+    const prose = { do: 1, products: 1, shop: 1, notes: 1, bookings: 1, hours: 1 };
     let current = "";
     String(text || "")
       .split(/\r?\n/)
@@ -318,9 +319,10 @@
         fields["Customer action"] ||
         (whatsapp ? "WhatsApp" : "") ||
         (phone ? "Call" : "");
+      const sellsVal = fields["Sells products"] || "";
       const facts = document.getElementById("d-facts");
       clearNode(facts);
-      [typeVal, actionVal].filter(Boolean).forEach(function (text) {
+      [typeVal, actionVal, sellsVal ? "Sells items: " + sellsVal : ""].filter(Boolean).forEach(function (text) {
         const pill = document.createElement("span");
         pill.className = "fact";
         pill.textContent = text;
@@ -431,6 +433,7 @@
 
       showPanel("d-do-panel", fillCopy("d-do", blocks.do));
       showPanel("d-products-panel", fillCopy("d-products", blocks.products));
+      showPanel("d-shop-panel", fillCopy("d-shop", blocks.shop));
       showPanel("d-book-panel", fillCopy("d-book", blocks.bookings));
       showPanel("d-hours-panel", fillCopy("d-hours", blocks.hours));
       showPanel("d-notes-panel", fillCopy("d-notes", blocks.notes));

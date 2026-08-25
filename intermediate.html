@@ -54,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool25" />
+    <link rel="stylesheet" href="styles.css?v=cool26" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -255,36 +255,65 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">5. Products or services</p>
+          <p class="brief-kicker">5. Services</p>
           <p class="brief-help">
-            Type a list, or upload a Word, Excel, PDF, or photo of your price
-            list. Both is fine.
+            What you do for people — cuts, fills, repairs, classes. Not the
+            bottles or food you sell.
           </p>
           <label class="brief-field">
             List
             <textarea
               name="Products or services"
               rows="5"
-              placeholder="One per line is fine. Skip this if you are uploading a file."
+              placeholder="One per line is fine."
             ></textarea>
           </label>
-          <div class="brief-file">
-            <span>Price list or menu — Word, Excel, PDF, or photo</span>
-            <label class="brief-pick">
-              <input
-                id="price-list-file"
-                type="file"
-                accept=".doc,.docx,.xls,.xlsx,.csv,.pdf,.odt,.ods,.txt,.rtf,image/*"
-                multiple
-              />
-              <span class="brief-pick-label">Choose files</span>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">6. Products you sell</p>
+          <p class="brief-help">
+            Nail products, food, parts, merch — items a customer can buy. Skip
+            this if you only do services. You can type a list or upload a Word,
+            Excel, PDF, or photo.
+          </p>
+          <div class="brief-choices brief-actions">
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="No" required />
+              No, services only
             </label>
-            <div class="brief-previews" id="price-list-previews" role="list" hidden></div>
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="Yes" />
+              Yes, we sell items
+            </label>
+          </div>
+          <div id="sell-products-wrap" hidden>
+            <label class="brief-field">
+              Items for sale
+              <textarea
+                name="Items for sale"
+                rows="5"
+                placeholder="e.g. gel kits, lunch meals, brake pads. Name and price if you have them. Skip this if you are uploading a file."
+              ></textarea>
+            </label>
+            <div class="brief-file">
+              <span>Catalogue, menu, or price list — Word, Excel, PDF, or photo</span>
+              <label class="brief-pick">
+                <input
+                  id="price-list-file"
+                  type="file"
+                  accept=".doc,.docx,.xls,.xlsx,.csv,.pdf,.odt,.ods,.txt,.rtf,image/*"
+                  multiple
+                />
+                <span class="brief-pick-label">Choose files</span>
+              </label>
+              <div class="brief-previews" id="price-list-previews" role="list" hidden></div>
+            </div>
           </div>
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">6. Photos and notes</p>
+          <p class="brief-kicker">7. Photos and notes</p>
           <div class="brief-file">
             <span>A photo of your vibe</span>
             <label class="brief-pick">
@@ -313,7 +342,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">7. Bookings</p>
+          <p class="brief-kicker">8. Bookings</p>
           <p class="brief-help">
             What should customers be able to book on the site?
           </p>
@@ -329,7 +358,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">8. When you take bookings</p>
+          <p class="brief-kicker">9. When you take bookings</p>
           <label class="brief-field">
             Typical hours and days
             <textarea
@@ -342,7 +371,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">9. Who manages bookings</p>
+          <p class="brief-kicker">10. Who manages bookings</p>
           <p class="brief-help">
             This person will use the private admin to see and manage bookings.
           </p>
@@ -365,7 +394,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">10. How you get paid</p>
+          <p class="brief-kicker">11. How you get paid</p>
           <p class="brief-help">Tick every way customers should be able to pay.</p>
           <div class="brief-choices">
             <label class="brief-choice">
@@ -405,7 +434,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">11. Google</p>
+          <p class="brief-kicker">12. Google</p>
           <p class="brief-help">
             Do you already have a Google Business profile so people can find you
             in search and Maps?
@@ -441,7 +470,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">12. Colours</p>
+          <p class="brief-kicker">13. Colours</p>
           <p class="brief-help" id="colour-help">
             We’ll read three colours from your logo and photos. Change them if they look wrong.
           </p>
@@ -533,6 +562,17 @@
           if (e.target && e.target.name === "Business type") syncTypeOther();
         });
         syncTypeOther();
+
+        const sellWrap = document.getElementById("sell-products-wrap");
+        function syncSellProducts() {
+          const picked = form.querySelector('input[name="Sells products"]:checked');
+          const on = Boolean(picked && picked.value === "Yes");
+          if (sellWrap) sellWrap.hidden = !on;
+        }
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Sells products") syncSellProducts();
+        });
+        syncSellProducts();
 
         function syncGoogle() {
           const picked = document.querySelector('input[name="Google profile"]:checked');
@@ -657,6 +697,7 @@
               type === "Other" ? val("Business type other") || "Other" : type
             );
             add(lines, "Customer action", val("Customer action"));
+            add(lines, "Sells products", val("Sells products"));
           });
 
           section(lines, "CONTACT", function () {
@@ -685,9 +726,15 @@
           const listFiles = attached.filter(function (item) {
             return item.kind === "list";
           });
-          if (products || listFiles.length) {
+          if (products) {
             lines.push("PRODUCTS OR SERVICES");
-            if (products) lines.push(products);
+            lines.push(products);
+            lines.push("");
+          }
+          const items = val("Items for sale");
+          if (val("Sells products") === "Yes" || items || listFiles.length) {
+            lines.push("ITEMS FOR SALE");
+            if (items) lines.push(items);
             listFiles.forEach(function (item) {
               lines.push("Price list file: " + item.file.name);
             });
@@ -809,10 +856,19 @@
           event.preventDefault();
           const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
-          const lists = Array.from(listInput.files || []).slice(0, MAX_LISTS);
-          if (!val("Products or services") && !lists.length) {
+          let lists =
+            val("Sells products") === "Yes"
+              ? Array.from(listInput.files || []).slice(0, MAX_LISTS)
+              : [];
+          const hasServices = Boolean(val("Products or services"));
+          const hasItems = Boolean(val("Items for sale") || lists.length);
+          if (!hasServices && val("Sells products") !== "Yes") {
+            window.alert("Add the services you offer, or say you sell products and list them.");
+            return;
+          }
+          if (val("Sells products") === "Yes" && !hasItems) {
             window.alert(
-              "Add a product list, or upload a Word, Excel, PDF, or photo of your price list."
+              "List the products you sell, or upload a Word, Excel, PDF, or photo of the catalogue."
             );
             return;
           }

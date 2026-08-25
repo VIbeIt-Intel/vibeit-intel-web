@@ -5,6 +5,7 @@ const FORMATS = {
     sections: [
       "Hero with Book / WhatsApp as the main button",
       "Treatments and prices (cuts, colour, treatments — not a food menu)",
+      "If they sell products, a Shop shelf separate from treatments",
       "Team / stylists if names exist in the brief",
       "Gallery of hair and the space",
       "Hours",
@@ -18,6 +19,7 @@ const FORMATS = {
     sections: [
       "Hero with Book as the main button",
       "Menu of sets, fills, and add-ons with prices if the brief has them",
+      "If they sell nail products, a Shop section separate from treatments",
       "Gallery of nail work",
       "Hours and how far ahead to book",
       "Book / contact",
@@ -207,6 +209,7 @@ export function formatPlaybook(type) {
       return "- " + s;
     }).join("\n"),
     f.avoid,
+    "If they sell items (nail products, food, parts, merch), keep a Shop / Menu / Products section separate from services. A salon can have treatments AND a product shelf. Hide Shop if they do not sell items.",
     "Rename nav labels to match this trade. Add or drop starter sections as needed. Keep a single index.html.",
   ].join("\n");
 }

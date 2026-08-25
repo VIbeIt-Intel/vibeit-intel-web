@@ -1411,6 +1411,14 @@ html.from-it .foot {
   margin-top: 1.1rem;
 }
 
+#sell-products-wrap[hidden] {
+  display: none;
+}
+
+#sell-products-wrap {
+  margin-top: 0.85rem;
+}
+
 .brief-field,
 .brief-file,
 .brief-swatch {

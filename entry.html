@@ -51,7 +51,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool25" />
+    <link rel="stylesheet" href="styles.css?v=cool26" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -235,20 +235,51 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">5. Products or services</p>
+          <p class="brief-kicker">5. Services</p>
+          <p class="brief-help">
+            What you do for people — cuts, fills, repairs, classes. Not the
+            bottles or food you sell.
+          </p>
           <label class="brief-field">
             List
             <textarea
               name="Products or services"
               rows="5"
-              required
               placeholder="One per line is fine."
             ></textarea>
           </label>
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">6. Photos and notes</p>
+          <p class="brief-kicker">6. Products you sell</p>
+          <p class="brief-help">
+            Nail products, food, parts, merch — items a customer can buy. Skip
+            this if you only do services.
+          </p>
+          <div class="brief-choices brief-actions">
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="No" required />
+              No, services only
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="Yes" />
+              Yes, we sell items
+            </label>
+          </div>
+          <div id="sell-products-wrap" hidden>
+            <label class="brief-field">
+              Items for sale
+              <textarea
+                name="Items for sale"
+                rows="5"
+                placeholder="e.g. gel kits, lunch meals, brake pads. Name and price if you have them."
+              ></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">7. Photos and notes</p>
           <div class="brief-file">
             <span>A photo of your vibe</span>
             <label class="brief-pick">
@@ -277,7 +308,7 @@
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">7. Colours</p>
+          <p class="brief-kicker">8. Colours</p>
           <p class="brief-help" id="colour-help">
             We’ll read three colours from your logo and photos. Change them if they look wrong.
           </p>
@@ -359,6 +390,21 @@
           if (e.target && e.target.name === "Business type") syncTypeOther();
         });
         syncTypeOther();
+
+        const sellWrap = document.getElementById("sell-products-wrap");
+        const sellItems = sellWrap && sellWrap.querySelector('textarea[name="Items for sale"]');
+        function sellsYes() {
+          return val("Sells products") === "Yes";
+        }
+        function syncSellProducts() {
+          const on = sellsYes();
+          if (sellWrap) sellWrap.hidden = !on;
+          if (sellItems) sellItems.required = on;
+        }
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Sells products") syncSellProducts();
+        });
+        syncSellProducts();
 
         function setFiles(fileInput, files) {
           VibeBriefFiles.setFiles(fileInput, files);
@@ -456,6 +502,7 @@
               type === "Other" ? val("Business type other") || "Other" : type
             );
             add(lines, "Customer action", val("Customer action"));
+            add(lines, "Sells products", val("Sells products"));
           });
 
           section(lines, "CONTACT", function () {
@@ -484,6 +531,12 @@
           if (products) {
             lines.push("PRODUCTS OR SERVICES");
             lines.push(products);
+            lines.push("");
+          }
+          const items = val("Items for sale");
+          if (val("Sells products") === "Yes" || items) {
+            lines.push("ITEMS FOR SALE");
+            if (items) lines.push(items);
             lines.push("");
           }
           const notes = val("Notes");
@@ -571,6 +624,14 @@
           event.preventDefault();
           const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
+          if (!val("Products or services") && val("Sells products") !== "Yes") {
+            window.alert("Add the services you offer, or say you sell products and list them.");
+            return;
+          }
+          if (val("Sells products") === "Yes" && !val("Items for sale")) {
+            window.alert("List the products you sell — nail products, food, parts, merch.");
+            return;
+          }
           if ((extra.files || []).length > MAX_EXTRA) {
             setFiles(extra, extras);
           }
