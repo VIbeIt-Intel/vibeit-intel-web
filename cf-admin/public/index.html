@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin.css?v=5" />
+    <link rel="stylesheet" href="/admin.css?v=8" />
   </head>
   <body>
     <div class="vibe" aria-hidden="true">
@@ -68,6 +68,7 @@
         <button type="button" data-status="" class="chip on">All</button>
         <button type="button" data-status="new" class="chip">New</button>
         <button type="button" data-status="in_progress" class="chip">In progress</button>
+        <button type="button" data-status="declined" class="chip">Declined</button>
         <button type="button" data-status="done" class="chip">Done</button>
       </nav>
       <p id="empty" class="note hidden">No requests yet. New briefs will land here and still email you.</p>
@@ -90,6 +91,7 @@
           <div class="status-row">
             <button type="button" class="chip" data-set="new">New</button>
             <button type="button" class="chip" data-set="in_progress">In progress</button>
+            <button type="button" class="chip" data-set="declined">Declined</button>
             <button type="button" class="chip" data-set="done">Done</button>
           </div>
           <div class="quick-links" id="d-links"></div>
@@ -112,7 +114,7 @@
               <option>Other</option>
             </select>
             <select id="d-action" aria-label="Customer action">
-              <option value="">Customer action</option>
+              <option value="">Not on their brief</option>
               <option>Call</option>
               <option>WhatsApp</option>
               <option>Book</option>
@@ -167,6 +169,6 @@
       </article>
     </div>
 
-    <script src="/admin.js?v=5"></script>
+    <script src="/admin.js?v=8"></script>
   </body>
 </html>

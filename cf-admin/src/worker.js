@@ -41,6 +41,7 @@ async function handle(request, env, url) {
   const briefMatch = path.match(/^\/api\/briefs\/([^/]+)$/);
   if (briefMatch && method === "GET") return getBrief(request, env, briefMatch[1]);
   if (briefMatch && method === "PATCH") return patchBrief(request, env, briefMatch[1]);
+  if (briefMatch && method === "DELETE") return deleteBrief(request, env, briefMatch[1]);
 
   const fileMatch = path.match(/^\/api\/briefs\/([^/]+)\/file\/(\d+)$/);
   if (fileMatch && method === "GET") return getFile(request, env, fileMatch[1], Number(fileMatch[2]));
@@ -207,10 +208,10 @@ async function listBriefs(request, env) {
   if (!email) return json({ error: "Login required" }, 401);
   const status = new URL(request.url).searchParams.get("status") || "";
   const sql =
-    status && /^(new|in_progress|done)$/.test(status)
+    status && /^(new|in_progress|done|declined)$/.test(status)
       ? "SELECT id, created_at, status, package, business_name, email, phone, subject, files FROM briefs WHERE status = ? ORDER BY created_at DESC LIMIT 200"
       : "SELECT id, created_at, status, package, business_name, email, phone, subject, files FROM briefs ORDER BY created_at DESC LIMIT 200";
-  const result = status && /^(new|in_progress|done)$/.test(status)
+  const result = status && /^(new|in_progress|done|declined)$/.test(status)
     ? await env.DB.prepare(sql).bind(status).all()
     : await env.DB.prepare(sql).all();
   const rows = (result.results || []).map(shapeBrief);
@@ -232,10 +233,27 @@ async function patchBrief(request, env, id) {
     return {};
   });
   const status = String(body.status || "");
-  if (!/^(new|in_progress|done)$/.test(status)) return json({ error: "Bad status" }, 400);
+  if (!/^(new|in_progress|done|declined)$/.test(status)) return json({ error: "Bad status" }, 400);
   const result = await env.DB.prepare("UPDATE briefs SET status = ? WHERE id = ?").bind(status, id).run();
   if (!result.meta || !result.meta.changes) return json({ error: "Not found" }, 404);
   return json({ ok: true, status });
+}
+
+async function deleteBrief(request, env, id) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  const row = await env.DB.prepare("SELECT files FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return json({ error: "Not found" }, 404);
+  const files = parseFiles(row.files);
+  for (let i = 0; i < files.length; i++) {
+    if (files[i] && files[i].key) {
+      try {
+        await env.FILES.delete(files[i].key);
+      } catch (err) {}
+    }
+  }
+  await env.DB.prepare("DELETE FROM briefs WHERE id = ?").bind(id).run();
+  return json({ ok: true });
 }
 
 async function getFile(request, env, id, index) {
@@ -346,8 +364,14 @@ async function startBuild(request, env, id) {
   return json({ ok: true, repoUrl: repoUrl, cursorUrl: cursorUrl, agentId: agentId });
 }
 
+function packageTier(row) {
+  const raw = String(row.package || row.brief_text || "Entry");
+  if (/intermediate|booking/i.test(raw)) return "Intermediate";
+  return "Entry";
+}
+
 function buildSitePrompt(row, type, action, repoUrl) {
-  const pkg = String(row.package || "Entry").trim();
+  const pkg = packageTier(row);
   const name = String(row.business_name || "this business").trim();
   return [
     "You are building a production website for VibeIt-Intel, a South African studio that ships SME sites.",
@@ -366,7 +390,8 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
     "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
-    "- Entry hides bookings. Intermediate keeps and fills the bookings section.",
+    "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
+    "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
     "- If the brief copy is placeholder junk (dddd, test, asdf), do not invent a fake brand story. Use honest generic copy for that trade and leave a short TODO comment.",
     "- Open a PR when the first draft is ready.",
     "",
@@ -394,33 +419,31 @@ async function collectPromptImages(env, files) {
 
 async function createGithubRepo(env, name, description) {
   const org = String(env.GITHUB_ORG || "").trim();
-  const endpoint = org
-    ? "https://api.github.com/orgs/" + encodeURIComponent(org) + "/repos"
-    : "https://api.github.com/user/repos";
+  const endpoints = [];
+  if (org) endpoints.push("https://api.github.com/orgs/" + encodeURIComponent(org) + "/repos");
+  endpoints.push("https://api.github.com/user/repos");
   let lastError = "GitHub could not create the repo";
   const names = [name, name + "-site", name + "-" + new Date().getFullYear()];
-  for (let i = 0; i < names.length; i++) {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + env.GITHUB_TOKEN,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "vibeit-admin",
-      },
-      body: JSON.stringify({
-        name: names[i],
-        description: String(description || "").slice(0, 350),
-        private: true,
-        auto_init: false,
-      }),
-    });
-    const body = await res.json().catch(function () {
-      return {};
-    });
-    if (res.ok) return body.html_url || body.clone_url;
-    lastError = body.message || lastError;
-    if (res.status !== 422) break;
+  const payload = {
+    description: String(description || "").slice(0, 350),
+    private: true,
+    auto_init: false,
+  };
+  for (let e = 0; e < endpoints.length; e++) {
+    for (let i = 0; i < names.length; i++) {
+      const res = await fetch(endpoints[e], {
+        method: "POST",
+        headers: githubHeaders(env),
+        body: JSON.stringify(Object.assign({ name: names[i] }, payload)),
+      });
+      const body = await res.json().catch(function () {
+        return {};
+      });
+      if (res.ok) return body.html_url || body.clone_url;
+      lastError = body.message || lastError;
+      if (res.status === 404 || res.status === 403) break;
+      if (res.status !== 422) break;
+    }
   }
   throw new Error(lastError);
 }

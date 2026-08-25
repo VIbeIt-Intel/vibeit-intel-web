@@ -213,20 +213,50 @@ h1 {
   background: var(--purple);
 }
 
-.list {
-  display: grid;
-  gap: 0.75rem;
-  list-style: none;
+.tag.declined {
+  background: rgb(255 255 255 / 10%);
+  color: rgb(246 241 251 / 70%);
+}
+
+.item-wrap {
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 1.1rem;
+  background: rgb(18 9 26 / 72%);
 }
 
 .item {
   width: 100%;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 1.1rem;
+  padding: 1rem 1.1rem 0.7rem;
+  border: 0;
+  border-radius: 0;
   color: inherit;
   text-align: left;
-  background: rgb(18 9 26 / 72%);
+  background: transparent;
+}
+
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0 1.1rem 0.95rem;
+}
+
+.btn-mini {
+  margin-top: 0;
+  width: auto;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.btn-danger {
+  color: #ffb4b4;
+  background: rgb(180 40 40 / 28%);
+}
+
+.chip[data-set="declined"].on {
+  color: #fff;
+  background: rgb(255 255 255 / 18%);
 }
 
 .item h2 {

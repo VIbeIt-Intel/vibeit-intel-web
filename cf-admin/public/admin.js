@@ -31,12 +31,14 @@
   function labelStatus(status) {
     if (status === "in_progress") return "In progress";
     if (status === "done") return "Done";
+    if (status === "declined") return "Declined";
     return "New";
   }
 
   function tagClass(status) {
     if (status === "in_progress") return "tag progress";
     if (status === "done") return "tag done";
+    if (status === "declined") return "tag declined";
     return "tag";
   }
 
@@ -61,16 +63,26 @@
     }
   }
 
+  function setStatus(id, status) {
+    return api("/api/briefs/" + id, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: status }),
+    }).then(function () {
+      return loadList();
+    });
+  }
+
   function renderList(briefs) {
     list.innerHTML = "";
     empty.classList.toggle("hidden", Boolean(briefs.length));
     briefs.forEach(function (item) {
       const li = document.createElement("li");
+      li.className = "item-wrap";
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "item";
-      btn.innerHTML =
-        "<h2></h2><p></p><span></span>";
+      btn.innerHTML = "<h2></h2><p></p><span></span>";
       btn.querySelector("h2").textContent = item.businessName || "New brief";
       btn.querySelector("p").textContent =
         (item.package || "Brief") + " · " + when(item.createdAt);
@@ -80,7 +92,35 @@
       btn.addEventListener("click", function () {
         openBrief(item.id);
       });
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+      function act(label, className, handler) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = className;
+        b.textContent = label;
+        b.addEventListener("click", function (event) {
+          event.stopPropagation();
+          handler();
+        });
+        actions.appendChild(b);
+      }
+      act("Accept", "btn btn-mini", function () {
+        setStatus(item.id, "in_progress");
+      });
+      act("Decline", "btn btn-mini btn-ghost", function () {
+        setStatus(item.id, "declined");
+      });
+      act("Delete", "btn btn-mini btn-danger", function () {
+        if (!window.confirm("Delete " + (item.businessName || "this request") + "? This cannot be undone.")) {
+          return;
+        }
+        api("/api/briefs/" + item.id, { method: "DELETE" }).then(function () {
+          loadList();
+        });
+      });
       li.appendChild(btn);
+      li.appendChild(actions);
       list.appendChild(li);
     });
   }
@@ -216,10 +256,16 @@
       document.getElementById("d-package").textContent = brief.package || fields.Package || "Brief";
       document.getElementById("d-name").textContent = brief.businessName || fields.Name || "New client";
       document.getElementById("d-meta").textContent = when(brief.createdAt);
+      const email = brief.email || fields.Email || "";
+      const phone = brief.phone || fields.Phone || "";
+      const whatsapp = fields.WhatsApp || "";
+      const typeVal = fields.Type || "";
+      const actionVal =
+        fields["Customer action"] ||
+        (whatsapp ? "WhatsApp" : "") ||
+        (phone ? "Call" : "");
       const facts = document.getElementById("d-facts");
       clearNode(facts);
-      const typeVal = fields.Type || "";
-      const actionVal = fields["Customer action"] || "";
       [typeVal, actionVal].filter(Boolean).forEach(function (text) {
         const pill = document.createElement("span");
         pill.className = "fact";
@@ -258,9 +304,6 @@
 
       const links = document.getElementById("d-links");
       clearNode(links);
-      const email = brief.email || fields.Email || "";
-      const phone = brief.phone || fields.Phone || "";
-      const whatsapp = fields.WhatsApp || "";
       if (email) {
         const mail = document.createElement("a");
         mail.href = "mailto:" + email;
@@ -436,7 +479,10 @@
       .catch(function (err) {
         btn.disabled = false;
         btn.textContent = "Start website";
-        msg.textContent = err.message || "Could not start the website.";
+        const raw = err.message || "Could not start the website.";
+        msg.textContent = /resource_exhausted/i.test(raw)
+          ? "Cursor Cloud Agents are out of usage. Open cursor.com/dashboard/spending, raise or wait for the limit, then hit Start website again. The GitHub repo is already created."
+          : raw;
         msg.classList.remove("hidden");
       });
   });
