@@ -154,36 +154,6 @@
     return { h: h, s: s, l: l };
   }
 
-  function hslToRgb(h, s, l) {
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const hp = ((h % 360) + 360) % 360 / 60;
-    const x = c * (1 - Math.abs((hp % 2) - 1));
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    if (hp < 1) {
-      r = c;
-      g = x;
-    } else if (hp < 2) {
-      r = x;
-      g = c;
-    } else if (hp < 3) {
-      g = c;
-      b = x;
-    } else if (hp < 4) {
-      g = x;
-      b = c;
-    } else if (hp < 5) {
-      r = x;
-      b = c;
-    } else {
-      r = c;
-      b = x;
-    }
-    const m = l - c / 2;
-    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
-  }
-
   function hueDiff(a, b) {
     const d = Math.abs(a - b) % 360;
     return d > 180 ? 360 - d : d;
@@ -281,6 +251,12 @@
       if (agree) backdrop = avg;
     }
 
+    const backdropMean = backdrop
+      ? (backdrop[0] + backdrop[1] + backdrop[2]) / 3
+      : null;
+    const backdropIsLight = backdropMean != null && backdropMean > 200;
+    const backdropIsDark = backdropMean != null && backdropMean < 45;
+
     const buckets = {};
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] < 140) continue;
@@ -290,14 +266,18 @@
       if (backdrop && distSq(backdrop, r, g, b) < 2200) continue;
       const chroma = Math.max(r, g, b) - Math.min(r, g, b);
       const hsl = rgbToHsl(r, g, b);
-      if (chroma < 22 && hsl.l < 0.22) continue;
-      if (chroma < 22 && hsl.l > 0.82) continue;
-      if (hsl.l < 0.12 && chroma < 48) continue;
+      if (backdropIsDark && chroma < 22 && hsl.l < 0.2) continue;
+      if (backdropIsLight && chroma < 22 && hsl.l > 0.82) continue;
+      if (!backdrop && chroma < 22 && hsl.l < 0.08) continue;
+      if (!backdrop && chroma < 22 && hsl.l > 0.92) continue;
       const hBucket = Math.round(hsl.h / 12) % 30;
-      const sBand = hsl.s < 0.28 ? 0 : hsl.s < 0.58 ? 1 : 2;
-      const lBand = hsl.l < 0.32 ? 0 : hsl.l < 0.62 ? 1 : 2;
-      const key = hBucket + ":" + sBand + ":" + lBand;
-      const wgt = weight * (0.12 + (chroma / 255) * 2.6) * (0.35 + hsl.s);
+      const sBand = hsl.s < 0.2 ? 0 : hsl.s < 0.5 ? 1 : 2;
+      const lBand = hsl.l < 0.28 ? 0 : hsl.l < 0.55 ? 1 : hsl.l < 0.78 ? 2 : 3;
+      const key = (hsl.s < 0.18 ? "n" : "c") + ":" + (hsl.s < 0.18 ? lBand : hBucket + ":" + sBand + ":" + lBand);
+      const wgt =
+        weight *
+        (chroma < 28 ? 0.9 : 0.14 + (chroma / 255) * 2.5) *
+        (chroma < 28 ? 1 : 0.35 + hsl.s);
       if (!buckets[key]) {
         buckets[key] = { r: 0, g: 0, b: 0, w: 0, h: hsl.h };
       }
@@ -321,17 +301,6 @@
     });
   }
 
-  function shiftHex(hex, dh, ds, dl) {
-    const n = parseInt(hex.slice(1), 16);
-    const hsl = rgbToHsl((n >> 16) & 255, (n >> 8) & 255, n & 255);
-    const rgb = hslToRgb(
-      hsl.h + dh,
-      Math.max(0.22, Math.min(0.92, hsl.s + ds)),
-      Math.max(0.22, Math.min(0.78, hsl.l + dl))
-    );
-    return toHex(rgb[0], rgb[1], rgb[2]);
-  }
-
   function pickThree(clusters) {
     clusters.forEach(function (item) {
       if (item.s == null) {
@@ -340,44 +309,65 @@
         item.s = hsl.s;
         item.l = hsl.l;
       }
-      item.score = item.w * (0.2 + item.s * 2.4) * (item.l < 0.16 || item.l > 0.88 ? 0.25 : 1);
+      item.score =
+        item.w *
+        (item.s >= 0.22 ? 0.25 + item.s * 2.2 : 0.7 + Math.abs(item.l - 0.5) * 0.35);
     });
     clusters.sort(function (a, b) {
       return b.score - a.score;
     });
+
     const chromatic = clusters.filter(function (item) {
       return item.s >= 0.22 && item.l >= 0.16 && item.l <= 0.86;
     });
-    const rest = clusters.filter(function (item) {
-      return chromatic.indexOf(item) === -1 && item.l >= 0.14 && item.l <= 0.9;
+    const lights = clusters.filter(function (item) {
+      return item.s < 0.22 && item.l >= 0.62;
     });
+    const mids = clusters.filter(function (item) {
+      return item.s < 0.28 && item.l >= 0.32 && item.l < 0.62;
+    });
+    const darks = clusters.filter(function (item) {
+      return item.s < 0.22 && item.l >= 0.12 && item.l < 0.32;
+    });
+
     const picked = [];
+
+    function farEnough(item) {
+      return picked.every(function (other) {
+        const dr = item.rgb[0] - other.rgb[0];
+        const dg = item.rgb[1] - other.rgb[1];
+        const db = item.rgb[2] - other.rgb[2];
+        const sameHue = item.s >= 0.2 && other.s >= 0.2 && hueDiff(item.h, other.h) < 36;
+        const near = dr * dr + dg * dg + db * db < 4200;
+        const closeL = Math.abs(item.l - other.l) < 0.14 && item.s < 0.22 && other.s < 0.22;
+        return !sameHue && !near && !closeL;
+      });
+    }
 
     function take(list) {
       list.forEach(function (item) {
         if (picked.length >= 3) return;
-        const tooClose = picked.some(function (other) {
-          const dr = item.rgb[0] - other.rgb[0];
-          const dg = item.rgb[1] - other.rgb[1];
-          const db = item.rgb[2] - other.rgb[2];
-          return hueDiff(item.h, other.h) < 16 && dr * dr + dg * dg + db * db < 4800;
-        });
-        if (!tooClose) picked.push(item);
+        if (farEnough(item)) picked.push(item);
       });
     }
 
     take(chromatic);
-    if (picked.length < 3) take(rest);
+    take(lights);
+    take(mids);
+    if (picked.length < 3) take(darks);
+
     if (!picked.length) return ["#00c8c9", "#ff8a1a", "#4a1f7a"];
     const hexes = picked.map(function (item) {
       return item.hex;
     });
-    const seed = hexes[0];
     if (hexes.length === 1) {
-      hexes.push(shiftHex(seed, 0, 0.04, -0.18));
-      hexes.push(shiftHex(seed, 36, -0.12, 0.16));
+      hexes.push("#f2f2f2");
+      hexes.push("#2b2b2b");
     } else if (hexes.length === 2) {
-      hexes.push(shiftHex(seed, 42, -0.06, 0.12));
+      const hasLight = picked.some(function (item) {
+        return item.l >= 0.62;
+      });
+      hexes.push(hasLight ? "#2b2b2b" : "#f2f2f2");
     }
     return hexes.slice(0, 3);
   }
