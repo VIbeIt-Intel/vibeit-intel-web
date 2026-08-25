@@ -1,4 +1,5 @@
 import { STARTER_FILES } from "./starterFiles.js";
+import { formatMarkdown, formatPlaybook } from "./siteFormats.js";
 
 const COOKIE = "vibeit_admin";
 const WEEK = 60 * 60 * 24 * 7;
@@ -309,7 +310,7 @@ async function startBuild(request, env, id) {
   });
   const type = String(body.type || "").trim();
   const action = String(body.action || "").trim();
-  if (!type || !action) return json({ error: "Pick a business type and customer action" }, 400);
+  if (!type || !action) return json({ error: "Pick a site format and customer action" }, 400);
 
   const businessName = String(row.business_name || "client").trim();
   let repoUrl = String(row.github_repo || "").trim();
@@ -383,9 +384,11 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "Package: " + pkg,
     "Repo: " + repoUrl,
     "",
+    formatPlaybook(type),
+    "",
     "Hard rules:",
-    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md and assets/. Customize that starter. Do not throw the layout away and start from a blank page.",
-    "- This is a " + type + ". Layout, copy, services, photos, and CTAs must fit that trade. A nail salon is not a mechanic workshop.",
+    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md, FORMAT.md, and assets/. Customize that starter. Do not throw the layout away and start from a blank page.",
+    "- Follow FORMAT.md. A hairdresser, a maintenance trade, and a food seller must not share the same page structure.",
     "- The main button and contact path must drive this action: " + action + ".",
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
@@ -524,10 +527,12 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
     "index.html": fillTokens(STARTER_FILES["index.html"], values),
     "styles.css": fillTokens(STARTER_FILES["styles.css"], values),
     "README.md": fillTokens(STARTER_FILES["README.md"], values),
+    "FORMAT.md": formatMarkdown(type),
     "BRIEF.md": [
       "# " + name,
       "",
       "Type: " + type,
+      "Site format: " + type,
       "Customer action: " + action,
       "Package: " + String(row.package || ""),
       "",

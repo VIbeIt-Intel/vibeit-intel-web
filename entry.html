@@ -51,7 +51,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool23" />
+    <link rel="stylesheet" href="styles.css?v=cool24" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -199,25 +199,11 @@
 
         <div class="brief-block">
           <p class="brief-kicker">4. What you do</p>
-          <label class="brief-field">
-            What kind of business is this?
-            <select name="Business type" required>
-              <option value="" disabled selected>Choose one</option>
-              <option>Hair or beauty salon</option>
-              <option>Nail salon</option>
-              <option>Barber</option>
-              <option>Mechanic or panel beater</option>
-              <option>Plumber, electrician or other trade</option>
-              <option>Restaurant, cafe or takeaway</option>
-              <option>Medical, dental or physio</option>
-              <option>Gym or fitness</option>
-              <option>Retail shop</option>
-              <option>Professional services</option>
-              <option>Cleaning or home services</option>
-              <option>Events or photography</option>
-              <option>Other</option>
-            </select>
-          </label>
+          <p class="brief-help">
+            Pick the site format that matches your trade. A salon, a restaurant,
+            and a plumber are built as different websites.
+          </p>
+          <div class="brief-choices format-grid" data-site-formats></div>
           <label class="brief-field" id="business-type-other-wrap" hidden>
             Tell us what you do
             <input type="text" name="Business type other" autocomplete="off" />
@@ -329,6 +315,7 @@
         </form>
     </main>
     <script src="brief-files.js?v=files5"></script>
+    <script src="brief-formats.js?v=fmt1"></script>
     <script>
       (function () {
         const MAX_EXTRA = 10;
@@ -365,15 +352,21 @@
           radio.addEventListener("change", sync);
         });
 
-        const typeSelect = form.querySelector('select[name="Business type"]');
         const typeOtherWrap = document.getElementById("business-type-other-wrap");
         const typeOtherInput = typeOtherWrap && typeOtherWrap.querySelector("input");
+        function selectedType() {
+          const picked = form.querySelector('input[name="Business type"]:checked');
+          return picked ? picked.value : "";
+        }
         function syncTypeOther() {
-          const other = Boolean(typeSelect && typeSelect.value === "Other");
+          const other = selectedType() === "Other";
           if (typeOtherWrap) typeOtherWrap.hidden = !other;
           if (typeOtherInput) typeOtherInput.required = other;
         }
-        if (typeSelect) typeSelect.addEventListener("change", syncTypeOther);
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Business type") syncTypeOther();
+        });
+        syncTypeOther();
 
         function setFiles(fileInput, files) {
           VibeBriefFiles.setFiles(fileInput, files);

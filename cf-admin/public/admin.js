@@ -53,6 +53,44 @@
     }
   }
 
+  const FORMAT_NOTES = {
+    "Hair or beauty salon":
+      "Cursor will build a salon: treatments, team, hair photos, and book — not a restaurant menu.",
+    "Nail salon": "Cursor will build a nail studio: sets, fills, gallery, and book.",
+    Barber: "Cursor will build a barber shop: cuts, fades, hours, and book or walk-in.",
+    "Mechanic or panel beater":
+      "Cursor will build a workshop: services, jobs, and quote or call — not a salon price list.",
+    "Plumber, electrician or other trade":
+      "Cursor will build a trades site: what they fix, where they work, and a quote.",
+    "Restaurant, cafe or takeaway":
+      "Cursor will build a food site: menu, hours, photos, and order or reserve.",
+    "Medical, dental or physio":
+      "Cursor will build a calm clinic: services, hours, and how to book.",
+    "Gym or fitness": "Cursor will build a gym: classes, trainers, and how to join.",
+    "Retail shop": "Cursor will build a shop: products and how to visit or buy.",
+    "Professional services":
+      "Cursor will build a professional site: what they do, who they help, then enquire.",
+    "Cleaning or home services":
+      "Cursor will build a cleaning site: packages, areas, and a quote.",
+    "Events or photography":
+      "Cursor will build a showcase: past work, packages, then enquire.",
+    Other: "Cursor will follow the brief and still pick one coherent layout — not a generic salon.",
+  };
+
+  function syncFormatNote() {
+    const type = document.getElementById("d-type").value;
+    const note = document.getElementById("d-format-note");
+    if (!type) {
+      note.textContent = "";
+      note.classList.add("hidden");
+      return;
+    }
+    note.textContent =
+      FORMAT_NOTES[type] ||
+      "Cursor will follow this trade and the brief. Reshape the starter to match; do not keep a generic brochure if the work is different.";
+    note.classList.remove("hidden");
+  }
+
   function hashLogin() {
     if (location.hash === "#login-denied") {
       loginMsg.textContent = "That Google account is not allowed. Use support@vibeit-intel.net.";
@@ -283,6 +321,7 @@
         typeSelect.value = typeVal;
       }
       actionSelect.value = actionVal;
+      syncFormatNote();
       const cursorLink = document.getElementById("d-cursor-link");
       const buildBtn = document.getElementById("d-build");
       const buildMsg = document.getElementById("d-build-msg");
@@ -446,13 +485,15 @@
     });
   });
 
+  document.getElementById("d-type").addEventListener("change", syncFormatNote);
+
   document.getElementById("d-build").addEventListener("click", function () {
     const type = document.getElementById("d-type").value;
     const action = document.getElementById("d-action").value;
     const msg = document.getElementById("d-build-msg");
     const btn = document.getElementById("d-build");
     if (!type || !action) {
-      msg.textContent = "Pick the business type and what customers should do, then start.";
+      msg.textContent = "Pick the site format and what customers should do, then start.";
       msg.classList.remove("hidden");
       return;
     }

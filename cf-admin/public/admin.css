@@ -407,6 +407,14 @@ h1 {
   width: auto;
 }
 
+.format-note {
+  margin-top: 0.55rem;
+  max-width: 42rem;
+  color: rgb(246 241 251 / 72%);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .swatch {
   display: flex;
   align-items: center;
