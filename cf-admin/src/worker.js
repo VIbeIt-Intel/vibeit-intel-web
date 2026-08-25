@@ -395,6 +395,7 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "- The main button and contact path must drive this action: " + action + ".",
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
+    "- If assets/ has a Word, Excel, PDF, CSV, or photo price list, use it for services and prices. Do not ignore it.",
     "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
     "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
@@ -475,6 +476,7 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
   const files = parseFiles(row.files);
   const uploaded = [];
   let extraCount = 0;
+  let listCount = 0;
   let logoSrc = "";
   const gallery = [];
 
@@ -485,13 +487,17 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
     if (!object || !object.byteLength) continue;
     const label = String(file.label || file.name || "file").toLowerCase();
     const ext = extFromFile(file);
-    let dest = "assets/file-" + (i + 1) + ext;
+    const image = isImageExt(ext);
+    let dest = "assets/file-" + (i + 1) + (ext || ".bin");
     if (label.indexOf("logo") !== -1 && !logoSrc) {
-      dest = "assets/logo" + ext;
-      logoSrc = dest;
-    } else if (label.indexOf("vibe") !== -1) {
+      dest = "assets/logo" + (ext || ".bin");
+      if (image) logoSrc = dest;
+    } else if (label.indexOf("vibe") !== -1 && image) {
       dest = "assets/vibe" + ext;
       gallery.push(dest);
+    } else if (label.indexOf("price list") !== -1 || !image) {
+      listCount += 1;
+      dest = "assets/price-list-" + listCount + (ext || ".bin");
     } else {
       extraCount += 1;
       dest = "assets/extra-" + extraCount + ext;
@@ -645,14 +651,26 @@ function whatsappHref(value) {
 }
 
 function extFromFile(file) {
-  const name = String(file.name || "");
-  const match = name.match(/\.(jpe?g|png|gif|webp)$/i);
-  if (match) return match[0].toLowerCase() === ".jpeg" ? ".jpg" : match[0].toLowerCase();
+  const name = String(file.name || file.label || "");
+  const match = name.match(/(\.[a-z0-9]{1,8})$/i);
+  if (match) {
+    const ext = match[1].toLowerCase();
+    return ext === ".jpeg" ? ".jpg" : ext;
+  }
   const type = String(file.type || "");
   if (type.indexOf("png") !== -1) return ".png";
   if (type.indexOf("webp") !== -1) return ".webp";
   if (type.indexOf("gif") !== -1) return ".gif";
-  return ".jpg";
+  if (type.indexOf("jpeg") !== -1) return ".jpg";
+  if (type.indexOf("pdf") !== -1) return ".pdf";
+  if (type.indexOf("spreadsheet") !== -1 || type.indexOf("excel") !== -1) return ".xlsx";
+  if (type.indexOf("wordprocessing") !== -1 || type.indexOf("msword") !== -1) return ".docx";
+  if (type.indexOf("csv") !== -1) return ".csv";
+  return ".bin";
+}
+
+function isImageExt(ext) {
+  return /\.(jpe?g|png|gif|webp)$/i.test(String(ext || ""));
 }
 
 function utf8ToBase64(text) {

@@ -256,15 +256,31 @@
 
         <div class="brief-block">
           <p class="brief-kicker">5. Products or services</p>
+          <p class="brief-help">
+            Type a list, or upload a Word, Excel, PDF, or photo of your price
+            list. Both is fine.
+          </p>
           <label class="brief-field">
             List
             <textarea
               name="Products or services"
               rows="5"
-              required
-              placeholder="One per line is fine."
+              placeholder="One per line is fine. Skip this if you are uploading a file."
             ></textarea>
           </label>
+          <div class="brief-file">
+            <span>Price list or menu — Word, Excel, PDF, or photo</span>
+            <label class="brief-pick">
+              <input
+                id="price-list-file"
+                type="file"
+                accept=".doc,.docx,.xls,.xlsx,.csv,.pdf,.odt,.ods,.txt,.rtf,image/*"
+                multiple
+              />
+              <span class="brief-pick-label">Choose files</span>
+            </label>
+            <div class="brief-previews" id="price-list-previews" role="list" hidden></div>
+          </div>
         </div>
 
         <div class="brief-block">
@@ -452,7 +468,7 @@
           This package includes two revision rounds after the first draft. Extra
           changes are quoted first. We’ll reply from support@vibeit-intel.net.
           Photos are compressed on this page so the email can take several at
-          once (max 10 extras).
+          once (max 10 extras). A Word or Excel price list is sent as-is.
         </p>
       </form>
     </main>
@@ -462,6 +478,7 @@
       (function () {
         const MAX_EXTRA = 10;
         const MAX_LOGO = 5;
+        const MAX_LISTS = 5;
         const MAX_EDGE = 1600;
         const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
@@ -478,6 +495,7 @@
         const submitLabel =
           'Send us your <span class="brief-vibe">Vibe</span>';
         const extra = document.getElementById("extra-photos");
+        const listInput = document.getElementById("price-list-file");
         const briefBox = document.getElementById("readable-brief");
         const replyTo = document.getElementById("brief-replyto");
         const logoInput = document.getElementById("logo-file");
@@ -664,9 +682,15 @@
             lines.push("");
           }
           const products = val("Products or services");
-          if (products) {
+          const listFiles = attached.filter(function (item) {
+            return item.kind === "list";
+          });
+          if (products || listFiles.length) {
             lines.push("PRODUCTS OR SERVICES");
-            lines.push(products);
+            if (products) lines.push(products);
+            listFiles.forEach(function (item) {
+              lines.push("Price list file: " + item.file.name);
+            });
             lines.push("");
           }
           const book = val("What customers can book");
@@ -774,17 +798,36 @@
           previews: document.getElementById("extra-previews"),
           onChange: refreshColours,
         });
+        VibeBriefFiles.bind(listInput, {
+          max: MAX_LISTS,
+          nouns: "lists",
+          previews: document.getElementById("price-list-previews"),
+        });
 
         form.addEventListener("submit", function (event) {
           if (nativeSend) return;
           event.preventDefault();
           const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
+          const lists = Array.from(listInput.files || []).slice(0, MAX_LISTS);
+          if (!val("Products or services") && !lists.length) {
+            window.alert(
+              "Add a product list, or upload a Word, Excel, PDF, or photo of your price list."
+            );
+            return;
+          }
           if ((extra.files || []).length > MAX_EXTRA) {
             setFiles(extra, extras);
           }
+          if ((listInput.files || []).length > MAX_LISTS) {
+            setFiles(listInput, lists);
+          }
           submit.disabled = true;
-          const hasFiles = logos.length || extras.length || (vibeInput.files && vibeInput.files[0]);
+          const hasFiles =
+            logos.length ||
+            extras.length ||
+            lists.length ||
+            (vibeInput.files && vibeInput.files[0]);
           submit.textContent = hasFiles ? "Compressing photos…" : "Sending…";
 
           const jobs = [];
@@ -809,12 +852,20 @@
               })
             );
           });
+          lists.forEach(function (file, i) {
+            jobs.push(
+              compressOne(file).then(function (out) {
+                return { kind: "list", index: i, file: out };
+              })
+            );
+          });
 
           Promise.all(jobs)
             .then(function (packed) {
               logoInput.disabled = true;
               vibeInput.disabled = true;
               extra.disabled = true;
+              listInput.disabled = true;
               extra.removeAttribute("name");
               clearAttachments();
 
@@ -831,6 +882,11 @@
                   file = namedFile(item.file, "vibe-photo");
                   label = "Vibe photo";
                   fieldName = "Vibe photo";
+                } else if (item.kind === "list") {
+                  const n = (item.index || 0) + 1;
+                  file = namedFile(item.file, n === 1 ? "price-list" : "price-list-" + n);
+                  label = n === 1 ? "Price list" : "Price list " + n;
+                  fieldName = label;
                 } else {
                   const n = item.index + 1;
                   file = namedFile(item.file, "extra-photo-" + n);
@@ -861,6 +917,7 @@
               extra.disabled = false;
               logoInput.disabled = false;
               vibeInput.disabled = false;
+              listInput.disabled = false;
               Array.prototype.forEach.call(form.querySelectorAll("input, textarea, select"), function (el) {
                 el.disabled = false;
               });
