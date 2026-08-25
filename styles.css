@@ -1437,6 +1437,11 @@ html.from-it .foot {
   border-radius: 0.8rem;
   background: transparent;
   cursor: pointer;
+  transition: box-shadow 0.25s ease;
+}
+
+.brief-swatch.is-auto input[type="color"] {
+  box-shadow: 0 0 0 2px rgb(0 200 201 / 70%);
 }
 
 .brief-pick {

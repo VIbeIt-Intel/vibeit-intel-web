@@ -51,7 +51,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool21" />
+    <link rel="stylesheet" href="styles.css?v=cool23" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -199,7 +199,9 @@
 
         <div class="brief-block">
           <p class="brief-kicker">4. Colours and vibe</p>
-          <p class="brief-help">Pick three colours that feel like your business.</p>
+          <p class="brief-help" id="colour-help">
+            We’ll read three colours from your logo and photos. Change them if they look wrong.
+          </p>
           <div class="brief-colours">
             <label class="brief-swatch">
               Colour 1
@@ -326,7 +328,7 @@
         </p>
         </form>
     </main>
-    <script src="brief-files.js?v=files2"></script>
+    <script src="brief-files.js?v=files3"></script>
     <script>
       (function () {
         const MAX_EXTRA = 10;
@@ -550,20 +552,33 @@
           form.appendChild(inputEl);
         }
 
+        const refreshColours = VibeBriefFiles.watchColours({
+          swatches: [
+            form.querySelector('input[name="Colour 1"]'),
+            form.querySelector('input[name="Colour 2"]'),
+            form.querySelector('input[name="Colour 3"]'),
+          ],
+          fileInputs: [logoInput, vibeInput, extra],
+          weights: { "logo-file": 8, "vibe-file": 2, "extra-photos": 0.7 },
+          note: document.getElementById("colour-help"),
+        });
         VibeBriefFiles.bind(logoInput, {
           max: MAX_LOGO,
           nouns: "logos",
           previews: document.getElementById("logo-previews"),
+          onChange: refreshColours,
         });
         VibeBriefFiles.bind(vibeInput, {
           max: 1,
           nouns: "photo",
           previews: document.getElementById("vibe-previews"),
+          onChange: refreshColours,
         });
         VibeBriefFiles.bind(extra, {
           max: MAX_EXTRA,
           nouns: "photos",
           previews: document.getElementById("extra-previews"),
+          onChange: refreshColours,
         });
 
         form.addEventListener("submit", function (event) {
