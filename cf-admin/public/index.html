@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin.css?v=9" />
+    <link rel="stylesheet" href="/admin.css?v=10" />
   </head>
   <body>
     <div class="vibe" aria-hidden="true">
@@ -126,6 +126,27 @@
           </div>
           <p id="d-format-note" class="format-note hidden"></p>
           <p id="d-build-msg" class="note hidden"></p>
+          <div class="bill-row">
+            <select id="d-bill-kind" aria-label="Quote or invoice">
+              <option value="quote">Quote</option>
+              <option value="invoice">Invoice</option>
+            </select>
+            <label class="bill-amount">
+              R
+              <input
+                id="d-bill-amount"
+                type="number"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                aria-label="Amount in rand"
+              />
+            </label>
+            <button id="d-bill-send" class="btn btn-hot" type="button">Send quote</button>
+            <a id="d-bill-open" class="btn btn-ghost hidden" target="_blank" rel="noopener">Open</a>
+          </div>
+          <p id="d-bill-msg" class="note hidden"></p>
+          <ul id="d-bill-sent" class="bill-sent hidden"></ul>
         </header>
         <div class="dossier-grid">
           <section class="panel" id="d-contact-panel" hidden>
@@ -174,6 +195,6 @@
       </article>
     </div>
 
-    <script src="/admin.js?v=12"></script>
+    <script src="/admin.js?v=13"></script>
   </body>
 </html>

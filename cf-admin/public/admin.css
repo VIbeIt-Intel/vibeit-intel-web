@@ -415,6 +415,53 @@ h1 {
   line-height: 1.45;
 }
 
+.bill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.9rem;
+}
+
+.bill-row select,
+.bill-amount input {
+  min-width: 8.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.7rem;
+  background: #12091a;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.bill-amount {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgb(246 241 251 / 78%);
+  font-weight: 700;
+}
+
+.bill-amount input {
+  width: 7.5rem;
+  min-width: 0;
+}
+
+.bill-row .btn {
+  margin-top: 0;
+  width: auto;
+  padding: 0.5rem 0.95rem;
+}
+
+.bill-sent {
+  margin-top: 0.55rem;
+  padding-left: 1.1rem;
+  color: rgb(246 241 251 / 72%);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .swatch {
   display: flex;
   align-items: center;

@@ -70,3 +70,20 @@ Create a Cursor API key. Create a GitHub token that can make repos in `VIbeIt-In
 npx wrangler secret put CURSOR_API_KEY
 npx wrangler secret put GITHUB_TOKEN
 ```
+
+## 6. Quotes and invoices
+
+On a request, **Send quote** prefills Entry R1,105 or Intermediate R2,500, then emails the client (or opens Gmail) with **your** bank details.
+
+Do not put the account number in git. Add them as Worker secrets:
+
+```bash
+npx wrangler secret put VIBEIT_ACCOUNT_NAME
+npx wrangler secret put VIBEIT_BANK
+npx wrangler secret put VIBEIT_ACCOUNT_NUMBER
+npx wrangler secret put VIBEIT_BRANCH
+```
+
+Optional: `VIBEIT_VAT` if you are VAT-registered. Optional: `RESEND_API_KEY` (and `RESEND_FROM`) to send from the worker instead of opening Gmail.
+
+The invoices table is created automatically on first send. For a fresh database, `schema.sql` already includes it.

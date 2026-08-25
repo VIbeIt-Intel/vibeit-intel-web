@@ -1,5 +1,13 @@
 import { STARTER_FILES } from "./starterFiles.js";
 import { formatMarkdown, formatPlaybook } from "./siteFormats.js";
+import {
+  bankFromEnv,
+  packageAmount,
+  quoteHtml,
+  quoteMailto,
+  quoteSubject,
+  quoteText,
+} from "./invoice.js";
 
 const COOKIE = "vibeit_admin";
 const WEEK = 60 * 60 * 24 * 7;
@@ -50,6 +58,12 @@ async function handle(request, env, url) {
   const buildMatch = path.match(/^\/api\/briefs\/([^/]+)\/build$/);
   if (buildMatch && method === "POST") return startBuild(request, env, buildMatch[1]);
 
+  const quotePage = path.match(/^\/api\/briefs\/([^/]+)\/quote\/([^/]+)$/);
+  if (quotePage && method === "GET") return getQuotePage(request, env, quotePage[1], quotePage[2]);
+
+  const quoteMatch = path.match(/^\/api\/briefs\/([^/]+)\/quote$/);
+  if (quoteMatch && method === "POST") return sendQuote(request, env, quoteMatch[1]);
+
   return json({ error: "Not found" }, 404);
 }
 
@@ -68,6 +82,10 @@ async function me(request, env) {
     build: {
       cursor: Boolean(env.CURSOR_API_KEY),
       github: Boolean(env.GITHUB_TOKEN),
+    },
+    billing: {
+      bank: bankFromEnv(env).ready,
+      email: Boolean(env.RESEND_API_KEY),
     },
   });
 }
@@ -224,7 +242,18 @@ async function getBrief(request, env, id) {
   if (!email) return json({ error: "Login required" }, 401);
   const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
   if (!row) return json({ error: "Not found" }, 404);
-  return json({ brief: shapeBrief(row) });
+  const quotes = await listQuotes(env, id);
+  const bank = bankFromEnv(env);
+  return json({
+    brief: Object.assign(shapeBrief(row), {
+      suggestedAmount: packageAmount(row),
+      quotes: quotes,
+    }),
+    billing: {
+      bank: bank.ready,
+      email: Boolean(env.RESEND_API_KEY),
+    },
+  });
 }
 
 async function patchBrief(request, env, id) {
@@ -719,6 +748,208 @@ function isImageExt(ext) {
 
 function utf8ToBase64(text) {
   return bytesToBase64(encoder.encode(String(text || "")));
+}
+
+async function ensureInvoicesTable(env) {
+  await env.DB.prepare(
+    "CREATE TABLE IF NOT EXISTS invoices (id TEXT PRIMARY KEY, brief_id TEXT NOT NULL, created_at TEXT NOT NULL, kind TEXT NOT NULL, number TEXT NOT NULL, amount INTEGER NOT NULL, description TEXT, note TEXT, to_email TEXT, sent_at TEXT, sent_via TEXT)"
+  ).run();
+}
+
+async function listQuotes(env, briefId) {
+  try {
+    await ensureInvoicesTable(env);
+    const result = await env.DB.prepare(
+      "SELECT id, created_at, kind, number, amount, sent_at, sent_via FROM invoices WHERE brief_id = ? ORDER BY created_at DESC LIMIT 20"
+    )
+      .bind(briefId)
+      .all();
+    return (result.results || []).map(function (row) {
+      return {
+        id: row.id,
+        createdAt: row.created_at,
+        kind: row.kind,
+        number: row.number,
+        amount: row.amount,
+        sentAt: row.sent_at || "",
+        sentVia: row.sent_via || "",
+      };
+    });
+  } catch (err) {
+    return [];
+  }
+}
+
+async function nextQuoteNumber(env) {
+  const day = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+  const prefix = "VI-" + day + "-";
+  const row = await env.DB.prepare("SELECT COUNT(*) AS n FROM invoices WHERE number LIKE ?")
+    .bind(prefix + "%")
+    .first();
+  const n = Number((row && row.n) || 0) + 1;
+  return prefix + String(n).padStart(2, "0");
+}
+
+function quoteDescription(row, kind) {
+  const pkg = String(row.package || "").trim();
+  if (pkg) return pkg.replace(/\s+—\s+from\s+/i, " — ");
+  return kind === "invoice" ? "VibeIt website — once-off" : "VibeIt website quote — once-off";
+}
+
+function displayDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString("en-ZA", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (err) {
+    return iso;
+  }
+}
+
+function quoteDoc(row, invoice, bank, toEmail) {
+  return {
+    kind: invoice.kind,
+    number: invoice.number,
+    amount: Number(invoice.amount) || 0,
+    description: invoice.description,
+    note: invoice.note || "",
+    businessName: String(row.business_name || "").trim() || "Client",
+    toEmail: toEmail,
+    createdAt: displayDate(invoice.created_at),
+    bank: bank,
+  };
+}
+
+async function sendQuote(request, env, id) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return json({ error: "Not found" }, 404);
+  const bank = bankFromEnv(env);
+  if (!bank.ready) {
+    return json(
+      {
+        error:
+          "Add VIBEIT_ACCOUNT_NAME, VIBEIT_BANK, and VIBEIT_ACCOUNT_NUMBER in Cloudflare (Workers → vibeit-admin → Settings → Variables), then send.",
+      },
+      501
+    );
+  }
+  const toEmail = String(row.email || "").trim();
+  if (!toEmail || toEmail.indexOf("@") === -1) {
+    return json({ error: "This brief has no client email." }, 400);
+  }
+  const body = await request.json().catch(function () {
+    return {};
+  });
+  const kind = String(body.kind || "quote") === "invoice" ? "invoice" : "quote";
+  const amount = Math.round(Number(body.amount));
+  if (!amount || amount < 1) return json({ error: "Enter an amount in rand." }, 400);
+  const note = String(body.note || "").trim().slice(0, 400);
+  await ensureInvoicesTable(env);
+  const invoice = {
+    id: crypto.randomUUID(),
+    kind: kind,
+    number: await nextQuoteNumber(env),
+    amount: amount,
+    description: quoteDescription(row, kind),
+    note: note,
+    created_at: new Date().toISOString(),
+  };
+  const doc = quoteDoc(row, invoice, bank, toEmail);
+  await env.DB.prepare(
+    "INSERT INTO invoices (id, brief_id, created_at, kind, number, amount, description, note, to_email, sent_at, sent_via) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  )
+    .bind(
+      invoice.id,
+      id,
+      invoice.created_at,
+      invoice.kind,
+      invoice.number,
+      invoice.amount,
+      invoice.description,
+      invoice.note,
+      toEmail,
+      "",
+      ""
+    )
+    .run();
+
+  const mailed = await tryResend(env, toEmail, quoteSubject(kind, invoice.number, doc.businessName), quoteHtml(doc), quoteText(doc));
+  const sentVia = mailed.sent ? "email" : "gmail";
+  const sentAt = new Date().toISOString();
+  await env.DB.prepare("UPDATE invoices SET sent_at = ?, sent_via = ? WHERE id = ?")
+    .bind(sentAt, sentVia, invoice.id)
+    .run();
+
+  return json({
+    ok: true,
+    sent: mailed.sent,
+    sentVia: sentVia,
+    mailError: mailed.error || "",
+    mailto: quoteMailto(doc),
+    printUrl: "/api/briefs/" + id + "/quote/" + invoice.id,
+    quote: {
+      id: invoice.id,
+      kind: invoice.kind,
+      number: invoice.number,
+      amount: invoice.amount,
+      sentAt: sentAt,
+      sentVia: sentVia,
+    },
+  });
+}
+
+async function getQuotePage(request, env, briefId, quoteId) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  await ensureInvoicesTable(env);
+  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(briefId).first();
+  const invoice = await env.DB.prepare("SELECT * FROM invoices WHERE id = ? AND brief_id = ?")
+    .bind(quoteId, briefId)
+    .first();
+  if (!row || !invoice) return json({ error: "Not found" }, 404);
+  const doc = quoteDoc(row, invoice, bankFromEnv(env), invoice.to_email || row.email || "");
+  return new Response(quoteHtml(doc, { printable: true }), {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "private, no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+async function tryResend(env, to, subject, html, text) {
+  if (!env.RESEND_API_KEY) return { sent: false };
+  const from = String(env.RESEND_FROM || "VibeIt-Intel <support@vibeit-intel.net>").trim();
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + env.RESEND_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: from,
+        to: [to],
+        bcc: ["support@vibeit-intel.net"],
+        subject: subject,
+        html: html,
+        text: text,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(function () {
+        return {};
+      });
+      return { sent: false, error: body.message || "Email did not send" };
+    }
+    return { sent: true };
+  } catch (err) {
+    return { sent: false, error: err.message || "Email did not send" };
+  }
 }
 
 async function saveBuild(env, id, repo, agentId, cursorUrl) {

@@ -107,6 +107,55 @@
     return actionVal;
   }
 
+  function formatRand(amount) {
+    const n = Math.round(Number(amount) || 0);
+    return "R" + n.toLocaleString("en-ZA");
+  }
+
+  function fillBill(brief, billing) {
+    const kind = document.getElementById("d-bill-kind");
+    const amount = document.getElementById("d-bill-amount");
+    const send = document.getElementById("d-bill-send");
+    const open = document.getElementById("d-bill-open");
+    const msg = document.getElementById("d-bill-msg");
+    const sent = document.getElementById("d-bill-sent");
+    kind.value = "quote";
+    send.disabled = false;
+    send.textContent = "Send quote";
+    open.classList.add("hidden");
+    amount.value = brief.suggestedAmount > 0 ? String(brief.suggestedAmount) : "";
+    clearNode(sent);
+    const quotes = brief.quotes || [];
+    sent.classList.toggle("hidden", !quotes.length);
+    quotes.forEach(function (item) {
+      const li = document.createElement("li");
+      const label = item.kind === "invoice" ? "Invoice" : "Quote";
+      const via = item.sentVia === "email" ? "emailed" : "opened in Gmail";
+      li.textContent =
+        label +
+        " " +
+        item.number +
+        " · " +
+        formatRand(item.amount) +
+        (item.sentAt ? " · " + via + " " + when(item.sentAt) : "");
+      sent.appendChild(li);
+    });
+    if (quotes[0]) {
+      open.href = "/api/briefs/" + brief.id + "/quote/" + quotes[0].id;
+      open.classList.remove("hidden");
+    }
+    if (!billing.bank) {
+      msg.textContent =
+        "Add your VibeIt bank details in Cloudflare first (account name, bank, account number). Then you can send a quote.";
+      msg.classList.remove("hidden");
+    } else if (!brief.email) {
+      msg.textContent = "This brief has no client email, so a quote cannot be sent yet.";
+      msg.classList.remove("hidden");
+    } else {
+      msg.classList.add("hidden");
+    }
+  }
+
   function hashLogin() {
     if (location.hash === "#login-denied") {
       loginMsg.textContent = "That Google account is not allowed. Use support@vibeit-intel.net.";
@@ -359,6 +408,8 @@
         chip.classList.toggle("on", chip.getAttribute("data-set") === brief.status);
       });
 
+      fillBill(brief, body.billing || {});
+
       const links = document.getElementById("d-links");
       clearNode(links);
       if (email) {
@@ -548,6 +599,64 @@
         msg.textContent = /resource_exhausted/i.test(raw)
           ? "Cursor Cloud Agents are out of usage. Open cursor.com/dashboard/spending, raise or wait for the limit, then hit Start website again. The GitHub repo is already created."
           : raw;
+        msg.classList.remove("hidden");
+      });
+  });
+
+  document.getElementById("d-bill-kind").addEventListener("change", function () {
+    const kind = document.getElementById("d-bill-kind").value;
+    document.getElementById("d-bill-send").textContent = kind === "invoice" ? "Send invoice" : "Send quote";
+  });
+
+  document.getElementById("d-bill-send").addEventListener("click", function () {
+    const kind = document.getElementById("d-bill-kind").value;
+    const amount = Number(document.getElementById("d-bill-amount").value);
+    const msg = document.getElementById("d-bill-msg");
+    const btn = document.getElementById("d-bill-send");
+    if (!amount || amount < 1) {
+      msg.textContent = "Enter the amount in rand.";
+      msg.classList.remove("hidden");
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    msg.classList.add("hidden");
+    api("/api/briefs/" + currentId + "/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: kind, amount: amount }),
+    })
+      .then(function (body) {
+        if (body.mailto && !body.sent) window.location.href = body.mailto;
+        return openBrief(currentId).then(function () {
+          const note = document.getElementById("d-bill-msg");
+          const link = document.getElementById("d-bill-open");
+          document.getElementById("d-bill-send").disabled = false;
+          document.getElementById("d-bill-send").textContent =
+            kind === "invoice" ? "Send invoice" : "Send quote";
+          if (body.printUrl) {
+            link.href = body.printUrl;
+            link.classList.remove("hidden");
+          }
+          if (body.sent) {
+            note.textContent =
+              (kind === "invoice" ? "Invoice " : "Quote ") +
+              body.quote.number +
+              " emailed to the client. A copy went to support@vibeit-intel.net.";
+          } else {
+            note.textContent =
+              (body.mailError ? body.mailError + " " : "") +
+              "Gmail should open with the " +
+              (kind === "invoice" ? "invoice" : "quote") +
+              " and your bank details. Open if you want a print/PDF copy.";
+          }
+          note.classList.remove("hidden");
+        });
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = kind === "invoice" ? "Send invoice" : "Send quote";
+        msg.textContent = err.message || "Could not send.";
         msg.classList.remove("hidden");
       });
   });
