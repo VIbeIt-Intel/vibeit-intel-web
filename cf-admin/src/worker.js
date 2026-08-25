@@ -399,6 +399,7 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "- Services and products are different. Treatments, repairs, and bookings go under Services. Items they sell (food, nail products, parts, merch) go under Shop. Hide Shop if they do not sell items.",
     "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
     "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
+    "- Only show a pay link or bank details if they appear in the brief. Do not invent PayFast, iKhoka, SnapScan, or a checkout. If they pay cash or with a card machine, say that. If payment details are missing, tell customers to WhatsApp or call.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
     "- If the brief copy is placeholder junk (dddd, test, asdf), do not invent a fake brand story. Use honest generic copy for that trade and leave a short TODO comment.",
     "- Open a PR when the first draft is ready.",

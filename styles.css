@@ -1411,11 +1411,15 @@ html.from-it .foot {
   margin-top: 1.1rem;
 }
 
-#sell-products-wrap[hidden] {
+#sell-products-wrap[hidden],
+#pay-eft-wrap[hidden],
+#pay-link-wrap[hidden] {
   display: none;
 }
 
-#sell-products-wrap {
+#sell-products-wrap,
+#pay-eft-wrap,
+#pay-link-wrap {
   margin-top: 0.85rem;
 }
 

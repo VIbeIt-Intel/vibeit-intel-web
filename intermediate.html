@@ -54,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool26" />
+    <link rel="stylesheet" href="styles.css?v=cool27" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -395,42 +395,93 @@
 
         <div class="brief-block">
           <p class="brief-kicker">11. How you get paid</p>
-          <p class="brief-help">Tick every way customers should be able to pay.</p>
+          <p class="brief-help">
+            Tick how people pay you today. You open the bank account or the app
+            yourself — we only put the details on the site. Don’t have the
+            numbers on you? Leave the boxes blank and send them later.
+          </p>
           <div class="brief-choices">
-            <label class="brief-choice">
-              <input type="checkbox" name="Pay with EFT" value="Yes" />
-              EFT / bank transfer
-            </label>
-            <label class="brief-choice">
-              <input type="checkbox" name="Pay with card" value="Yes" />
-              Card
-            </label>
-            <label class="brief-choice">
-              <input type="checkbox" name="Pay with SnapScan" value="Yes" />
-              SnapScan
-            </label>
-            <label class="brief-choice">
-              <input type="checkbox" name="Pay with PayFast" value="Yes" />
-              PayFast
-            </label>
             <label class="brief-choice">
               <input type="checkbox" name="Pay with cash" value="Yes" />
               Cash
             </label>
             <label class="brief-choice">
-              <input type="checkbox" name="Pay with other" value="Yes" id="pay-other" />
-              Other
+              <input type="checkbox" name="Pay with card machine" value="Yes" />
+              Card machine in the shop
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with EFT" value="Yes" />
+              Bank transfer (EFT)
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with app" value="Yes" />
+              Phone or app (PayFast, iKhoka, SnapScan)
             </label>
           </div>
-          <label class="brief-field" id="pay-other-wrap" hidden>
-            Other payment method
-            <input
-              type="text"
-              name="Other payment method"
-              placeholder="e.g. Ozow, Zapper"
-              autocomplete="off"
-            />
-          </label>
+          <div id="pay-eft-wrap" hidden>
+            <p class="brief-help">
+              Copy these from your banking app or a bank letter. They go on the
+              site so customers can pay you.
+            </p>
+            <div class="brief-row">
+              <label class="brief-field">
+                Name on the account
+                <input
+                  type="text"
+                  name="Bank account name"
+                  placeholder="usually your business name"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="brief-field">
+                Bank
+                <input
+                  type="text"
+                  name="Bank"
+                  placeholder="e.g. Capitec, FNB, Standard Bank"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <div class="brief-row">
+              <label class="brief-field">
+                Account number
+                <input
+                  type="text"
+                  name="Account number"
+                  inputmode="numeric"
+                  placeholder="copy from the app"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="brief-field">
+                Branch code
+                <input
+                  type="text"
+                  name="Branch code"
+                  inputmode="numeric"
+                  placeholder="optional"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+          </div>
+          <div id="pay-link-wrap" hidden>
+            <p class="brief-help">
+              Open the app you already use and copy the link customers pay with.
+              You get this from PayFast, iKhoka, SnapScan, or similar — not from
+              us.
+            </p>
+            <label class="brief-field">
+              Pay link
+              <input
+                type="text"
+                name="Pay link"
+                placeholder="Paste the link, or write I’ll send it later"
+                autocomplete="off"
+              />
+            </label>
+          </div>
         </div>
 
         <div class="brief-block">
@@ -516,9 +567,8 @@
         const googleWrap = document.getElementById("google-url-wrap");
         const googleInput = googleWrap.querySelector("input");
         const googleRadios = document.querySelectorAll('input[name="Google profile"]');
-        const payOther = document.getElementById("pay-other");
-        const payOtherWrap = document.getElementById("pay-other-wrap");
-        const payOtherInput = payOtherWrap.querySelector("input");
+        const payEftWrap = document.getElementById("pay-eft-wrap");
+        const payLinkWrap = document.getElementById("pay-link-wrap");
         const form = document.querySelector(".brief-form");
         const submit = form.querySelector(".brief-submit");
         const submitLabel =
@@ -583,11 +633,17 @@
           radio.addEventListener("change", syncGoogle);
         });
 
-        function syncPayOther() {
-          payOtherWrap.hidden = !payOther.checked;
-          payOtherInput.required = payOther.checked;
+        function syncPayDetails() {
+          const eft = form.querySelector('input[name="Pay with EFT"]');
+          const app = form.querySelector('input[name="Pay with app"]');
+          if (payEftWrap) payEftWrap.hidden = !(eft && eft.checked);
+          if (payLinkWrap) payLinkWrap.hidden = !(app && app.checked);
         }
-        payOther.addEventListener("change", syncPayOther);
+        form.addEventListener("change", function (e) {
+          if (!e.target || !e.target.name || e.target.name.indexOf("Pay with") !== 0) return;
+          syncPayDetails();
+        });
+        syncPayDetails();
 
         function setFiles(fileInput, files) {
           VibeBriefFiles.setFiles(fileInput, files);
@@ -672,12 +728,10 @@
 
         function paymentList() {
           const picked = [];
-          if (val("Pay with EFT")) picked.push("EFT");
-          if (val("Pay with card")) picked.push("Card");
-          if (val("Pay with SnapScan")) picked.push("SnapScan");
-          if (val("Pay with PayFast")) picked.push("PayFast");
           if (val("Pay with cash")) picked.push("Cash");
-          if (val("Pay with other")) picked.push(val("Other payment method") || "Other");
+          if (val("Pay with card machine")) picked.push("Card machine");
+          if (val("Pay with EFT")) picked.push("EFT");
+          if (val("Pay with app")) picked.push("Phone or app");
           return picked.join(", ");
         }
 
@@ -762,6 +816,13 @@
               adminName && adminRole ? adminName + " (" + adminRole + ")" : adminName || adminRole
             );
             add(lines, "Payments", paymentList());
+            if (val("Pay with EFT")) {
+              add(lines, "Bank account name", val("Bank account name"));
+              add(lines, "Bank", val("Bank"));
+              add(lines, "Account number", val("Account number"));
+              add(lines, "Branch code", val("Branch code"));
+            }
+            if (val("Pay with app")) add(lines, "Pay link", val("Pay link"));
             add(lines, "Google", val("Google profile"));
             add(lines, "Google profile", val("Google profile URL"));
           });
@@ -869,6 +930,12 @@
           if (val("Sells products") === "Yes" && !hasItems) {
             window.alert(
               "List the products you sell, or upload a Word, Excel, PDF, or photo of the catalogue."
+            );
+            return;
+          }
+          if (!paymentList()) {
+            window.alert(
+              "Tick how customers pay you today — cash, card in the shop, EFT, or a phone app. Bank details and pay links can wait."
             );
             return;
           }

@@ -442,6 +442,11 @@
       clearNode(adminList);
       addField(adminList, "Booking admin", fields["Booking admin"]);
       addField(adminList, "Payments", fields.Payments);
+      addField(adminList, "Bank account name", fields["Bank account name"]);
+      addField(adminList, "Bank", fields.Bank);
+      addField(adminList, "Account number", fields["Account number"]);
+      addField(adminList, "Branch code", fields["Branch code"]);
+      addField(adminList, "Pay link", fields["Pay link"], domainHref(fields["Pay link"]));
       addField(adminList, "Google", fields.Google);
       addField(
         adminList,
