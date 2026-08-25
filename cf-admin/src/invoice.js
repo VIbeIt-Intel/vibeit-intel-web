@@ -12,12 +12,14 @@ export function bankFromEnv(env) {
   const accountNumber = String(env.VIBEIT_ACCOUNT_NUMBER || "").trim();
   const branch = String(env.VIBEIT_BRANCH || "").trim();
   return {
-    legalName: String(env.VIBEIT_LEGAL_NAME || "VibeIt-Intel").trim() || "VibeIt-Intel",
+    legalName: String(env.VIBEIT_LEGAL_NAME || env.VIBEIT_ACCOUNT_NAME || "VibeIt-Intel").trim() || "VibeIt-Intel",
+    registration: String(env.VIBEIT_REGISTRATION || "").trim(),
     vat: String(env.VIBEIT_VAT || "").trim(),
     accountName: accountName,
     bank: bank,
     accountNumber: accountNumber,
     branch: branch,
+    swift: String(env.VIBEIT_SWIFT || "").trim(),
     ready: Boolean(accountName && bank && accountNumber),
   };
 }
@@ -60,6 +62,8 @@ export function quoteText(doc) {
     "Account " + doc.bank.accountNumber,
   ];
   if (doc.bank.branch) lines.push("Branch " + doc.bank.branch);
+  if (doc.bank.swift) lines.push("SWIFT " + doc.bank.swift);
+  if (doc.bank.registration) lines.push("Reg. " + doc.bank.registration);
   if (doc.bank.vat) lines.push("VAT " + doc.bank.vat);
   if (doc.note) {
     lines.push("");
@@ -98,8 +102,14 @@ export function quoteHtml(doc, opts) {
   const vat = doc.bank.vat
     ? "<p class=\"muted\">VAT " + escapeHtml(doc.bank.vat) + "</p>"
     : "";
+  const registration = doc.bank.registration
+    ? "<p class=\"muted\">Reg. " + escapeHtml(doc.bank.registration) + "</p>"
+    : "";
   const branch = doc.bank.branch
     ? "<p>Branch code <strong>" + escapeHtml(doc.bank.branch) + "</strong></p>"
+    : "";
+  const swift = doc.bank.swift
+    ? "<p>SWIFT " + escapeHtml(doc.bank.swift) + "</p>"
     : "";
   const note = doc.note ? "<p class=\"note\">" + escapeHtml(doc.note) + "</p>" : "";
   const printHint = printable
@@ -127,6 +137,7 @@ export function quoteHtml(doc, opts) {
     "<p class=\"kicker\">VibeIt-Intel</p>",
     "<h1>" + escapeHtml(kind) + " " + escapeHtml(doc.number) + "</h1>",
     "<p class=\"muted\">" + escapeHtml(doc.createdAt || "") + " · " + escapeHtml(doc.bank.legalName) + "</p>",
+    registration,
     vat,
     "<p>To <strong>" + escapeHtml(doc.businessName || "Client") + "</strong></p>",
     "<p>" + escapeHtml(intro) + "</p>",
@@ -141,6 +152,7 @@ export function quoteHtml(doc, opts) {
     "<p>" + escapeHtml(doc.bank.bank) + "</p>",
     "<p>Account <strong>" + escapeHtml(doc.bank.accountNumber) + "</strong></p>",
     branch,
+    swift,
     "<p>Use <strong>" + escapeHtml(doc.number) + "</strong> as the payment reference.</p></div>",
     "<p class=\"muted\">support@vibeit-intel.net · WhatsApp 068 943 4124 · vibeit-intel.net</p>",
     "</div></body></html>",
