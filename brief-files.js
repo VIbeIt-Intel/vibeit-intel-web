@@ -483,5 +483,40 @@
           clearTimeout(timer);
         });
     },
+    finishSend: function (formEl) {
+      const nextEl = formEl && formEl.querySelector('input[name="_next"]');
+      const next =
+        (nextEl && nextEl.value) ||
+        "https://vibeit-intel.net/entry-sent.html";
+      const action =
+        (formEl && formEl.getAttribute("action")) ||
+        "https://formsubmit.co/support@vibeit-intel.net";
+      const ajaxUrl = /\/ajax\//.test(action)
+        ? action
+        : action.replace("https://formsubmit.co/", "https://formsubmit.co/ajax/");
+      const data = new FormData(formEl);
+      const ctrl = new AbortController();
+      const timer = setTimeout(function () {
+        ctrl.abort();
+      }, 12000);
+
+      function go() {
+        window.location.assign(next);
+      }
+
+      return fetch(ajaxUrl, {
+        method: "POST",
+        body: data,
+        headers: { Accept: "application/json" },
+        signal: ctrl.signal,
+      })
+        .catch(function () {
+          return null;
+        })
+        .finally(function () {
+          clearTimeout(timer);
+          go();
+        });
+    },
   };
 })(window);

@@ -573,7 +573,7 @@
         <a href="privacy.html">Privacy</a>
       </p>
     </footer>
-    <script src="brief-files.js?v=files5"></script>
+    <script src="brief-files.js?v=files6"></script>
     <script src="brief-formats.js?v=fmt1"></script>
     <script>
       (function () {
@@ -602,7 +602,6 @@
         const vibeInput = document.getElementById("vibe-file");
         const subjectEl = form.querySelector('input[name="_subject"]');
         const subjectBase = subjectEl ? subjectEl.value : "VibeIt brief — Intermediate";
-        let nativeSend = false;
 
         function sync() {
           const picked = document.querySelector('input[name="Domain"]:checked');
@@ -935,7 +934,6 @@
         });
 
         form.addEventListener("submit", function (event) {
-          if (nativeSend) return;
           event.preventDefault();
           const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
@@ -1055,8 +1053,7 @@
               });
             })
             .then(function () {
-              nativeSend = true;
-              form.submit();
+              return VibeBriefFiles.finishSend(form);
             })
             .catch(function () {
               extra.disabled = false;
