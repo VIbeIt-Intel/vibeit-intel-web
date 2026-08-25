@@ -115,7 +115,7 @@
 
   function formatRand(amount) {
     const n = Math.round(Number(amount) || 0);
-    return "R" + n.toLocaleString("en-ZA");
+    return "R" + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
   function fillBill(brief, billing) {

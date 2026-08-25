@@ -1287,11 +1287,15 @@ html.from-it .foot {
 }
 
 .foot {
-  padding: 1rem 6vw 2rem;
-  color: rgb(246 241 251 / 55%);
-  font-size: 0.78rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 1.15rem 6vw 2.6rem;
+  color: rgb(246 241 251 / 62%);
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+}
+
+.foot-rand {
+  margin-top: 0.28rem;
 }
 
 .foot-links {
