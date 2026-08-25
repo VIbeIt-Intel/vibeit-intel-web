@@ -91,9 +91,15 @@
     note.classList.remove("hidden");
   }
 
-  function isEntryPackage(brief, fields) {
+  function packageKind(brief, fields) {
     const raw = String((brief && brief.package) || (fields && fields.Package) || "");
-    return !/intermediate|booking/i.test(raw);
+    if (/advance|custom platform/i.test(raw)) return "Advance";
+    if (/intermediate|booking/i.test(raw)) return "Intermediate";
+    return "Entry";
+  }
+
+  function isEntryPackage(brief, fields) {
+    return packageKind(brief, fields) === "Entry";
   }
 
   function syncActionOptions(entry, actionVal) {
@@ -262,6 +268,7 @@
       WEBSITE: "website",
       BUSINESS: "business",
       "WHAT THEY DO": "do",
+      "WHAT THEY NEED": "do",
       "PRODUCTS OR SERVICES": "products",
       "ITEMS FOR SALE": "shop",
       NOTES: "notes",
@@ -371,7 +378,7 @@
       const sellsVal = fields["Sells products"] || "";
       const facts = document.getElementById("d-facts");
       clearNode(facts);
-      [typeVal, actionVal, sellsVal ? "Sells items: " + sellsVal : ""].filter(Boolean).forEach(function (text) {
+      [typeVal, actionVal, sellsVal ? "Sells items: " + sellsVal : "", packageKind(brief, fields) === "Advance" ? "Advance enquiry" : ""].filter(Boolean).forEach(function (text) {
         const pill = document.createElement("span");
         pill.className = "fact";
         pill.textContent = text;
@@ -388,20 +395,30 @@
         typeSelect.value = typeVal;
       }
       actionSelect.value = syncActionOptions(isEntryPackage(brief, fields), actionVal);
-      syncFormatNote();
       const cursorLink = document.getElementById("d-cursor-link");
       const buildBtn = document.getElementById("d-build");
       const buildMsg = document.getElementById("d-build-msg");
+      const buildRow = document.getElementById("d-build-row");
+      const formatNote = document.getElementById("d-format-note");
       buildMsg.classList.add("hidden");
-      if (brief.cursorUrl) {
+      const advance = packageKind(brief, fields) === "Advance";
+      if (buildRow) buildRow.classList.toggle("hidden", advance);
+      if (advance) {
+        formatNote.textContent =
+          "This is an Advance enquiry. WhatsApp them or send a quote — do not start a standard website.";
+        formatNote.classList.remove("hidden");
+        cursorLink.classList.add("hidden");
+      } else if (brief.cursorUrl) {
         cursorLink.href = brief.cursorUrl;
         cursorLink.classList.remove("hidden");
         buildBtn.textContent = "Started";
         buildBtn.disabled = true;
+        syncFormatNote();
       } else {
         cursorLink.classList.add("hidden");
         buildBtn.textContent = "Start website";
         buildBtn.disabled = false;
+        syncFormatNote();
       }
       document.getElementById("d-status").textContent = labelStatus(brief.status);
       document.querySelectorAll(".status-row .chip").forEach(function (chip) {
@@ -482,6 +499,8 @@
       );
       showPanel("d-web-panel", webList.childNodes.length > 0);
 
+      const doTitle = document.querySelector("#d-do-panel h2");
+      if (doTitle) doTitle.textContent = advance ? "What they need" : "What they do";
       showPanel("d-do-panel", fillCopy("d-do", blocks.do));
       showPanel("d-products-panel", fillCopy("d-products", blocks.products));
       showPanel("d-shop-panel", fillCopy("d-shop", blocks.shop));

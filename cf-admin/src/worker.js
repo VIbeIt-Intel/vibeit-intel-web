@@ -340,6 +340,9 @@ async function startBuild(request, env, id) {
   const type = String(body.type || "").trim();
   const action = String(body.action || "").trim();
   if (!type || !action) return json({ error: "Pick a site format and customer action" }, 400);
+  if (packageTier(row) === "Advance") {
+    return json({ error: "Advance is a custom enquiry. WhatsApp them or send a quote — do not start a standard website." }, 400);
+  }
   if (packageTier(row) === "Entry" && (action === "Book" || action === "Buy")) {
     return json({ error: "Entry is Call, WhatsApp, or Get a quote. Book and Buy are Intermediate." }, 400);
   }
@@ -399,6 +402,7 @@ async function startBuild(request, env, id) {
 
 function packageTier(row) {
   const raw = String(row.package || row.brief_text || "Entry");
+  if (/advance|custom platform/i.test(raw)) return "Advance";
   if (/intermediate|booking/i.test(raw)) return "Intermediate";
   return "Entry";
 }
