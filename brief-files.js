@@ -211,7 +211,7 @@
   }
 
   function sampleImage(img, weight) {
-    const max = 96;
+    const max = 128;
     let w = img.naturalWidth || img.width;
     let h = img.naturalHeight || img.height;
     if (!w || !h) return [];
@@ -230,23 +230,74 @@
     } catch (err) {
       return [];
     }
+
+    function patchAvg(x0, y0, size) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let n = 0;
+      const x1 = Math.min(w, x0 + size);
+      const y1 = Math.min(h, y0 + size);
+      for (let y = Math.max(0, y0); y < y1; y++) {
+        for (let x = Math.max(0, x0); x < x1; x++) {
+          const i = (y * w + x) * 4;
+          if (data[i + 3] < 140) continue;
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          n += 1;
+        }
+      }
+      return n ? [r / n, g / n, b / n] : null;
+    }
+
+    function distSq(a, r, g, b) {
+      const dr = a[0] - r;
+      const dg = a[1] - g;
+      const db = a[2] - b;
+      return dr * dr + dg * dg + db * db;
+    }
+
+    const corners = [
+      patchAvg(0, 0, 8),
+      patchAvg(w - 8, 0, 8),
+      patchAvg(0, h - 8, 8),
+      patchAvg(w - 8, h - 8, 8),
+    ].filter(Boolean);
+    let backdrop = null;
+    if (corners.length >= 3) {
+      const avg = [0, 0, 0];
+      corners.forEach(function (c) {
+        avg[0] += c[0];
+        avg[1] += c[1];
+        avg[2] += c[2];
+      });
+      avg[0] /= corners.length;
+      avg[1] /= corners.length;
+      avg[2] /= corners.length;
+      const agree = corners.every(function (c) {
+        return distSq(avg, c[0], c[1], c[2]) < 1600;
+      });
+      if (agree) backdrop = avg;
+    }
+
     const buckets = {};
     for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] < 140) continue;
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
+      if (backdrop && distSq(backdrop, r, g, b) < 2200) continue;
+      const chroma = Math.max(r, g, b) - Math.min(r, g, b);
       const hsl = rgbToHsl(r, g, b);
-      if (hsl.l > 0.93 && hsl.s < 0.12) continue;
-      if (hsl.l < 0.05 && hsl.s < 0.12) continue;
+      if (chroma < 22 && hsl.l < 0.22) continue;
+      if (chroma < 22 && hsl.l > 0.82) continue;
+      if (hsl.l < 0.12 && chroma < 48) continue;
       const hBucket = Math.round(hsl.h / 12) % 30;
-      const sBand = hsl.s < 0.22 ? 0 : hsl.s < 0.5 ? 1 : 2;
+      const sBand = hsl.s < 0.28 ? 0 : hsl.s < 0.58 ? 1 : 2;
       const lBand = hsl.l < 0.32 ? 0 : hsl.l < 0.62 ? 1 : 2;
       const key = hBucket + ":" + sBand + ":" + lBand;
-      const wgt =
-        weight *
-        (0.28 + hsl.s * 1.15) *
-        (0.5 + (1 - Math.abs(hsl.l - 0.48)) * 0.7);
+      const wgt = weight * (0.12 + (chroma / 255) * 2.6) * (0.35 + hsl.s);
       if (!buckets[key]) {
         buckets[key] = { r: 0, g: 0, b: 0, w: 0, h: hsl.h };
       }
@@ -257,11 +308,15 @@
     }
     return Object.keys(buckets).map(function (key) {
       const item = buckets[key];
+      const rgb = [item.r / item.w, item.g / item.w, item.b / item.w];
+      const hsl = rgbToHsl(rgb[0], rgb[1], rgb[2]);
       return {
-        hex: toHex(item.r / item.w, item.g / item.w, item.b / item.w),
+        hex: toHex(rgb[0], rgb[1], rgb[2]),
         w: item.w,
-        h: item.h,
-        rgb: [item.r / item.w, item.g / item.w, item.b / item.w],
+        h: hsl.h,
+        s: hsl.s,
+        l: hsl.l,
+        rgb: rgb,
       };
     });
   }
@@ -271,36 +326,58 @@
     const hsl = rgbToHsl((n >> 16) & 255, (n >> 8) & 255, n & 255);
     const rgb = hslToRgb(
       hsl.h + dh,
-      Math.max(0.18, Math.min(0.92, hsl.s + ds)),
-      Math.max(0.16, Math.min(0.84, hsl.l + dl))
+      Math.max(0.22, Math.min(0.92, hsl.s + ds)),
+      Math.max(0.22, Math.min(0.78, hsl.l + dl))
     );
     return toHex(rgb[0], rgb[1], rgb[2]);
   }
 
   function pickThree(clusters) {
+    clusters.forEach(function (item) {
+      if (item.s == null) {
+        const hsl = rgbToHsl(item.rgb[0], item.rgb[1], item.rgb[2]);
+        item.h = hsl.h;
+        item.s = hsl.s;
+        item.l = hsl.l;
+      }
+      item.score = item.w * (0.2 + item.s * 2.4) * (item.l < 0.16 || item.l > 0.88 ? 0.25 : 1);
+    });
     clusters.sort(function (a, b) {
-      return b.w - a.w;
+      return b.score - a.score;
+    });
+    const chromatic = clusters.filter(function (item) {
+      return item.s >= 0.22 && item.l >= 0.16 && item.l <= 0.86;
+    });
+    const rest = clusters.filter(function (item) {
+      return chromatic.indexOf(item) === -1 && item.l >= 0.14 && item.l <= 0.9;
     });
     const picked = [];
-    clusters.forEach(function (item) {
-      if (picked.length >= 3) return;
-      const tooClose = picked.some(function (other) {
-        const dr = item.rgb[0] - other.rgb[0];
-        const dg = item.rgb[1] - other.rgb[1];
-        const db = item.rgb[2] - other.rgb[2];
-        return hueDiff(item.h, other.h) < 18 && dr * dr + dg * dg + db * db < 5200;
+
+    function take(list) {
+      list.forEach(function (item) {
+        if (picked.length >= 3) return;
+        const tooClose = picked.some(function (other) {
+          const dr = item.rgb[0] - other.rgb[0];
+          const dg = item.rgb[1] - other.rgb[1];
+          const db = item.rgb[2] - other.rgb[2];
+          return hueDiff(item.h, other.h) < 16 && dr * dr + dg * dg + db * db < 4800;
+        });
+        if (!tooClose) picked.push(item);
       });
-      if (!tooClose) picked.push(item);
-    });
+    }
+
+    take(chromatic);
+    if (picked.length < 3) take(rest);
     if (!picked.length) return ["#00c8c9", "#ff8a1a", "#4a1f7a"];
     const hexes = picked.map(function (item) {
       return item.hex;
     });
+    const seed = hexes[0];
     if (hexes.length === 1) {
-      hexes.push(shiftHex(hexes[0], 28, 0.05, -0.16));
-      hexes.push(shiftHex(hexes[0], -42, -0.08, 0.12));
+      hexes.push(shiftHex(seed, 0, 0.04, -0.18));
+      hexes.push(shiftHex(seed, 36, -0.12, 0.16));
     } else if (hexes.length === 2) {
-      hexes.push(shiftHex(hexes[0], 48, -0.04, 0.1));
+      hexes.push(shiftHex(seed, 42, -0.06, 0.12));
     }
     return hexes.slice(0, 3);
   }
