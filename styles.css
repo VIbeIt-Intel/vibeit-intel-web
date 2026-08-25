@@ -1424,6 +1424,11 @@ html.from-it .foot {
   font-weight: 600;
 }
 
+.brief-field[hidden],
+.brief-file[hidden] {
+  display: none;
+}
+
 .brief-file:first-of-type,
 .brief-help + .brief-choices,
 .brief-kicker + .brief-help,

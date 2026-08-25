@@ -91,6 +91,22 @@
     note.classList.remove("hidden");
   }
 
+  function isEntryPackage(brief, fields) {
+    const raw = String((brief && brief.package) || (fields && fields.Package) || "");
+    return !/intermediate|booking/i.test(raw);
+  }
+
+  function syncActionOptions(entry, actionVal) {
+    const select = document.getElementById("d-action");
+    Array.prototype.forEach.call(select.options, function (opt) {
+      const locked = entry && (opt.value === "Book" || opt.value === "Buy");
+      opt.hidden = locked;
+      opt.disabled = locked;
+    });
+    if (entry && (actionVal === "Book" || actionVal === "Buy")) return "";
+    return actionVal;
+  }
+
   function hashLogin() {
     if (location.hash === "#login-denied") {
       loginMsg.textContent = "That Google account is not allowed. Use support@vibeit-intel.net.";
@@ -320,7 +336,7 @@
         typeSelect.appendChild(opt);
         typeSelect.value = typeVal;
       }
-      actionSelect.value = actionVal;
+      actionSelect.value = syncActionOptions(isEntryPackage(brief, fields), actionVal);
       syncFormatNote();
       const cursorLink = document.getElementById("d-cursor-link");
       const buildBtn = document.getElementById("d-build");

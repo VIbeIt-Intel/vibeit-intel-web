@@ -311,6 +311,9 @@ async function startBuild(request, env, id) {
   const type = String(body.type || "").trim();
   const action = String(body.action || "").trim();
   if (!type || !action) return json({ error: "Pick a site format and customer action" }, 400);
+  if (packageTier(row) === "Entry" && (action === "Book" || action === "Buy")) {
+    return json({ error: "Entry is Call, WhatsApp, or Get a quote. Book and Buy are Intermediate." }, 400);
+  }
 
   const businessName = String(row.business_name || "client").trim();
   let repoUrl = String(row.github_repo || "").trim();
