@@ -1280,6 +1280,49 @@ html.from-it .foot {
   text-transform: uppercase;
 }
 
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.1rem;
+  margin-top: 0.55rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.foot-links a {
+  color: rgb(246 241 251 / 72%);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.foot-links a:hover {
+  color: var(--teal);
+}
+
+.legal {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.3rem;
+  color: rgb(246 241 251 / 82%);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.legal h2 {
+  margin: 0.55rem 0 0;
+  color: #fff;
+  font-size: 1.02rem;
+}
+
+.legal ul {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.legal li + li {
+  margin-top: 0.35rem;
+}
+
 .brief {
   padding: 0.5rem 6vw 4.2rem;
   max-width: 42rem;
@@ -1671,6 +1714,25 @@ html.from-it .foot {
 }
 
 .brief-foot a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.brief-agree {
+  margin: 1.15rem 0 0;
+}
+
+.brief-agree .brief-choice {
+  width: 100%;
+}
+
+.brief-agree .brief-help {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.brief-agree .brief-help a {
   color: var(--teal);
   font-weight: 700;
   text-decoration: none;

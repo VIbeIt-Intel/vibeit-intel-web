@@ -71,6 +71,7 @@ export function quoteText(doc) {
   }
   lines.push("");
   lines.push("Use " + doc.number + " as the payment reference.");
+  lines.push("Payment starts the work. Terms: https://vibeit-intel.net/terms.html");
   lines.push("");
   lines.push("Questions: support@vibeit-intel.net or WhatsApp 068 943 4124");
   lines.push("vibeit-intel.net");
@@ -153,7 +154,8 @@ export function quoteHtml(doc, opts) {
     "<p>Account <strong>" + escapeHtml(doc.bank.accountNumber) + "</strong></p>",
     branch,
     swift,
-    "<p>Use <strong>" + escapeHtml(doc.number) + "</strong> as the payment reference.</p></div>",
+    "<p>Use <strong>" + escapeHtml(doc.number) + "</strong> as the payment reference.</p>",
+    "<p>Payment starts the work. <a href=\"https://vibeit-intel.net/terms.html\">Terms</a></p></div>",
     "<p class=\"muted\">support@vibeit-intel.net · WhatsApp 068 943 4124 · vibeit-intel.net</p>",
     "</div></body></html>",
   ].join("");

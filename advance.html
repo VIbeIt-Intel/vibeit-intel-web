@@ -51,7 +51,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool27" />
+    <link rel="stylesheet" href="styles.css?v=cool29" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -175,6 +175,18 @@
           </label>
         </div>
 
+        <div class="brief-agree">
+          <label class="brief-choice">
+            <input type="checkbox" name="Agree to terms" value="Yes" required />
+            I agree to the terms of work and the privacy notice
+          </label>
+          <p class="brief-help">
+            <a href="terms.html" target="_blank" rel="noopener noreferrer">Read the terms</a>
+            ·
+            <a href="privacy.html" target="_blank" rel="noopener noreferrer">Read privacy</a>
+          </p>
+        </div>
+
         <button class="pack-cta pack-cta-hot brief-submit" type="submit">
           Send us your <span class="brief-vibe">Vibe</span>
         </button>
@@ -184,6 +196,13 @@
         </p>
       </form>
     </main>
+    <footer class="foot">
+      <p>VIBEIT-INTEL (Pty) Ltd · Prices in South African Rand</p>
+      <p class="foot-links">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+      </p>
+    </footer>
     <script src="brief-files.js?v=files5"></script>
     <script>
       (function () {
@@ -199,7 +218,11 @@
 
         function val(name) {
           const first = form.querySelector('[name="' + name + '"]');
-          return first ? String(first.value || "").trim() : "";
+          if (!first) return "";
+          if (first.type === "checkbox") {
+            return first.checked ? String(first.value || "Yes").trim() : "";
+          }
+          return String(first.value || "").trim();
         }
 
         function add(lines, label, value) {
@@ -215,6 +238,7 @@
           lines.push("");
           lines.push("BUSINESS");
           lines.push("Type: Custom platform");
+          add(lines, "Agreed to terms", val("Agree to terms"));
           lines.push("");
           lines.push("CONTACT");
           add(lines, "Name", business);

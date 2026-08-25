@@ -486,6 +486,7 @@
       addField(contactList, "Phone", phone, phone ? "tel:" + phone.replace(/\s+/g, "") : "");
       addField(contactList, "WhatsApp", whatsapp);
       addField(contactList, "Email", email, email ? "mailto:" + email : "");
+      addField(contactList, "Agreed to terms", fields["Agreed to terms"]);
       showPanel("d-contact-panel", contactList.childNodes.length > 0);
 
       const webList = document.getElementById("d-web-fields");
