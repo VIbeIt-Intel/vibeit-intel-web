@@ -187,6 +187,7 @@ async function createBrief(request, env, url) {
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
   const savedFiles = [];
+  const listedNames = originalsFromBrief(briefText);
 
   for (const [label, value] of form.entries()) {
     if (!(value instanceof Blob) || !value.size) continue;
@@ -194,12 +195,14 @@ async function createBrief(request, env, url) {
     const safe = sanitizeName(value.name || label || "file");
     const key = "briefs/" + id + "/" + String(savedFiles.length + 1).padStart(2, "0") + "-" + safe;
     await env.FILES.put(key, await value.arrayBuffer());
+    const listed = listedNames[savedFiles.length];
     savedFiles.push({
       key: key,
       name: value.name || safe,
       type: value.type || "application/octet-stream",
       size: value.size,
       label: label,
+      originalName: pickOriginalName(value.name, label, listed),
     });
   }
 
@@ -289,16 +292,19 @@ async function deleteBrief(request, env, id) {
 async function getFile(request, env, id, index) {
   const email = await currentUser(request, env);
   if (!email) return json({ error: "Login required" }, 401);
-  const row = await env.DB.prepare("SELECT files FROM briefs WHERE id = ?").bind(id).first();
+  const row = await env.DB.prepare("SELECT files, brief_text FROM briefs WHERE id = ?").bind(id).first();
   if (!row) return json({ error: "Not found" }, 404);
-  const files = parseFiles(row.files);
+  const files = enrichFiles(parseFiles(row.files), row.brief_text);
   const file = files[index];
   if (!file || !file.key) return json({ error: "Not found" }, 404);
   const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
   if (!object) return json({ error: "Missing file" }, 404);
   const headers = new Headers();
   headers.set("Content-Type", file.type || "application/octet-stream");
-  headers.set("Content-Disposition", "inline; filename=\"" + (file.name || "file").replace(/"/g, "") + "\"");
+  headers.set(
+    "Content-Disposition",
+    "inline; filename=\"" + (file.originalName || file.name || "file").replace(/"/g, "") + "\""
+  );
   headers.set("Cache-Control", "private, max-age=3600");
   headers.set("X-Robots-Tag", "noindex");
   return new Response(object, { headers });
@@ -992,6 +998,7 @@ function sleep(ms) {
 }
 
 function shapeBrief(row) {
+  const briefText = row.brief_text || "";
   return {
     id: row.id,
     createdAt: row.created_at,
@@ -1001,8 +1008,8 @@ function shapeBrief(row) {
     email: row.email,
     phone: row.phone,
     subject: row.subject,
-    briefText: row.brief_text || "",
-    files: parseFiles(row.files),
+    briefText: briefText,
+    files: enrichFiles(parseFiles(row.files), briefText),
     githubRepo: row.github_repo || "",
     cursorAgentId: row.cursor_agent_id || "",
     cursorUrl: row.cursor_url || "",
@@ -1016,6 +1023,59 @@ function parseFiles(raw) {
   } catch (err) {
     return [];
   }
+}
+
+function originalsFromBrief(text) {
+  const out = [];
+  let inFiles = false;
+  String(text || "")
+    .split(/\r?\n/)
+    .forEach(function (raw) {
+      const line = raw.trim();
+      if (/^FILES\b/.test(line)) {
+        inFiles = true;
+        return;
+      }
+      if (!inFiles) return;
+      if (!line || /^[A-Z][A-Z0-9 ]+$/.test(line)) {
+        inFiles = false;
+        return;
+      }
+      const match = line.match(/^[•\-]\s*(.+?)\s+[—–-]\s+(.+)$/);
+      if (match) out.push({ label: match[1].trim(), name: match[2].trim() });
+    });
+  return out;
+}
+
+function slotKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function nameLooksLikeSlot(name, label) {
+  const base = slotKey(String(name || "").replace(/\.[^.]+$/, "").split(/[/\\]/).pop());
+  const slot = slotKey(label);
+  return Boolean(base && slot && base === slot);
+}
+
+function pickOriginalName(fileName, label, listed) {
+  const listedName = listed && listed.name;
+  if (listedName && !nameLooksLikeSlot(listedName, label)) return listedName;
+  if (fileName && !nameLooksLikeSlot(fileName, label)) return fileName;
+  return listedName || fileName || "";
+}
+
+function enrichFiles(files, briefText) {
+  const listed = originalsFromBrief(briefText);
+  return files.map(function (file, i) {
+    if (file.originalName && !nameLooksLikeSlot(file.originalName, file.label)) return file;
+    const originalName = pickOriginalName(file.originalName || file.name, file.label, listed[i]);
+    if (!originalName || originalName === file.originalName) return file;
+    return Object.assign({}, file, { originalName: originalName });
+  });
 }
 
 function pickPhone(briefText, form) {

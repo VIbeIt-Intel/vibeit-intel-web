@@ -669,18 +669,16 @@
           VibeBriefFiles.setFiles(fileInput, files);
         }
 
-        function namedFile(file, base) {
-          const orig = file.name || base;
-          const dot = orig.lastIndexOf(".");
-          const ext =
-            dot >= 0
-              ? orig.slice(dot)
-              : file.type === "image/jpeg"
-                ? ".jpg"
-                : "";
-          return new File([file], base + ext, {
-            type: file.type || "application/octet-stream",
-          });
+        function namedFile(file, originalName) {
+          const name = String(originalName || file.name || "").trim();
+          if (!name || file.name === name) return file;
+          try {
+            return new File([file], name, {
+              type: file.type || "application/octet-stream",
+            });
+          } catch (err) {
+            return file;
+          }
         }
 
         function compressOne(file) {
@@ -811,7 +809,7 @@
             lines.push("ITEMS FOR SALE");
             if (items) lines.push(items);
             listFiles.forEach(function (item) {
-              lines.push("Price list file: " + item.file.name);
+              lines.push("Price list file: " + (item.originalName || item.file.name));
             });
             lines.push("");
           }
@@ -860,7 +858,7 @@
             lines.push("None attached");
           } else {
             attached.forEach(function (item) {
-              lines.push("• " + item.label + " — " + item.file.name);
+              lines.push("• " + item.label + " — " + (item.originalName || item.file.name));
             });
           }
 
@@ -977,28 +975,29 @@
           logos.forEach(function (file, i) {
             jobs.push(
               compressOne(file).then(function (out) {
-                return { kind: "logo", index: i, file: out };
+                return { kind: "logo", index: i, file: out, originalName: file.name };
               })
             );
           });
           if (vibeInput.files[0]) {
+            const vibeFile = vibeInput.files[0];
             jobs.push(
-              compressOne(vibeInput.files[0]).then(function (file) {
-                return { kind: "vibe", file: file };
+              compressOne(vibeFile).then(function (file) {
+                return { kind: "vibe", file: file, originalName: vibeFile.name };
               })
             );
           }
           extras.forEach(function (file, i) {
             jobs.push(
               compressOne(file).then(function (out) {
-                return { kind: "extra", index: i, file: out };
+                return { kind: "extra", index: i, file: out, originalName: file.name };
               })
             );
           });
           lists.forEach(function (file, i) {
             jobs.push(
               compressOne(file).then(function (out) {
-                return { kind: "list", index: i, file: out };
+                return { kind: "list", index: i, file: out, originalName: file.name };
               })
             );
           });
@@ -1013,31 +1012,32 @@
               clearAttachments();
 
               const attached = packed.map(function (item) {
-                let file = item.file;
+                let file = namedFile(item.file, item.originalName);
                 let label = "File";
                 let fieldName = "File";
                 if (item.kind === "logo") {
                   const n = (item.index || 0) + 1;
-                  file = namedFile(item.file, n === 1 ? "logo" : "logo-" + n);
                   label = n === 1 ? "Logo" : "Logo " + n;
                   fieldName = label;
                 } else if (item.kind === "vibe") {
-                  file = namedFile(item.file, "vibe-photo");
                   label = "Vibe photo";
                   fieldName = "Vibe photo";
                 } else if (item.kind === "list") {
                   const n = (item.index || 0) + 1;
-                  file = namedFile(item.file, n === 1 ? "price-list" : "price-list-" + n);
                   label = n === 1 ? "Price list" : "Price list " + n;
                   fieldName = label;
                 } else {
                   const n = item.index + 1;
-                  file = namedFile(item.file, "extra-photo-" + n);
                   label = "Extra photo " + n;
-                  fieldName = "Extra photo " + n;
+                  fieldName = label;
                 }
                 addAttachment(file, fieldName);
-                return { kind: item.kind, label: label, file: file };
+                return {
+                  kind: item.kind,
+                  label: label,
+                  file: file,
+                  originalName: item.originalName || file.name,
+                };
               });
 
               if (subjectEl) {

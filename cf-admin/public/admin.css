@@ -535,7 +535,7 @@ h1 {
 
 .files {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(8.2rem, 1fr));
   gap: 0.55rem;
 }
 
@@ -592,14 +592,26 @@ h1 {
   font-weight: 700;
 }
 
-.file span {
-  display: block;
+.file .file-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
   padding: 0.35rem 0.45rem 0.5rem;
+}
+
+.file .file-slot {
   font-size: 0.68rem;
-  color: rgb(246 241 251 / 72%);
-  white-space: nowrap;
+  font-weight: 650;
+  color: rgb(246 241 251 / 88%);
+}
+
+.file .file-name {
+  font-size: 0.62rem;
+  line-height: 1.25;
+  color: rgb(246 241 251 / 62%);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 code {

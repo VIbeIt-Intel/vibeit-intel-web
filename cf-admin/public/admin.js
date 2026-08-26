@@ -342,6 +342,92 @@
     list.appendChild(dd);
   }
 
+  function fileBaseName(name) {
+    return String(name || "")
+      .split(/[/\\]/)
+      .pop()
+      .trim();
+  }
+
+  function fileExt(name) {
+    const base = fileBaseName(name);
+    const dot = base.lastIndexOf(".");
+    if (dot < 1 || dot === base.length - 1) return "";
+    return base.slice(dot + 1).toUpperCase().slice(0, 4);
+  }
+
+  function slotKey(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function slotLooksGeneric(name, slot) {
+    const base = slotKey(fileBaseName(name).replace(/\.[^.]+$/, ""));
+    const label = slotKey(slot);
+    return Boolean(base && label && base === label);
+  }
+
+  function inferSlot(file) {
+    const raw = String(file.label || file.name || "").toLowerCase();
+    if (/price|catalogue|catalog|\bmenu\b|\blist\b/.test(raw)) return "Price list";
+    if (/vibe/.test(raw)) return "Vibe photo";
+    if (/extra/.test(raw)) return "Extra photos";
+    if (/logo/.test(raw)) return "Logo";
+    return "";
+  }
+
+  function namesFromBrief(text) {
+    const out = [];
+    let inFiles = false;
+    String(text || "")
+      .split(/\r?\n/)
+      .forEach(function (raw) {
+        const line = raw.trim();
+        if (/^FILES\b/.test(line)) {
+          inFiles = true;
+          return;
+        }
+        if (!inFiles) return;
+        if (!line || /^[A-Z][A-Z0-9 ]+$/.test(line)) {
+          inFiles = false;
+          return;
+        }
+        const match = line.match(/^[•\-]\s*(.+?)\s+[—–-]\s+(.+)$/);
+        if (match) out.push({ label: match[1].trim(), name: match[2].trim() });
+      });
+    return out;
+  }
+
+  function displaySlot(file, files, index) {
+    let label = String(file.label || "").trim();
+    if (!label || /^file$/i.test(label)) label = inferSlot(file);
+    const raw = String(file.label || "").trim();
+    const same = files.filter(function (item) {
+      return String(item.label || "").trim() === raw;
+    });
+    if (same.length > 1 && label && !/\d+\s*$/.test(label)) {
+      const n = files.slice(0, index + 1).filter(function (item) {
+        return String(item.label || "").trim() === raw;
+      }).length;
+      if (/^extra/i.test(label)) return "Extra " + n;
+      return label + " " + n;
+    }
+    return label || "File";
+  }
+
+  function displayFileName(file, slot, listed) {
+    const candidates = [file.originalName, listed && listed.name, file.name];
+    for (let i = 0; i < candidates.length; i++) {
+      const name = fileBaseName(candidates[i]);
+      if (!name || slotLooksGeneric(name, slot)) continue;
+      return name;
+    }
+    return fileBaseName(file.originalName || (listed && listed.name) || file.name);
+  }
+
   function domainHref(value) {
     if (!value) return "";
     if (/^https?:\/\//i.test(value)) return value;
@@ -529,27 +615,44 @@
 
       const files = document.getElementById("d-files");
       clearNode(files);
+      const fileList = brief.files || [];
+      const listedNames = namesFromBrief(brief.briefText);
       document.getElementById("d-files-title").textContent =
-        "Files" + (brief.files && brief.files.length ? " (" + brief.files.length + ")" : "");
-      (brief.files || []).forEach(function (file, index) {
+        "Files" + (fileList.length ? " (" + fileList.length + ")" : "");
+      fileList.forEach(function (file, index) {
+        const slot = displaySlot(file, fileList, index);
+        const original = displayFileName(file, slot, listedNames[index]);
+        const caption = original && original !== slot ? slot + " · " + original : slot;
         const link = document.createElement("a");
         link.className = "file";
         link.href = "/api/briefs/" + id + "/file/" + index;
         link.target = "_blank";
         link.rel = "noopener";
+        link.title = caption;
         if (file.type && file.type.indexOf("image/") === 0) {
           const img = document.createElement("img");
           img.src = link.href;
-          img.alt = file.label || file.name || "File";
+          img.alt = caption;
           link.appendChild(img);
         } else {
           const fallback = document.createElement("div");
           fallback.className = "fallback";
-          fallback.textContent = (file.label || "FILE").slice(0, 12);
+          const ext = fileExt(original || file.name);
+          fallback.textContent = ext || (slot || "FILE").slice(0, 12);
           link.appendChild(fallback);
         }
         const cap = document.createElement("span");
-        cap.textContent = file.label || file.name || "File";
+        cap.className = "file-cap";
+        const slotEl = document.createElement("strong");
+        slotEl.className = "file-slot";
+        slotEl.textContent = slot;
+        cap.appendChild(slotEl);
+        if (original) {
+          const nameEl = document.createElement("small");
+          nameEl.className = "file-name";
+          nameEl.textContent = original;
+          cap.appendChild(nameEl);
+        }
         link.appendChild(cap);
         files.appendChild(link);
       });
