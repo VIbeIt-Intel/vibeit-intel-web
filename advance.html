@@ -3,18 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Advance enquiry | VibeIt-Intel — order book and staff office</title>
+    <title>Advance brief | VibeIt-Intel — order book and staff office</title>
     <meta
       name="description"
-      content="Tell VibeIt-Intel what you need for an order book and staff office. We will come back with a time to talk or a quote."
+      content="VibeIt-Intel Advance brief. Same questions as Intermediate, plus what you need for customer logins and a staff office. On request."
     />
     <link rel="canonical" href="https://vibeit-intel.net/advance.html" />
-    <meta property="og:title" content="Advance enquiry — VibeIt-Intel" />
+    <meta property="og:title" content="Advance brief — VibeIt-Intel" />
     <meta
       property="og:description"
-      content="Tell us what you need. We will come back with a time to talk or a quote."
+      content="Tell us about the business, then what you need for an order book and staff office. We quote from this."
     />
-    <meta property="og:url" content="https://vibeit-intel.net/advance.html" />
+    <meta
+      property="og:url"
+      content="https://vibeit-intel.net/advance.html"
+    />
     <meta property="og:type" content="website" />
     <meta
       property="og:image"
@@ -51,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool30" />
+    <link rel="stylesheet" href="styles.css?v=cool33" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -96,9 +99,10 @@
       <p class="eyebrow">Advance · on request</p>
       <h1>Tell us what you need.</h1>
       <p class="lead">
-        A public site plus an order office — customer logins, invoices, and a
-        private place for staff to confirm and pack orders. A few lines is
-        enough — we will WhatsApp a time to talk, or send a quote.
+        Same questions as Intermediate — domain, logo, what you do, services,
+        shop, photos, bookings, payments, Google — plus the order book and
+        staff office. We quote from this. Files come through with this form,
+        to support@vibeit-intel.net.
       </p>
 
       <form
@@ -108,7 +112,7 @@
         enctype="multipart/form-data"
         data-store="https://vibeit-admin.vibeit-intel.workers.dev/api/briefs"
       >
-        <input type="hidden" name="_subject" value="VibeIt enquiry — Advance" />
+        <input type="hidden" name="_subject" value="VibeIt brief — Advance" />
         <input type="hidden" name="_template" value="basic" />
         <input type="hidden" name="_captcha" value="false" />
         <input
@@ -120,7 +124,7 @@
         <input
           type="hidden"
           name="_autoresponse"
-          value="Thanks for your VibeIt enquiry. We received it and will reply from support@vibeit-intel.net."
+          value="Thanks for your VibeIt brief. We received it and will reply from support@vibeit-intel.net."
         />
         <input type="text" name="_honey" class="brief-honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <textarea
@@ -135,43 +139,511 @@
           name="Package"
           value="Advance — Order book and staff office — on request"
         />
+        <input
+          type="hidden"
+          name="Revision rounds"
+          value="Set in your quote. Extra changes are quoted first."
+        />
 
         <div class="brief-block">
-          <p class="brief-kicker">1. Your business</p>
+          <p class="brief-kicker">1. Domain</p>
+          <p class="brief-help">Do you already have a web address?</p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I already have a domain" required />
+              Yes, I have one
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Domain" value="I need a domain" />
+              No, I need one
+            </label>
+          </div>
+          <div id="domain-have-wrap" hidden>
+            <p class="brief-help">
+              After the site is built we WhatsApp you. You log in to wherever you bought the address. We type what’s needed. You watch.
+            </p>
+            <label class="brief-field">
+              Your web address
+              <input
+                type="text"
+                name="Domain name"
+                placeholder="e.g. mybusiness.co.za"
+                autocomplete="off"
+              />
+            </label>
+            <p class="brief-help">Do you get email on this address?</p>
+            <div class="brief-choices">
+              <label class="brief-choice">
+                <input type="radio" name="Mail on this domain" value="Yes" />
+                Yes
+              </label>
+              <label class="brief-choice">
+                <input type="radio" name="Mail on this domain" value="No" />
+                No
+              </label>
+            </div>
+            <p class="brief-help">What should we do?</p>
+            <div class="brief-choices">
+              <label class="brief-choice brief-choice-block">
+                <input
+                  type="radio"
+                  name="Domain plan"
+                  value="Keep my address where it is. Hook the new site to it (included)."
+                />
+                Keep my address where it is. Hook the new site to it (included).
+              </label>
+              <label class="brief-choice brief-choice-block">
+                <input
+                  type="radio"
+                  name="Domain plan"
+                  value="Move it onto our xneelo (from R400, quoted first)"
+                />
+                Move it onto our xneelo (from R400, quoted first)
+              </label>
+            </div>
+            <p class="brief-help" id="domain-move-note" hidden>
+              You’ll need to approve an email from the old provider.
+            </p>
+            <label class="brief-tick">
+              <input
+                type="checkbox"
+                name="Domain login"
+                value="I can log in when you WhatsApp me. I will not send a password on this form."
+              />
+              I can log in when you WhatsApp me. I will not send a password on this form.
+            </label>
+          </div>
+          <div id="domain-need-wrap" hidden>
+            <p class="brief-help">
+              We register a new .co.za for you. Year one is in this package. After that about R105 a year, it depends on the name. You don’t have to buy it yourself.
+            </p>
+            <label class="brief-field">
+              The name you want
+              <input
+                type="text"
+                name="Domain name"
+                placeholder="e.g. mybusiness"
+                autocomplete="off"
+              />
+            </label>
+            <p class="brief-help">We add .co.za.</p>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">2. Logo</p>
+          <div class="brief-file">
+            <span>Upload your logo if you have one — more than one is fine</span>
+            <label class="brief-pick">
+              <input id="logo-file" type="file" accept="image/*,.svg,.pdf" multiple />
+              <span class="brief-pick-label">Choose files</span>
+            </label>
+            <div class="brief-previews" id="logo-previews" role="list" hidden></div>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">3. About</p>
           <label class="brief-field">
             Business name
             <input type="text" name="Business name" required autocomplete="organization" />
           </label>
           <label class="brief-field">
-            Email
-            <input type="email" name="email" required autocomplete="email" />
+            Registration number
+            <input type="text" name="Registration number" autocomplete="off" />
+          </label>
+          <label class="brief-field">
+            Business address
+            <textarea name="Business address" rows="3" autocomplete="street-address"></textarea>
           </label>
           <div class="brief-row">
-            <label class="brief-field">
-              WhatsApp
-              <input type="tel" name="WhatsApp" autocomplete="tel" />
-            </label>
             <label class="brief-field">
               Phone
               <input type="tel" name="Phone" autocomplete="tel" />
             </label>
+            <label class="brief-field">
+              WhatsApp
+              <input type="tel" name="WhatsApp" autocomplete="tel" />
+            </label>
           </div>
-          <p class="brief-help">WhatsApp is best. Phone is fine if that is what you use.</p>
+          <label class="brief-field">
+            Email
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
         </div>
 
         <div class="brief-block">
-          <p class="brief-kicker">2. What you need</p>
+          <p class="brief-kicker">4. What you do</p>
           <p class="brief-help">
-            Customer logins, a staff office, invoices, or a link to software you
-            already use — write it in your own words.
+            Pick the site format that matches your trade. A salon, a restaurant,
+            and a plumber are built as different websites.
+          </p>
+          <div class="brief-choices format-grid" data-site-formats></div>
+          <label class="brief-field" id="business-type-other-wrap" hidden>
+            Tell us what you do
+            <input type="text" name="Business type other" autocomplete="off" />
+          </label>
+          <p class="brief-help">What should a customer do on the site?</p>
+          <div class="brief-choices brief-actions">
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Call" />
+              Call
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="WhatsApp" />
+              WhatsApp
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Book" required checked />
+              Book
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Get a quote" />
+              Get a quote
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Customer action" value="Buy" />
+              Buy
+            </label>
+          </div>
+          <label class="brief-field">
+            Description of your business
+            <textarea
+              name="Business description"
+              rows="5"
+              required
+              placeholder="Who you serve, and what you want customers to do."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">5. Services</p>
+          <p class="brief-help">
+            What you do for people — cuts, fills, repairs, classes. Not the
+            bottles or food you sell.
           </p>
           <label class="brief-field">
-            Tell us
+            List
+            <textarea
+              name="Products or services"
+              rows="5"
+              placeholder="One per line is fine."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">6. Products you sell</p>
+          <p class="brief-help">
+            Nail products, food, parts, merch — items a customer can buy. Skip
+            this if you only do services. You can type a list or upload a Word,
+            Excel, PDF, or photo.
+          </p>
+          <div class="brief-choices brief-actions">
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="No" required />
+              No, services only
+            </label>
+            <label class="brief-choice">
+              <input type="radio" name="Sells products" value="Yes" />
+              Yes, we sell items
+            </label>
+          </div>
+          <div id="sell-products-wrap" hidden>
+            <label class="brief-field">
+              Items for sale
+              <textarea
+                name="Items for sale"
+                rows="5"
+                placeholder="e.g. gel kits, lunch meals, brake pads. Name and price if you have them. Skip this if you are uploading a file."
+              ></textarea>
+            </label>
+            <div class="brief-file">
+              <span>Catalogue, menu, or price list — Word, Excel, PDF, or photo</span>
+              <label class="brief-pick">
+                <input
+                  id="price-list-file"
+                  type="file"
+                  accept=".doc,.docx,.xls,.xlsx,.csv,.pdf,.odt,.ods,.txt,.rtf,image/*"
+                  multiple
+                />
+                <span class="brief-pick-label">Choose files</span>
+              </label>
+              <div class="brief-previews" id="price-list-previews" role="list" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">7. Photos and notes</p>
+          <div class="brief-file">
+            <span>A photo of your vibe</span>
+            <label class="brief-pick">
+              <input id="vibe-file" type="file" accept="image/*" />
+              <span class="brief-pick-label">Choose file</span>
+            </label>
+            <div class="brief-previews" id="vibe-previews" role="list" hidden></div>
+          </div>
+          <div class="brief-file">
+            <span>More photos — up to 10, compressed before sending</span>
+            <label class="brief-pick">
+              <input
+                id="extra-photos"
+                type="file"
+                accept="image/*"
+                multiple
+              />
+              <span class="brief-pick-label">Choose files</span>
+            </label>
+            <div class="brief-previews" id="extra-previews" role="list" hidden></div>
+          </div>
+          <label class="brief-field">
+            Notes
+            <textarea name="Notes" rows="4" placeholder="Anything else we should know."></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">8. Bookings</p>
+          <p class="brief-help">
+            What should customers be able to book on the site?
+          </p>
+          <label class="brief-field">
+            Services, time slots, and staff
+            <textarea
+              name="What customers can book"
+              rows="5"
+              required
+              placeholder="e.g. haircut 45 min with any stylist, or a 2-hour consult with Nomsa only. List each service, how long it takes, and who does it if that matters."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">9. When you take bookings</p>
+          <label class="brief-field">
+            Typical hours and days
+            <textarea
+              name="Booking hours"
+              rows="4"
+              required
+              placeholder="e.g. Tue–Sat 9:00–17:00, closed Sunday and Monday. Lunch 13:00–14:00."
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">10. Who manages bookings</p>
+          <p class="brief-help">
+            This person will use the private admin to see and manage bookings.
+          </p>
+          <div class="brief-row">
+            <label class="brief-field">
+              Name
+              <input type="text" name="Booking admin name" required autocomplete="name" />
+            </label>
+            <label class="brief-field">
+              Role
+              <input
+                type="text"
+                name="Booking admin role"
+                required
+                placeholder="e.g. owner, receptionist"
+                autocomplete="organization-title"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">11. How you get paid</p>
+          <p class="brief-help">
+            Tick how people pay you today. You open the bank account or the app
+            yourself — we only put the details on the site. Don’t have the
+            numbers on you? Leave the boxes blank and send them later.
+          </p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with cash" value="Yes" />
+              Cash
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with card machine" value="Yes" />
+              Card machine in the shop
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with EFT" value="Yes" />
+              Bank transfer (EFT)
+            </label>
+            <label class="brief-choice">
+              <input type="checkbox" name="Pay with app" value="Yes" />
+              Phone or app (PayFast, iKhoka, SnapScan)
+            </label>
+          </div>
+          <div id="pay-eft-wrap" hidden>
+            <p class="brief-help">
+              Copy these from your banking app or a bank letter. They go on the
+              site so customers can pay you.
+            </p>
+            <div class="brief-row">
+              <label class="brief-field">
+                Name on the account
+                <input
+                  type="text"
+                  name="Bank account name"
+                  placeholder="usually your business name"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="brief-field">
+                Bank
+                <input
+                  type="text"
+                  name="Bank"
+                  placeholder="e.g. Capitec, FNB, Standard Bank"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <div class="brief-row">
+              <label class="brief-field">
+                Account number
+                <input
+                  type="text"
+                  name="Account number"
+                  inputmode="numeric"
+                  placeholder="copy from the app"
+                  autocomplete="off"
+                />
+              </label>
+              <label class="brief-field">
+                Branch code
+                <input
+                  type="text"
+                  name="Branch code"
+                  inputmode="numeric"
+                  placeholder="optional"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+          </div>
+          <div id="pay-link-wrap" hidden>
+            <p class="brief-help">
+              Open the app you already use and copy the link customers pay with.
+              You get this from PayFast, iKhoka, SnapScan, or similar — not from
+              us.
+            </p>
+            <label class="brief-field">
+              Pay link
+              <input
+                type="text"
+                name="Pay link"
+                placeholder="Paste the link, or write I’ll send it later"
+                autocomplete="off"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">12. Google</p>
+          <p class="brief-help">
+            Do you already have a Google Business profile so people can find you
+            in search and Maps?
+          </p>
+          <div class="brief-choices">
+            <label class="brief-choice">
+              <input
+                type="radio"
+                name="Google profile"
+                value="I already have a Google Business profile"
+                required
+              />
+              Yes, I have one
+            </label>
+            <label class="brief-choice">
+              <input
+                type="radio"
+                name="Google profile"
+                value="I need a Google Business profile"
+              />
+              No, I need one
+            </label>
+          </div>
+          <label class="brief-field" id="google-url-wrap" hidden>
+            Link to your Google profile
+            <input
+              type="url"
+              name="Google profile URL"
+              placeholder="https://maps.google.com/… or paste the link"
+              autocomplete="off"
+            />
+          </label>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">13. Colours</p>
+          <p class="brief-help" id="colour-help">
+            We’ll read three colours from your logo and photos. Change them if they look wrong.
+          </p>
+          <div class="brief-colours">
+            <label class="brief-swatch">
+              Colour 1
+              <input type="color" name="Colour 1" value="#00c8c9" />
+            </label>
+            <label class="brief-swatch">
+              Colour 2
+              <input type="color" name="Colour 2" value="#ff8a1a" />
+            </label>
+            <label class="brief-swatch">
+              Colour 3
+              <input type="color" name="Colour 3" value="#4a1f7a" />
+            </label>
+          </div>
+        </div>
+
+        <div class="brief-block">
+          <p class="brief-kicker">14. Order book and staff office</p>
+          <p class="brief-help">
+            This is the Advance part. Customer logins, a private office to
+            confirm and pack orders, invoices, and a link to software you
+            already use if you need it.
+          </p>
+          <label class="brief-field">
+            Who should get a customer login
+            <textarea
+              name="Customer logins"
+              rows="3"
+              required
+              placeholder="e.g. regular shops that reorder, staff at their end, or anyone who buys."
+            ></textarea>
+          </label>
+          <label class="brief-field">
+            What staff do in the office
+            <textarea
+              name="Staff office"
+              rows="4"
+              required
+              placeholder="e.g. confirm the order, pack it, mark paid, send an invoice."
+            ></textarea>
+          </label>
+          <label class="brief-field">
+            Software you already use
+            <textarea
+              name="Existing software"
+              rows="3"
+              placeholder="e.g. Xero, Sage, a till, WhatsApp only. Write none if you start fresh."
+            ></textarea>
+          </label>
+          <label class="brief-field">
+            Tell us what you need
             <textarea
               name="What they need"
-              rows="6"
+              rows="5"
               required
-              placeholder="Who it is for, and what it should do."
+              placeholder="Anything the questions above missed — alerts, invoices, how orders should move."
             ></textarea>
           </label>
         </div>
@@ -192,8 +664,10 @@
           Send us your <span class="brief-vibe">Vibe</span>
         </button>
         <p class="brief-foot">
-          We’ll reply from support@vibeit-intel.net or WhatsApp. This is not a
-          booking — we will suggest a time once we have read this.
+          Revision rounds are set in your quote. Extra changes are quoted first.
+          We’ll reply from support@vibeit-intel.net. Photos are compressed on
+          this page so the email can take several at once (max 10 extras). A
+          Word or Excel price list is sent as-is.
         </p>
       </form>
     </main>
@@ -206,20 +680,180 @@
       </p>
     </footer>
     <script src="brief-files.js?v=files7"></script>
+    <script src="brief-formats.js?v=fmt1"></script>
     <script>
       (function () {
+        const MAX_EXTRA = 10;
+        const MAX_LOGO = 5;
+        const MAX_LISTS = 5;
+        const MAX_EDGE = 1600;
+        const QUALITY = 0.72;
+        const haveWrap = document.getElementById("domain-have-wrap");
+        const needWrap = document.getElementById("domain-need-wrap");
+        const haveFields = haveWrap.querySelectorAll("input");
+        const needFields = needWrap.querySelectorAll("input");
+        const moveNote = document.getElementById("domain-move-note");
+        const radios = document.querySelectorAll('input[name="Domain"]');
+        const googleWrap = document.getElementById("google-url-wrap");
+        const googleInput = googleWrap.querySelector("input");
+        const googleRadios = document.querySelectorAll('input[name="Google profile"]');
+        const payEftWrap = document.getElementById("pay-eft-wrap");
+        const payLinkWrap = document.getElementById("pay-link-wrap");
         const form = document.querySelector(".brief-form");
         const submit = form.querySelector(".brief-submit");
         const submitLabel =
           'Send us your <span class="brief-vibe">Vibe</span>';
+        const extra = document.getElementById("extra-photos");
+        const listInput = document.getElementById("price-list-file");
         const briefBox = document.getElementById("readable-brief");
         const replyTo = document.getElementById("brief-replyto");
+        const logoInput = document.getElementById("logo-file");
+        const vibeInput = document.getElementById("vibe-file");
         const subjectEl = form.querySelector('input[name="_subject"]');
-        const subjectBase = subjectEl ? subjectEl.value : "VibeIt enquiry — Advance";
+        const subjectBase = subjectEl ? subjectEl.value : "VibeIt brief — Advance";
+
+        function setPath(wrap, fields, on) {
+          wrap.hidden = !on;
+          fields.forEach(function (el) {
+            el.disabled = !on;
+            if (el.name === "Domain name") {
+              el.required = on;
+              return;
+            }
+            if (el.type === "checkbox" || el.type === "radio") el.required = on;
+          });
+        }
+
+        function syncMoveNote() {
+          const have = !haveWrap.hidden;
+          const move = document.querySelector('input[name="Domain plan"]:checked');
+          moveNote.hidden = !(have && move && /xneelo/i.test(move.value));
+        }
+
+        function sync() {
+          const picked = document.querySelector('input[name="Domain"]:checked');
+          const have = Boolean(picked) && picked.value === "I already have a domain";
+          const need = Boolean(picked) && picked.value === "I need a domain";
+          setPath(haveWrap, haveFields, have);
+          setPath(needWrap, needFields, need);
+          syncMoveNote();
+        }
+        radios.forEach(function (radio) {
+          radio.addEventListener("change", sync);
+        });
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Domain plan") syncMoveNote();
+        });
+        sync();
+
+        const typeOtherWrap = document.getElementById("business-type-other-wrap");
+        const typeOtherInput = typeOtherWrap && typeOtherWrap.querySelector("input");
+        function selectedType() {
+          const picked = form.querySelector('input[name="Business type"]:checked');
+          return picked ? picked.value : "";
+        }
+        function syncTypeOther() {
+          const other = selectedType() === "Other";
+          if (typeOtherWrap) typeOtherWrap.hidden = !other;
+          if (typeOtherInput) typeOtherInput.required = other;
+        }
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Business type") syncTypeOther();
+        });
+        syncTypeOther();
+
+        const sellWrap = document.getElementById("sell-products-wrap");
+        function syncSellProducts() {
+          const picked = form.querySelector('input[name="Sells products"]:checked');
+          const on = Boolean(picked && picked.value === "Yes");
+          if (sellWrap) sellWrap.hidden = !on;
+        }
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Sells products") syncSellProducts();
+        });
+        syncSellProducts();
+
+        function syncGoogle() {
+          const picked = document.querySelector('input[name="Google profile"]:checked');
+          googleWrap.hidden = !picked || picked.value !== "I already have a Google Business profile";
+          googleInput.required = Boolean(picked) && picked.value === "I already have a Google Business profile";
+        }
+        googleRadios.forEach(function (radio) {
+          radio.addEventListener("change", syncGoogle);
+        });
+
+        function syncPayDetails() {
+          const eft = form.querySelector('input[name="Pay with EFT"]');
+          const app = form.querySelector('input[name="Pay with app"]');
+          if (payEftWrap) payEftWrap.hidden = !(eft && eft.checked);
+          if (payLinkWrap) payLinkWrap.hidden = !(app && app.checked);
+        }
+        form.addEventListener("change", function (e) {
+          if (!e.target || !e.target.name || e.target.name.indexOf("Pay with") !== 0) return;
+          syncPayDetails();
+        });
+        syncPayDetails();
+
+        function setFiles(fileInput, files) {
+          VibeBriefFiles.setFiles(fileInput, files);
+        }
+
+        function namedFile(file, originalName) {
+          const name = String(originalName || file.name || "").trim();
+          if (!name || file.name === name) return file;
+          try {
+            return new File([file], name, {
+              type: file.type || "application/octet-stream",
+            });
+          } catch (err) {
+            return file;
+          }
+        }
+
+        function compressOne(file) {
+          return new Promise(function (resolve) {
+            if (!file.type || file.type.indexOf("image/") !== 0 || file.type === "image/svg+xml") {
+              resolve(file);
+              return;
+            }
+            const image = new Image();
+            const url = URL.createObjectURL(file);
+            image.onload = function () {
+              const scale = Math.min(1, MAX_EDGE / image.width, MAX_EDGE / image.height);
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.max(1, Math.round(image.width * scale));
+              canvas.height = Math.max(1, Math.round(image.height * scale));
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(
+                function (blob) {
+                  URL.revokeObjectURL(url);
+                  if (!blob) {
+                    resolve(file);
+                    return;
+                  }
+                  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+                  resolve(new File([blob], name, { type: "image/jpeg" }));
+                },
+                "image/jpeg",
+                QUALITY
+              );
+            };
+            image.onerror = function () {
+              URL.revokeObjectURL(url);
+              resolve(file);
+            };
+            image.src = url;
+          });
+        }
 
         function val(name) {
-          const first = form.querySelector('[name="' + name + '"]');
+          const first = form.querySelector('[name="' + name + '"]:not(:disabled)');
           if (!first) return "";
+          if (first.type === "radio") {
+            const picked = form.querySelector('input[name="' + name + '"]:checked:not(:disabled)');
+            return picked ? String(picked.value || "").trim() : "";
+          }
           if (first.type === "checkbox") {
             return first.checked ? String(first.value || "Yes").trim() : "";
           }
@@ -231,30 +865,162 @@
           lines.push(label + ": " + value);
         }
 
-        function fillReadableBrief() {
+        function section(lines, title, bodyFn) {
+          const start = lines.length;
+          bodyFn();
+          if (lines.length === start) return;
+          lines.splice(start, 0, title);
+          lines.push("");
+        }
+
+        function paymentList() {
+          const picked = [];
+          if (val("Pay with cash")) picked.push("Cash");
+          if (val("Pay with card machine")) picked.push("Card machine");
+          if (val("Pay with EFT")) picked.push("EFT");
+          if (val("Pay with app")) picked.push("Phone or app");
+          return picked.join(", ");
+        }
+
+        function fillReadableBrief(attached) {
           const lines = [];
           const business = val("Business name") || "New client";
           lines.push(business);
-          lines.push(val("Package") || "Advance — Order book and staff office — on request");
+          lines.push(val("Package") || subjectBase);
+          add(lines, "Revisions", val("Revision rounds"));
           lines.push("");
-          lines.push("BUSINESS");
-          lines.push("Type: Order book and staff office");
-          add(lines, "Agreed to terms", val("Agree to terms"));
-          lines.push("");
-          lines.push("CONTACT");
-          add(lines, "Name", business);
-          add(lines, "Phone", val("Phone"));
-          add(lines, "WhatsApp", val("WhatsApp"));
-          add(lines, "Email", val("email"));
-          lines.push("");
-          const need = val("What they need");
-          if (need) {
-            lines.push("WHAT THEY NEED");
-            lines.push(need);
+
+          section(lines, "BUSINESS", function () {
+            const type = val("Business type");
+            add(
+              lines,
+              "Type",
+              type === "Other" ? val("Business type other") || "Other" : type
+            );
+            add(lines, "Customer action", val("Customer action"));
+            add(lines, "Sells products", val("Sells products"));
+            add(lines, "Agreed to terms", val("Agree to terms"));
+          });
+
+          section(lines, "CONTACT", function () {
+            add(lines, "Name", business);
+            add(lines, "Registration", val("Registration number"));
+            add(lines, "Address", val("Business address"));
+            add(lines, "Phone", val("Phone"));
+            add(lines, "WhatsApp", val("WhatsApp"));
+            add(lines, "Email", val("email"));
+          });
+
+          section(lines, "WEBSITE", function () {
+            add(lines, "Domain", val("Domain"));
+            add(lines, "Domain name", val("Domain name"));
+            if (val("Domain") === "I already have a domain") {
+              add(lines, "Mail on this domain", val("Mail on this domain"));
+              add(lines, "Domain plan", val("Domain plan"));
+              add(lines, "Domain login", val("Domain login"));
+            }
+            const colours = [val("Colour 1"), val("Colour 2"), val("Colour 3")].filter(Boolean);
+            if (colours.length) add(lines, "Colours", colours.join("   "));
+          });
+
+          const desc = val("Business description");
+          if (desc) {
+            lines.push("WHAT THEY DO");
+            lines.push(desc);
             lines.push("");
           }
-          lines.push("FILES (0)");
-          lines.push("None attached");
+          const products = val("Products or services");
+          const listFiles = attached.filter(function (item) {
+            return item.kind === "list";
+          });
+          if (products) {
+            lines.push("PRODUCTS OR SERVICES");
+            lines.push(products);
+            lines.push("");
+          }
+          const items = val("Items for sale");
+          if (val("Sells products") === "Yes" || items || listFiles.length) {
+            lines.push("ITEMS FOR SALE");
+            if (items) lines.push(items);
+            listFiles.forEach(function (item) {
+              lines.push("Price list file: " + (item.originalName || item.file.name));
+            });
+            lines.push("");
+          }
+          const book = val("What customers can book");
+          if (book) {
+            lines.push("BOOKINGS");
+            lines.push(book);
+            lines.push("");
+          }
+          const hours = val("Booking hours");
+          if (hours) {
+            lines.push("HOURS");
+            lines.push(hours);
+            lines.push("");
+          }
+
+          section(lines, "ADMIN AND PAYMENTS", function () {
+            const adminName = val("Booking admin name");
+            const adminRole = val("Booking admin role");
+            add(
+              lines,
+              "Booking admin",
+              adminName && adminRole ? adminName + " (" + adminRole + ")" : adminName || adminRole
+            );
+            add(lines, "Payments", paymentList());
+            if (val("Pay with EFT")) {
+              add(lines, "Bank account name", val("Bank account name"));
+              add(lines, "Bank", val("Bank"));
+              add(lines, "Account number", val("Account number"));
+              add(lines, "Branch code", val("Branch code"));
+            }
+            if (val("Pay with app")) add(lines, "Pay link", val("Pay link"));
+            add(lines, "Google", val("Google profile"));
+            add(lines, "Google profile", val("Google profile URL"));
+          });
+
+          const logins = val("Customer logins");
+          const office = val("Staff office");
+          const software = val("Existing software");
+          const need = val("What they need");
+          if (logins || office || software || need) {
+            lines.push("ORDER BOOK AND STAFF OFFICE");
+            if (logins) {
+              lines.push("Customer logins:");
+              lines.push(logins);
+            }
+            if (office) {
+              lines.push("Staff office:");
+              lines.push(office);
+            }
+            if (software) {
+              lines.push("Existing software:");
+              lines.push(software);
+            }
+            if (need) {
+              lines.push("What they need:");
+              lines.push(need);
+            }
+            lines.push("");
+          }
+
+          const notes = val("Notes");
+          if (notes) {
+            lines.push("NOTES");
+            lines.push(notes);
+            lines.push("");
+          }
+
+          lines.push("FILES (" + attached.length + ")");
+          if (!attached.length) {
+            lines.push("None attached");
+          } else {
+            attached.forEach(function (item) {
+              lines.push("• " + item.label + " — " + (item.originalName || item.file.name));
+            });
+          }
+
           briefBox.value = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
         }
 
@@ -267,9 +1033,62 @@
             }
             if (el.id === "readable-brief") return;
             if (name === "email") return;
+            if (el.getAttribute("data-brief-attachment")) return;
             el.disabled = true;
           });
         }
+
+        function clearAttachments() {
+          form.querySelectorAll("input[data-brief-attachment]").forEach(function (el) {
+            el.remove();
+          });
+        }
+
+        function addAttachment(file, fieldName) {
+          const inputEl = document.createElement("input");
+          inputEl.type = "file";
+          inputEl.name = fieldName;
+          inputEl.setAttribute("data-brief-attachment", "1");
+          inputEl.className = "brief-honey";
+          inputEl.tabIndex = -1;
+          inputEl.setAttribute("aria-hidden", "true");
+          setFiles(inputEl, [file]);
+          form.appendChild(inputEl);
+        }
+
+        const refreshColours = VibeBriefFiles.watchColours({
+          swatches: [
+            form.querySelector('input[name="Colour 1"]'),
+            form.querySelector('input[name="Colour 2"]'),
+            form.querySelector('input[name="Colour 3"]'),
+          ],
+          fileInputs: [logoInput, vibeInput, extra],
+          weights: { "logo-file": 8, "vibe-file": 2, "extra-photos": 0.7 },
+          note: document.getElementById("colour-help"),
+        });
+        VibeBriefFiles.bind(logoInput, {
+          max: MAX_LOGO,
+          nouns: "logos",
+          previews: document.getElementById("logo-previews"),
+          onChange: refreshColours,
+        });
+        VibeBriefFiles.bind(vibeInput, {
+          max: 1,
+          nouns: "photo",
+          previews: document.getElementById("vibe-previews"),
+          onChange: refreshColours,
+        });
+        VibeBriefFiles.bind(extra, {
+          max: MAX_EXTRA,
+          nouns: "photos",
+          previews: document.getElementById("extra-previews"),
+          onChange: refreshColours,
+        });
+        VibeBriefFiles.bind(listInput, {
+          max: MAX_LISTS,
+          nouns: "lists",
+          previews: document.getElementById("price-list-previews"),
+        });
 
         form.addEventListener("submit", function (event) {
           event.preventDefault();
@@ -277,29 +1096,140 @@
             window.alert("Add a WhatsApp number, or a phone number we can reach you on.");
             return;
           }
-          submit.disabled = true;
-          submit.textContent = "Sending…";
-          if (subjectEl) {
-            const business = val("Business name");
-            subjectEl.value = business ? subjectBase + " — " + business : subjectBase;
+          const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
+          const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
+          let lists =
+            val("Sells products") === "Yes"
+              ? Array.from(listInput.files || []).slice(0, MAX_LISTS)
+              : [];
+          const hasServices = Boolean(val("Products or services"));
+          const hasItems = Boolean(val("Items for sale") || lists.length);
+          if (!hasServices && val("Sells products") !== "Yes") {
+            window.alert("Add the services you offer, or say you sell products and list them.");
+            return;
           }
-          replyTo.value = val("email");
-          fillReadableBrief();
-          keepOnlyMailFields();
-          VibeBriefFiles.storeBrief(form)
-            .catch(function () {
-              return null;
+          if (val("Sells products") === "Yes" && !hasItems) {
+            window.alert(
+              "List the products you sell, or upload a Word, Excel, PDF, or photo of the catalogue."
+            );
+            return;
+          }
+          if (!paymentList()) {
+            window.alert(
+              "Tick how customers pay you today — cash, card in the shop, EFT, or a phone app. Bank details and pay links can wait."
+            );
+            return;
+          }
+          if ((extra.files || []).length > MAX_EXTRA) {
+            setFiles(extra, extras);
+          }
+          if ((listInput.files || []).length > MAX_LISTS) {
+            setFiles(listInput, lists);
+          }
+          submit.disabled = true;
+          const hasFiles =
+            logos.length ||
+            extras.length ||
+            lists.length ||
+            (vibeInput.files && vibeInput.files[0]);
+          submit.textContent = hasFiles ? "Compressing photos…" : "Sending…";
+
+          const jobs = [];
+          logos.forEach(function (file, i) {
+            jobs.push(
+              compressOne(file).then(function (out) {
+                return { kind: "logo", index: i, file: out, originalName: file.name };
+              })
+            );
+          });
+          if (vibeInput.files[0]) {
+            const vibeFile = vibeInput.files[0];
+            jobs.push(
+              compressOne(vibeFile).then(function (file) {
+                return { kind: "vibe", file: file, originalName: vibeFile.name };
+              })
+            );
+          }
+          extras.forEach(function (file, i) {
+            jobs.push(
+              compressOne(file).then(function (out) {
+                return { kind: "extra", index: i, file: out, originalName: file.name };
+              })
+            );
+          });
+          lists.forEach(function (file, i) {
+            jobs.push(
+              compressOne(file).then(function (out) {
+                return { kind: "list", index: i, file: out, originalName: file.name };
+              })
+            );
+          });
+
+          Promise.all(jobs)
+            .then(function (packed) {
+              logoInput.disabled = true;
+              vibeInput.disabled = true;
+              extra.disabled = true;
+              listInput.disabled = true;
+              extra.removeAttribute("name");
+              clearAttachments();
+
+              const attached = packed.map(function (item) {
+                let file = namedFile(item.file, item.originalName);
+                let label = "File";
+                let fieldName = "File";
+                if (item.kind === "logo") {
+                  const n = (item.index || 0) + 1;
+                  label = n === 1 ? "Logo" : "Logo " + n;
+                  fieldName = label;
+                } else if (item.kind === "vibe") {
+                  label = "Vibe photo";
+                  fieldName = "Vibe photo";
+                } else if (item.kind === "list") {
+                  const n = (item.index || 0) + 1;
+                  label = n === 1 ? "Price list" : "Price list " + n;
+                  fieldName = label;
+                } else {
+                  const n = item.index + 1;
+                  label = "Extra photo " + n;
+                  fieldName = label;
+                }
+                addAttachment(file, fieldName);
+                return {
+                  kind: item.kind,
+                  label: label,
+                  file: file,
+                  originalName: item.originalName || file.name,
+                };
+              });
+
+              if (subjectEl) {
+                const business = val("Business name");
+                subjectEl.value = business ? subjectBase + " — " + business : subjectBase;
+              }
+              replyTo.value = val("email");
+              fillReadableBrief(attached);
+              keepOnlyMailFields();
+              submit.textContent = "Sending…";
+              return VibeBriefFiles.storeBrief(form).catch(function () {
+                return null;
+              });
             })
             .then(function () {
               return VibeBriefFiles.finishSend(form);
             })
             .catch(function () {
+              extra.disabled = false;
+              logoInput.disabled = false;
+              vibeInput.disabled = false;
+              listInput.disabled = false;
               Array.prototype.forEach.call(form.querySelectorAll("input, textarea, select"), function (el) {
                 el.disabled = false;
               });
+              clearAttachments();
               submit.disabled = false;
               submit.innerHTML = submitLabel;
-              window.alert("Could not send just now. Try again, or WhatsApp us.");
+              window.alert("Could not send just now. Try again, or WhatsApp the photos to us.");
             });
         });
       })();

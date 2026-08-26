@@ -4,10 +4,13 @@ import {
   bankFromEnv,
   packageAmount,
   quoteHtml,
-  quoteMailto,
+  quoteCoverHtml,
+  quotePdf,
   quoteSubject,
   quoteText,
+  loadLogoBytes,
 } from "./invoice.js";
+import { gmailStatus, saveGmailAppPassword, saveGmailRefresh, sendViaGmail } from "./gmailSend.js";
 
 const COOKIE = "vibeit_admin";
 const WEEK = 60 * 60 * 24 * 7;
@@ -40,6 +43,10 @@ async function handle(request, env, url) {
 
   if (path === "/auth/login" && method === "GET") return startGoogle(request, env, url);
   if (path === "/auth/callback" && method === "GET") return finishGoogle(request, env, url);
+  if (path === "/auth/gmail" && method === "GET") return gmailConnectPage(request, env, url);
+  if (path === "/auth/gmail/google" && method === "GET") return startGmailGoogle(request, env, url);
+  if (path === "/auth/gmail/callback" && method === "GET") return finishGmailGoogle(request, env, url);
+  if (path === "/api/gmail" && method === "POST") return saveGmail(request, env);
   if (path === "/auth/password" && method === "POST") return passwordLogin(request, env);
   if (path === "/auth/logout" && method === "POST") return logout(request);
   if (path === "/api/me" && method === "GET") return me(request, env);
@@ -57,6 +64,9 @@ async function handle(request, env, url) {
 
   const buildMatch = path.match(/^\/api\/briefs\/([^/]+)\/build$/);
   if (buildMatch && method === "POST") return startBuild(request, env, buildMatch[1]);
+
+  const quotePdfPage = path.match(/^\/api\/briefs\/([^/]+)\/quote\/([^/]+)\.pdf$/);
+  if (quotePdfPage && method === "GET") return getQuotePdf(request, env, quotePdfPage[1], quotePdfPage[2]);
 
   const quotePage = path.match(/^\/api\/briefs\/([^/]+)\/quote\/([^/]+)$/);
   if (quotePage && method === "GET") return getQuotePage(request, env, quotePage[1], quotePage[2]);
@@ -77,6 +87,7 @@ function authOptions(env) {
 async function me(request, env) {
   const email = await currentUser(request, env);
   if (!email) return json({ email: null }, 200);
+  const gmail = await gmailStatus(env);
   return json({
     email,
     build: {
@@ -85,7 +96,8 @@ async function me(request, env) {
     },
     billing: {
       bank: bankFromEnv(env).ready,
-      email: Boolean(env.RESEND_API_KEY),
+      email: Boolean(gmail.connected || env.RESEND_API_KEY),
+      gmail: gmail.connected,
     },
   });
 }
@@ -137,6 +149,121 @@ async function finishGoogle(request, env, url) {
   const email = String(profile.email || "").trim().toLowerCase();
   if (!profile.verified_email || !isAllowed(email, env)) return redirectHome("#login-denied");
   return setSession(request, email, env);
+}
+
+async function startGmailGoogle(request, env, url) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.SESSION_SECRET) {
+    return redirectHome("#gmail-setup");
+  }
+  const state = await signToken({ n: crypto.randomUUID(), t: Date.now(), gmail: true }, env.SESSION_SECRET, 600);
+  const redirect = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  redirect.searchParams.set("client_id", env.GOOGLE_CLIENT_ID);
+  redirect.searchParams.set("redirect_uri", url.origin + "/auth/gmail/callback");
+  redirect.searchParams.set("response_type", "code");
+  redirect.searchParams.set("scope", "openid email https://www.googleapis.com/auth/gmail.send");
+  redirect.searchParams.set("access_type", "offline");
+  redirect.searchParams.set("prompt", "consent");
+  redirect.searchParams.set("login_hint", email);
+  redirect.searchParams.set("state", state);
+  return new Response(null, { status: 302, headers: { Location: redirect.toString() } });
+}
+
+async function finishGmailGoogle(request, env, url) {
+  const user = await currentUser(request, env);
+  if (!user) return redirectHome("#login-error");
+  if (url.searchParams.get("error")) return redirectHome("#gmail-error");
+  const code = url.searchParams.get("code");
+  const parsed = await readToken(url.searchParams.get("state"), env.SESSION_SECRET);
+  if (!code || !parsed || !parsed.gmail) return redirectHome("#gmail-error");
+  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: url.origin + "/auth/gmail/callback",
+      grant_type: "authorization_code",
+    }),
+  });
+  const tokenBody = await tokenRes.json();
+  if (!tokenRes.ok || !tokenBody.refresh_token) return redirectHome("#gmail-error");
+  const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+    headers: { Authorization: "Bearer " + tokenBody.access_token },
+  });
+  const profile = await userRes.json();
+  const email = String(profile.email || "").trim().toLowerCase();
+  if (!isAllowed(email, env)) return redirectHome("#gmail-denied");
+  await saveGmailRefresh(env, email, tokenBody.refresh_token);
+  return redirectHome("#gmail-ok");
+}
+
+async function saveGmail(request, env) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  const body = await request.json().catch(function () {
+    return {};
+  });
+  const saved = await saveGmailAppPassword(env, email, body.appPassword);
+  if (saved.error) return json({ error: saved.error }, 400);
+  return json({ ok: true });
+}
+
+function gmailConnectPage(request, env, url) {
+  return currentUser(request, env).then(async function (email) {
+    if (!email) {
+      return new Response(null, { status: 302, headers: { Location: "/" } });
+    }
+    const status = await gmailStatus(env);
+    const html = [
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" />",
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />",
+      "<title>Connect Gmail</title>",
+      "<link rel=\"stylesheet\" href=\"/admin.css?v=12\" />",
+      "</head><body>",
+      "<div class=\"vibe\" aria-hidden=\"true\"><span class=\"blob teal\"></span><span class=\"blob orange\"></span><span class=\"blob purple\"></span></div>",
+      "<div class=\"screen\"><header class=\"top\">",
+      "<img src=\"https://vibeit-intel.net/assets/v-it-mark.png\" alt=\"\" width=\"72\" height=\"68\" />",
+      "<p>VibeIt-Intel</p></header>",
+      "<main class=\"card\">",
+      "<p class=\"kicker\">Gmail</p>",
+      "<h1>Send quotes from Gmail</h1>",
+      status.connected
+        ? "<p class=\"lead\">Connected as " +
+          String(status.email || email).replace(/</g, "") +
+          ". Send quote will email the branded PDF from this inbox.</p>"
+        : "<p class=\"lead\">Connect once. After that, Send quote emails the client from support@vibeit-intel.net with the invoice PDF attached. Bank details stay on the PDF.</p>",
+      status.canOauth
+        ? "<p><a class=\"btn btn-hot\" href=\"/auth/gmail/google\">Continue with Google</a></p>"
+        : "",
+      "<form id=\"gmail-form\">",
+      "<label>Gmail app password for " +
+        String(email).replace(/</g, "") +
+        "<input name=\"appPassword\" type=\"password\" autocomplete=\"off\" required /></label>",
+      "<p class=\"note\">Google account → Security → 2-Step Verification → App passwords. Create one named VibeIt and paste it here. Not your normal Gmail password.</p>",
+      "<p id=\"gmail-msg\" class=\"note hidden\"></p>",
+      "<button class=\"btn btn-hot\" type=\"submit\">Connect Gmail</button>",
+      "</form>",
+      "<p style=\"margin-top:16px\"><a class=\"btn btn-ghost\" href=\"/\">Back to requests</a></p>",
+      "</main></div>",
+      "<script>",
+      "document.getElementById('gmail-form').addEventListener('submit', function (event) {",
+      "event.preventDefault();",
+      "var pass = new FormData(event.target).get('appPassword');",
+      "var msg = document.getElementById('gmail-msg');",
+      "fetch('/api/gmail', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appPassword: pass }) })",
+      ".then(function (res) { return res.json().then(function (body) { if (!res.ok) throw new Error(body.error || 'Could not connect'); return body; }); })",
+      ".then(function () { location.href = '/#gmail-ok'; })",
+      ".catch(function (err) { msg.textContent = err.message; msg.classList.remove('hidden'); });",
+      "});",
+      "</script></body></html>",
+    ].join("");
+    return new Response(html, {
+      headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" },
+    });
+  });
 }
 
 async function passwordLogin(request, env) {
@@ -247,6 +374,7 @@ async function getBrief(request, env, id) {
   if (!row) return json({ error: "Not found" }, 404);
   const quotes = await listQuotes(env, id);
   const bank = bankFromEnv(env);
+  const gmail = await gmailStatus(env);
   return json({
     brief: Object.assign(shapeBrief(row), {
       suggestedAmount: packageAmount(row),
@@ -254,7 +382,8 @@ async function getBrief(request, env, id) {
     }),
     billing: {
       bank: bank.ready,
-      email: Boolean(env.RESEND_API_KEY),
+      email: Boolean(gmail.connected || env.RESEND_API_KEY),
+      gmail: gmail.connected,
     },
   });
 }
@@ -887,20 +1016,53 @@ async function sendQuote(request, env, id) {
     )
     .run();
 
-  const mailed = await tryResend(env, toEmail, quoteSubject(kind, invoice.number, doc.businessName), quoteHtml(doc), quoteText(doc));
-  const sentVia = mailed.sent ? "email" : "gmail";
-  const sentAt = new Date().toISOString();
+  const logoBytes = await loadLogoBytes();
+  const fileName =
+    "VibeIt-" + (kind === "invoice" ? "Invoice" : "Quote") + "-" + invoice.number + ".pdf";
+  let pdfBytes = null;
+  try {
+    pdfBytes = await quotePdf(doc, logoBytes);
+  } catch (err) {}
+
+  const coverHtml = quoteCoverHtml(doc);
+  const coverText = quoteText(doc);
+  const subject = quoteSubject(kind, invoice.number, doc.businessName);
+  let mailed = { sent: false, error: "" };
+  if (pdfBytes) {
+    mailed = await sendViaGmail(env, {
+      to: toEmail,
+      bcc: "support@vibeit-intel.net",
+      subject: subject,
+      html: coverHtml,
+      text: coverText,
+      filename: fileName,
+      pdfBytes: pdfBytes,
+    });
+  }
+  if (!mailed.sent) {
+    const attachments = pdfBytes ? [{ filename: fileName, content: bytesToBase64(pdfBytes) }] : [];
+    const resend = await tryResend(env, toEmail, subject, coverHtml, coverText, attachments);
+    if (resend.sent) mailed = { sent: true, via: "email" };
+    else if (resend.error) mailed.error = mailed.error || resend.error;
+  }
+
+  const sentVia = mailed.sent ? mailed.via || "email" : "";
+  const sentAt = mailed.sent ? new Date().toISOString() : "";
   await env.DB.prepare("UPDATE invoices SET sent_at = ?, sent_via = ? WHERE id = ?")
     .bind(sentAt, sentVia, invoice.id)
     .run();
 
+  const gmail = await gmailStatus(env);
   return json({
     ok: true,
     sent: mailed.sent,
     sentVia: sentVia,
     mailError: mailed.error || "",
-    mailto: quoteMailto(doc),
+    needGmail: !mailed.sent && !gmail.connected,
+    gmail: "",
+    mailto: "",
     printUrl: "/api/briefs/" + id + "/quote/" + invoice.id,
+    pdfUrl: "/api/briefs/" + id + "/quote/" + invoice.id + ".pdf",
     quote: {
       id: invoice.id,
       kind: invoice.kind,
@@ -912,17 +1074,25 @@ async function sendQuote(request, env, id) {
   });
 }
 
-async function getQuotePage(request, env, briefId, quoteId) {
-  const email = await currentUser(request, env);
-  if (!email) return json({ error: "Login required" }, 401);
+async function loadQuoteDoc(env, briefId, quoteId) {
   await ensureInvoicesTable(env);
   const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(briefId).first();
   const invoice = await env.DB.prepare("SELECT * FROM invoices WHERE id = ? AND brief_id = ?")
     .bind(quoteId, briefId)
     .first();
-  if (!row || !invoice) return json({ error: "Not found" }, 404);
-  const doc = quoteDoc(row, invoice, bankFromEnv(env), invoice.to_email || row.email || "");
-  return new Response(quoteHtml(doc, { printable: true }), {
+  if (!row || !invoice) return null;
+  return {
+    invoice: invoice,
+    doc: quoteDoc(row, invoice, bankFromEnv(env), invoice.to_email || row.email || ""),
+  };
+}
+
+async function getQuotePage(request, env, briefId, quoteId) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  const loaded = await loadQuoteDoc(env, briefId, quoteId);
+  if (!loaded) return json({ error: "Not found" }, 404);
+  return new Response(quoteHtml(loaded.doc, { printable: true }), {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "private, no-store",
@@ -931,9 +1101,40 @@ async function getQuotePage(request, env, briefId, quoteId) {
   });
 }
 
-async function tryResend(env, to, subject, html, text) {
+async function getQuotePdf(request, env, briefId, quoteId) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  const loaded = await loadQuoteDoc(env, briefId, quoteId);
+  if (!loaded) return json({ error: "Not found" }, 404);
+  const bytes = await quotePdf(loaded.doc);
+  const name =
+    "VibeIt-" +
+    (loaded.invoice.kind === "invoice" ? "Invoice" : "Quote") +
+    "-" +
+    loaded.invoice.number +
+    ".pdf";
+  return new Response(bytes, {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="' + name + '"',
+      "Cache-Control": "private, no-store",
+      "X-Robots-Tag": "noindex",
+    },
+  });
+}
+
+async function tryResend(env, to, subject, html, text, attachments) {
   if (!env.RESEND_API_KEY) return { sent: false };
   const from = String(env.RESEND_FROM || "VibeIt-Intel <support@vibeit-intel.net>").trim();
+  const payload = {
+    from: from,
+    to: [to],
+    bcc: ["support@vibeit-intel.net"],
+    subject: subject,
+    html: html,
+    text: text,
+  };
+  if (attachments && attachments.length) payload.attachments = attachments;
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -941,14 +1142,7 @@ async function tryResend(env, to, subject, html, text) {
         Authorization: "Bearer " + env.RESEND_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: from,
-        to: [to],
-        bcc: ["support@vibeit-intel.net"],
-        subject: subject,
-        html: html,
-        text: text,
-      }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const body = await res.json().catch(function () {

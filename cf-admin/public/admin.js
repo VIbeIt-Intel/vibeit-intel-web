@@ -11,6 +11,7 @@
   const setup = document.getElementById("setup");
   let filter = "";
   let currentId = "";
+  let canEmailQuote = false;
 
   function show(el) {
     login.classList.add("hidden");
@@ -125,6 +126,8 @@
     const open = document.getElementById("d-bill-open");
     const msg = document.getElementById("d-bill-msg");
     const sent = document.getElementById("d-bill-sent");
+    const gmailBtn = document.getElementById("d-gmail-connect");
+    canEmailQuote = Boolean(billing && (billing.gmail || billing.email));
     kind.value = "quote";
     send.disabled = false;
     send.textContent = "Send quote";
@@ -136,20 +139,27 @@
     quotes.forEach(function (item) {
       const li = document.createElement("li");
       const label = item.kind === "invoice" ? "Invoice" : "Quote";
-      const via = item.sentVia === "email" ? "emailed" : "opened in Gmail";
+      const via =
+        item.sentVia === "gmail"
+          ? "emailed from Gmail"
+          : item.sentVia === "email"
+            ? "emailed with PDF"
+            : "";
       li.textContent =
         label +
         " " +
         item.number +
         " · " +
         formatRand(item.amount) +
-        (item.sentAt ? " · " + via + " " + when(item.sentAt) : "");
+        (item.sentAt && via ? " · " + via + " " + when(item.sentAt) : item.sentAt ? " · saved " + when(item.sentAt) : "");
       sent.appendChild(li);
     });
     if (quotes[0]) {
-      open.href = "/api/briefs/" + brief.id + "/quote/" + quotes[0].id;
+      open.href = "/api/briefs/" + brief.id + "/quote/" + quotes[0].id + ".pdf";
+      open.setAttribute("download", "");
       open.classList.remove("hidden");
     }
+    if (gmailBtn) gmailBtn.classList.toggle("hidden", Boolean(billing && billing.gmail));
     if (!billing.bank) {
       msg.textContent =
         "Add your VibeIt bank details in Cloudflare first (account name, bank, account number). Then you can send a quote.";
@@ -157,8 +167,12 @@
     } else if (!brief.email) {
       msg.textContent = "This brief has no client email, so a quote cannot be sent yet.";
       msg.classList.remove("hidden");
+    } else if (billing.gmail || billing.email) {
+      msg.textContent = "Send emails the branded PDF from Gmail. Bank details stay on the invoice.";
+      msg.classList.remove("hidden");
     } else {
-      msg.classList.add("hidden");
+      msg.textContent = "Connect Gmail once. After that, Send quote emails the PDF from your inbox.";
+      msg.classList.remove("hidden");
     }
   }
 
@@ -759,6 +773,29 @@
       });
   });
 
+  function downloadPdf(url, fallbackName) {
+    return fetch(url, { credentials: "same-origin" })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Could not download the PDF.");
+        const header = res.headers.get("Content-Disposition") || "";
+        const match = header.match(/filename="([^"]+)"/);
+        return res.blob().then(function (blob) {
+          return { blob: blob, name: (match && match[1]) || fallbackName };
+        });
+      })
+      .then(function (file) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file.blob);
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () {
+          URL.revokeObjectURL(a.href);
+        }, 4000);
+      });
+  }
+
   document.getElementById("d-bill-kind").addEventListener("change", function () {
     const kind = document.getElementById("d-bill-kind").value;
     document.getElementById("d-bill-send").textContent = kind === "invoice" ? "Send invoice" : "Send quote";
@@ -777,34 +814,35 @@
     btn.disabled = true;
     btn.textContent = "Sending…";
     msg.classList.add("hidden");
+    if (!canEmailQuote) {
+      location.href = "/auth/gmail";
+      return;
+    }
     api("/api/briefs/" + currentId + "/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ kind: kind, amount: amount }),
     })
       .then(function (body) {
-        if (body.mailto && !body.sent) window.location.href = body.mailto;
         return openBrief(currentId).then(function () {
           const note = document.getElementById("d-bill-msg");
           const link = document.getElementById("d-bill-open");
           document.getElementById("d-bill-send").disabled = false;
           document.getElementById("d-bill-send").textContent =
             kind === "invoice" ? "Send invoice" : "Send quote";
-          if (body.printUrl) {
-            link.href = body.printUrl;
+          if (body.pdfUrl) {
+            link.href = body.pdfUrl;
             link.classList.remove("hidden");
           }
           if (body.sent) {
             note.textContent =
               (kind === "invoice" ? "Invoice " : "Quote ") +
               body.quote.number +
-              " emailed to the client. A copy went to support@vibeit-intel.net.";
+              " emailed from Gmail with the branded PDF attached. Bank details are on the invoice, not in the mail body.";
+          } else if (body.needGmail) {
+            note.textContent = "Connect Gmail once, then send again. The PDF is ready.";
           } else {
-            note.textContent =
-              (body.mailError ? body.mailError + " " : "") +
-              "Gmail should open with the " +
-              (kind === "invoice" ? "invoice" : "quote") +
-              " and your bank details. Open if you want a print/PDF copy.";
+            note.textContent = (body.mailError ? body.mailError + " " : "") + "The PDF is ready if you need to send it yourself.";
           }
           note.classList.remove("hidden");
         });
