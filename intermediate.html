@@ -54,7 +54,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool30" />
+    <link rel="stylesheet" href="styles.css?v=cool32" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -146,9 +146,7 @@
 
         <div class="brief-block">
           <p class="brief-kicker">1. Domain</p>
-          <p class="brief-help">
-            Do you already have a web address? Moving an existing domain is extra, from R400 — quoted first.
-          </p>
+          <p class="brief-help">Do you already have a web address?</p>
           <div class="brief-choices">
             <label class="brief-choice">
               <input type="radio" name="Domain" value="I already have a domain" required />
@@ -168,6 +166,41 @@
               autocomplete="off"
             />
           </label>
+          <div id="domain-have-wrap" hidden>
+            <p class="brief-help">
+              After the site is built we contact you to add it on your domain. You log in. We type the records. No PIN unless you chose a move.
+            </p>
+            <p class="brief-help">Mail on this domain?</p>
+            <div class="brief-choices">
+              <label class="brief-choice">
+                <input type="radio" name="Mail on this domain" value="Yes" />
+                Yes
+              </label>
+              <label class="brief-choice">
+                <input type="radio" name="Mail on this domain" value="No" />
+                No
+              </label>
+            </div>
+            <p class="brief-help">What should we do?</p>
+            <div class="brief-choices">
+              <label class="brief-choice brief-choice-block">
+                <input type="radio" name="Domain plan" value="Point the website only (included)" />
+                Point the website only (included). We’ll WhatsApp you after the build to add the records together.
+              </label>
+              <label class="brief-choice brief-choice-block">
+                <input type="radio" name="Domain plan" value="Move it to our xneelo (from R400, quoted first)" />
+                Move it to our xneelo (from R400, quoted first)
+              </label>
+            </div>
+            <label class="brief-choice brief-choice-block">
+              <input
+                type="checkbox"
+                name="Domain login"
+                value="I can log in when you contact me. I will not send a password on this form."
+              />
+              I can log in when you contact me. I will not send a password on this form.
+            </label>
+          </div>
         </div>
 
         <div class="brief-block">
@@ -585,7 +618,9 @@
         const MAX_EDGE = 1600;
         const QUALITY = 0.72;
         const wrap = document.getElementById("domain-name-wrap");
+        const haveWrap = document.getElementById("domain-have-wrap");
         const input = wrap.querySelector("input");
+        const haveFields = haveWrap.querySelectorAll("input");
         const radios = document.querySelectorAll('input[name="Domain"]');
         const googleWrap = document.getElementById("google-url-wrap");
         const googleInput = googleWrap.querySelector("input");
@@ -608,16 +643,27 @@
         function sync() {
           const picked = document.querySelector('input[name="Domain"]:checked');
           wrap.hidden = !picked;
-          if (!picked) return;
-          const need = picked.value === "I need a domain";
-          input.required = need;
+          const have = Boolean(picked) && picked.value === "I already have a domain";
+          const need = Boolean(picked) && picked.value === "I need a domain";
+          haveWrap.hidden = !have;
+          if (!picked) {
+            haveFields.forEach(function (el) {
+              el.required = false;
+            });
+            return;
+          }
+          input.required = true;
           input.placeholder = need
             ? "the name you want, e.g. mybusiness"
             : "e.g. mybusiness.co.za";
+          haveFields.forEach(function (el) {
+            el.required = have;
+          });
         }
         radios.forEach(function (radio) {
           radio.addEventListener("change", sync);
         });
+        sync();
 
         const typeOtherWrap = document.getElementById("business-type-other-wrap");
         const typeOtherInput = typeOtherWrap && typeOtherWrap.querySelector("input");
@@ -787,6 +833,11 @@
           section(lines, "WEBSITE", function () {
             add(lines, "Domain", val("Domain"));
             add(lines, "Domain name", val("Domain name"));
+            if (val("Domain") === "I already have a domain") {
+              add(lines, "Mail on this domain", val("Mail on this domain"));
+              add(lines, "Domain plan", val("Domain plan"));
+              add(lines, "Domain login", val("Domain login"));
+            }
             const colours = [val("Colour 1"), val("Colour 2"), val("Colour 3")].filter(Boolean);
             if (colours.length) add(lines, "Colours", colours.join("   "));
           });

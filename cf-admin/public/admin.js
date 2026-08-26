@@ -614,6 +614,9 @@
         fields["Domain name"],
         domainHref(fields["Domain name"])
       );
+      addField(webList, "Mail on this domain", fields["Mail on this domain"]);
+      addField(webList, "Domain plan", fields["Domain plan"]);
+      addField(webList, "Domain login", fields["Domain login"]);
       showPanel("d-web-panel", webList.childNodes.length > 0);
 
       const doTitle = document.querySelector("#d-do-panel h2");

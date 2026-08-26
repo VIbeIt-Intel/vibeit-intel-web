@@ -1480,10 +1480,31 @@ html.from-it .foot {
   margin-top: 1.1rem;
 }
 
+.brief-choice-block {
+  align-items: flex-start;
+}
+
+.brief-choice-block input {
+  margin-top: 0.2rem;
+}
+
+#domain-have-wrap {
+  margin-top: 0.85rem;
+}
+
+#domain-have-wrap[hidden],
 #sell-products-wrap[hidden],
 #pay-eft-wrap[hidden],
 #pay-link-wrap[hidden] {
   display: none;
+}
+
+#domain-have-wrap .brief-help {
+  margin-top: 0.85rem;
+}
+
+#domain-have-wrap .brief-choice {
+  margin-top: 0.55rem;
 }
 
 #sell-products-wrap,
