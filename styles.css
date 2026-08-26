@@ -672,21 +672,28 @@ html.from-it .foot {
 }
 
 .steps {
+  --step-g: 1.6rem;
+  --step-c: calc((100% - 2 * var(--step-g)) / 3);
+  --step-r: 31px;
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.6rem;
+  gap: var(--step-g);
   margin-top: 1.8rem;
   list-style: none;
 }
 
-.steps::before {
+.steps::before,
+.steps::after {
   content: "";
   position: absolute;
-  top: 27px;
-  left: 16.66%;
-  right: 16.66%;
+  top: 36px;
+  width: calc(var(--step-c) + var(--step-g) - 2 * var(--step-r));
   height: 2px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 0;
   background: linear-gradient(
     90deg,
     var(--teal),
@@ -694,11 +701,29 @@ html.from-it .foot {
     var(--purple),
     var(--teal)
   );
-  background-size: 200% 100%;
+  background-size: 220% 100%;
+  box-shadow:
+    0 0 0.5px 0.5px rgb(255 255 255 / 45%),
+    0 0 0 1px rgb(0 200 201 / 35%),
+    0 0 8px 1px rgb(0 200 201 / 65%),
+    0 0 16px 2px rgb(255 138 26 / 40%),
+    0 0 26px 3px rgb(74 31 122 / 45%);
   animation:
     step-line 6s linear infinite,
-    step-progress 6s ease-in-out infinite;
-  pointer-events: none;
+    step-bridge 6s ease-in-out infinite;
+}
+
+.steps::before {
+  left: calc(var(--step-c) / 2 + var(--step-r));
+}
+
+.steps::after {
+  left: calc(var(--step-c) * 1.5 + var(--step-g) + var(--step-r));
+  animation-delay: 0s, 2s;
+}
+
+.steps li::after {
+  content: none;
 }
 
 .steps li {
@@ -711,40 +736,77 @@ html.from-it .foot {
   text-align: center;
 }
 
+.step-badge {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 0.55rem;
+}
+
 .step-num {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 56px;
   height: 56px;
-  margin-bottom: 1rem;
-  border: 2px solid transparent;
+  border: 2px solid rgb(255 255 255 / 10%);
   border-radius: 50%;
-  background:
-    linear-gradient(#1a1026, #1a1026) padding-box,
-    conic-gradient(
-      from var(--wa-spin),
-      var(--teal),
-      var(--orange),
-      var(--purple),
-      var(--teal),
-      var(--orange),
-      var(--purple),
-      var(--teal)
-    ) border-box;
+  background: #1a1026;
   box-shadow: 0 0 18px rgb(0 200 201 / 40%);
   color: #fff;
   font-size: 1.2rem;
   font-weight: 800;
+  animation: step-hit 6s ease-in-out infinite;
+}
+
+.step-orbit {
+  position: absolute;
+  inset: 0;
+  width: 72px;
+  height: 72px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.step-orbit-track {
+  fill: none;
+  stroke: url(#step-orbit-grad);
+  stroke-width: 2;
+  opacity: 0.72;
+}
+
+.step-orbit-run {
+  fill: none;
+  stroke: url(#step-orbit-grad);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 64 124;
+  filter:
+    drop-shadow(0 0 3px rgb(0 200 201 / 95%))
+    drop-shadow(0 0 8px rgb(255 138 26 / 70%));
   animation:
-    wa-border-flow 6s linear infinite,
-    step-hit 6s ease-in-out infinite;
+    step-orbit-spin 1.15s linear infinite,
+    step-orbit-show 6s ease-in-out infinite;
 }
 
 .steps li:nth-child(2) .step-num {
-  animation-delay: 0s, 2s;
+  animation-delay: 2s;
 }
 
 .steps li:nth-child(3) .step-num {
+  animation-delay: 4s;
+}
+
+.steps li:nth-child(2) .step-orbit-run {
+  animation-delay: 0s, 2s;
+}
+
+.steps li:nth-child(3) .step-orbit-run {
   animation-delay: 0s, 4s;
 }
 
@@ -787,37 +849,58 @@ html.from-it .foot {
   }
 }
 
-@keyframes step-progress {
+@keyframes step-bridge {
   0%,
-  6% {
-    clip-path: inset(0 100% 0 0);
+  22% {
+    opacity: 0.38;
+    filter: saturate(0.75) brightness(0.85);
   }
-  30% {
-    clip-path: inset(0 50% 0 0);
-  }
-  62%,
+  32%,
   90% {
-    clip-path: inset(0);
+    opacity: 1;
+    filter: saturate(1.2) brightness(1.12);
   }
   100% {
-    clip-path: inset(0 100% 0 0);
+    opacity: 0.38;
+    filter: saturate(0.75) brightness(0.85);
   }
 }
 
-@keyframes step-progress-vert {
+@keyframes step-bridge-vert {
   0%,
-  6% {
-    clip-path: inset(0 0 100% 0);
+  22% {
+    opacity: 0.38;
+    filter: saturate(0.75) brightness(0.85);
   }
-  30% {
-    clip-path: inset(0 0 50% 0);
-  }
-  62%,
+  32%,
   90% {
-    clip-path: inset(0);
+    opacity: 1;
+    filter: saturate(1.2) brightness(1.12);
   }
   100% {
-    clip-path: inset(0 0 100% 0);
+    opacity: 0.38;
+    filter: saturate(0.75) brightness(0.85);
+  }
+}
+
+@keyframes step-orbit-spin {
+  to {
+    stroke-dashoffset: -188;
+  }
+}
+
+@keyframes step-orbit-show {
+  0%,
+  4% {
+    opacity: 0.5;
+  }
+  8%,
+  26% {
+    opacity: 1;
+  }
+  32%,
+  100% {
+    opacity: 0.5;
   }
 }
 
@@ -1987,13 +2070,22 @@ html.from-it .foot {
     gap: 1.5rem;
   }
 
-  .steps::before {
-    top: 1.6rem;
-    bottom: 1.6rem;
-    left: 27px;
-    right: auto;
+  .steps::before,
+  .steps::after {
+    content: none;
+    display: none;
+    animation: none;
+  }
+
+  .steps li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 35px;
+    top: 66px;
     width: 2px;
-    height: auto;
+    height: calc(100% - 66px + 1.5rem);
+    border-radius: 999px;
+    transform: none;
     background: linear-gradient(
       180deg,
       var(--teal),
@@ -2001,20 +2093,32 @@ html.from-it .foot {
       var(--purple),
       var(--teal)
     );
-    background-size: 100% 200%;
-    animation-name: step-line-vert, step-progress-vert;
+    background-size: 100% 220%;
+    box-shadow:
+      0 0 0.5px 0.5px rgb(255 255 255 / 45%),
+      0 0 0 1px rgb(0 200 201 / 35%),
+      0 0 8px 1px rgb(0 200 201 / 65%),
+      0 0 16px 2px rgb(255 138 26 / 40%);
+    animation:
+      step-line-vert 6s linear infinite,
+      step-bridge-vert 6s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  .steps li:nth-child(2)::after {
+    animation-delay: 0s, 2s;
   }
 
   .steps li {
     display: grid;
-    grid-template-columns: 56px 1fr;
+    grid-template-columns: 72px 1fr;
     grid-template-rows: auto auto;
     column-gap: 1.1rem;
     align-items: start;
     text-align: left;
   }
 
-  .step-num {
+  .step-badge {
     grid-row: 1 / span 2;
     margin-bottom: 0;
   }
@@ -2063,7 +2167,10 @@ html.from-it .foot {
   .wa-hero-mark::after,
   .dock-orb,
   .step-num,
+  .step-orbit-run,
   .steps::before,
+  .steps::after,
+  .steps li::after,
   .steps h3,
   .steps p,
   .brief-vibe,

@@ -74,7 +74,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool38" />
+    <link rel="stylesheet" href="styles.css?v=cool40" />
     <script>
       if (
         /(?:^|[?&])from=it(?:&|$)/.test(location.search) &&
@@ -141,17 +141,42 @@
         <h2 id="path-heading">How it works</h2>
         <ol class="steps">
           <li>
-            <span class="step-num">1</span>
+            <span class="step-badge">
+              <svg class="step-orbit" viewBox="0 0 72 72" aria-hidden="true">
+                <defs>
+                  <linearGradient id="step-orbit-grad" x1="8" y1="8" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#00c8c9" />
+                    <stop offset="0.5" stop-color="#ff8a1a" />
+                    <stop offset="1" stop-color="#4a1f7a" />
+                  </linearGradient>
+                </defs>
+                <circle class="step-orbit-track" cx="36" cy="36" r="30" />
+                <circle class="step-orbit-run" cx="36" cy="36" r="30" />
+              </svg>
+              <span class="step-num">1</span>
+            </span>
             <h3>Brief us</h3>
             <p>Share what your business does, who you serve, and how clients should reach you.</p>
           </li>
           <li>
-            <span class="step-num">2</span>
+            <span class="step-badge">
+              <svg class="step-orbit" viewBox="0 0 72 72" aria-hidden="true">
+                <circle class="step-orbit-track" cx="36" cy="36" r="30" />
+                <circle class="step-orbit-run" cx="36" cy="36" r="30" />
+              </svg>
+              <span class="step-num">2</span>
+            </span>
             <h3>We design and build</h3>
             <p>Brand, content, and structure — a site that represents your business clearly.</p>
           </li>
           <li>
-            <span class="step-num">3</span>
+            <span class="step-badge">
+              <svg class="step-orbit" viewBox="0 0 72 72" aria-hidden="true">
+                <circle class="step-orbit-track" cx="36" cy="36" r="30" />
+                <circle class="step-orbit-run" cx="36" cy="36" r="30" />
+              </svg>
+              <span class="step-num">3</span>
+            </span>
             <h3>Launch and support</h3>
             <p>You go live with a site people can find, contact, and use. We remain available after launch.</p>
           </li>
