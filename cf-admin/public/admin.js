@@ -247,7 +247,7 @@
       msg.textContent = "This brief has no client email, so a quote cannot be sent yet.";
       msg.classList.remove("hidden");
     } else if (billing.gmail || billing.email) {
-      msg.textContent = "Send emails the branded PDF from Gmail. Bank details stay on the invoice.";
+      msg.textContent = "Enter the full package price. A quote asks for 50% now to start design. Use Invoice later for the remaining 50%.";
       msg.classList.remove("hidden");
     } else {
       msg.textContent =

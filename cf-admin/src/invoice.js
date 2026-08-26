@@ -43,6 +43,21 @@ export function formatRand(amount) {
   return "R" + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+export function designDeposit(amount) {
+  const total = Math.round(Number(amount) || 0);
+  const deposit = Math.round(total / 2);
+  return { total: total, deposit: deposit, balance: total - deposit };
+}
+
+function isInvoice(doc) {
+  return Boolean(doc && doc.kind === "invoice");
+}
+
+function dueNowAmount(doc) {
+  const pay = designDeposit(doc && doc.amount);
+  return isInvoice(doc) ? pay.total : pay.deposit;
+}
+
 export function quoteLabel(kind) {
   return kind === "invoice" ? "Invoice" : "Quote";
 }
@@ -161,26 +176,40 @@ export function quoteScope(row) {
 }
 
 export function quoteText(doc) {
-  const kind = doc.kind === "invoice" ? "invoice" : "quote";
+  const kind = isInvoice(doc) ? "invoice" : "quote";
+  const pay = designDeposit(doc.amount);
   const lines = [
     "Hi " + (doc.businessName || "there") + ",",
     "",
     kind === "invoice"
       ? "Your VibeIt-Intel invoice is attached."
-      : "Your VibeIt-Intel quote is attached. It confirms the brief you sent us. Pay this to start - it stays open for 14 days.",
+      : "Your VibeIt-Intel quote is attached. It confirms the brief you sent us. Pay 50% (" +
+        formatRand(pay.deposit) +
+        ") to start the design. It stays open for 14 days.",
     "",
     quoteLabel(doc.kind) + " " + doc.number,
     pdfSafeKeep(doc.description),
-    "Total due: " + formatRand(doc.amount),
+    "Project total: " + formatRand(pay.total),
+    kind === "invoice"
+      ? "Total due: " + formatRand(pay.total)
+      : "Due now (50% to start design): " + formatRand(pay.deposit),
+  ];
+  if (kind !== "invoice") {
+    lines.push("Balance when you approve (50%): " + formatRand(pay.balance));
+  }
+  lines.push(
     "",
     "Bank details and the payment reference are on the attached " + kind + ".",
-    "Payment starts the work. Terms: " + SITE + "/terms.html",
+    kind === "invoice"
+      ? "Pay this invoice in full. Terms: " + SITE + "/terms.html"
+      : "The 50% deposit starts the design. Terms: " + SITE + "/terms.html",
     "",
     "Questions: support@vibeit-intel.net or WhatsApp 068 943 4124",
-    SITE.replace("https://", ""),
-  ];
+    SITE.replace("https://", "")
+  );
   if (doc.note) {
-    lines.splice(8, 0, "", doc.note);
+    const insertAt = lines.indexOf("Bank details and the payment reference are on the attached " + kind + ".");
+    lines.splice(insertAt, 0, "", doc.note);
   }
   return lines.join("\n");
 }
@@ -191,10 +220,12 @@ function pdfSafeKeep(text) {
 
 export function quoteCoverHtml(doc) {
   const kind = quoteLabel(doc.kind);
-  const intro =
-    doc.kind === "invoice"
-      ? "Your invoice is attached. Pay using the bank details on that document."
-      : "Your quote is attached. It confirms the brief you sent us. Pay using the bank details on that document to start - it stays open for 14 days.";
+  const pay = designDeposit(doc.amount);
+  const intro = isInvoice(doc)
+    ? "Your invoice is attached. Pay using the bank details on that document."
+    : "Your quote is attached. It confirms the brief you sent us. Pay 50% (" +
+      formatRand(pay.deposit) +
+      ") using the bank details on that document to start the design - it stays open for 14 days.";
   return [
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /></head>',
     '<body style="margin:0;background:#f3eef8;color:#160c22;font-family:Segoe UI,Helvetica,Arial,sans-serif;">',
@@ -226,8 +257,13 @@ export function quoteCoverHtml(doc) {
       escapeHtml(doc.description) +
       "</div>",
     '<div style="margin-top:10px;font-size:22px;font-weight:800;color:#4a1f7a;">' +
-      escapeHtml(formatRand(doc.amount)) +
-      "</div>",
+      escapeHtml(formatRand(dueNowAmount(doc))) +
+      "</div>" +
+      (isInvoice(doc)
+        ? ""
+        : '<div style="margin-top:6px;font-size:12px;color:#5c4e6a;">Project total ' +
+          escapeHtml(formatRand(pay.total)) +
+          " · 50% to start design</div>"),
     "</td></tr></table></td></tr>",
     '<tr><td style="padding:18px 24px 28px;font-size:14px;line-height:1.55;color:#5c4e6a;">',
     "<p style=\"margin:0 0 14px;\">Open the attached PDF for the EFT details. Use <strong style=\"color:#160c22;\">" +
@@ -337,7 +373,7 @@ function quoteScopeHtml(doc) {
     logo +
     (rows ? "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:10px;\">" + rows + "</table>" : "") +
     blocks +
-    "<p style=\"margin:14px 0 0;color:#5c4e6a;font-size:12px;\">Payment accepts this scope. Changes after payment are a new quote.</p>" +
+    "<p style=\"margin:14px 0 0;color:#5c4e6a;font-size:12px;\">Paying the 50% deposit accepts this scope. Changes after that are a new quote.</p>" +
     "</div>"
   );
 }
@@ -345,11 +381,11 @@ function quoteScopeHtml(doc) {
 export function quoteHtml(doc, opts) {
   const printable = Boolean(opts && opts.printable);
   const kind = quoteLabel(doc.kind);
+  const pay = designDeposit(doc.amount);
   const logoSrc = opts && opts.logoCid ? "cid:" + opts.logoCid : LOGO_URL;
-  const intro =
-    doc.kind === "invoice"
-      ? "Please pay this invoice to the account below."
-      : "This quote confirms the brief you submitted. Pay to start - it stays open for 14 days.";
+  const intro = isInvoice(doc)
+    ? "Please pay this invoice to the account below."
+    : "This quote confirms the brief you submitted. Pay 50% to start the design - it stays open for 14 days. The other 50% is due when you approve the design.";
   const scopeHtml = quoteScopeHtml(doc);
   const note = doc.note
     ? "<tr><td colspan=\"2\" style=\"padding:12px 0 0;color:#5c4e6a;font-size:14px;white-space:pre-wrap;\">" +
@@ -439,14 +475,28 @@ export function quoteHtml(doc, opts) {
     "<tr>",
     "<td style=\"padding:14px 12px;border-bottom:1px solid #efe7f5;font-size:15px;\">" +
       escapeHtml(doc.description) +
-      "<div style=\"margin-top:4px;color:#5c4e6a;font-size:13px;\">Once-off \u00b7 South African Rand</div></td>",
+      "<div style=\"margin-top:4px;color:#5c4e6a;font-size:13px;\">" +
+      (isInvoice(doc) ? "Once-off \u00b7 South African Rand" : "Once-off \u00b7 50% to start design") +
+      "</div></td>",
     "<td align=\"right\" style=\"padding:14px 12px;border-bottom:1px solid #efe7f5;font-size:18px;font-weight:800;color:#4a1f7a;\">" +
-      escapeHtml(formatRand(doc.amount)) +
+      escapeHtml(formatRand(pay.total)) +
       "</td></tr>",
+    isInvoice(doc)
+      ? ""
+      : "<tr><td style=\"padding:10px 12px;color:#5c4e6a;font-size:14px;\">Due now \u2014 50% to start design</td>" +
+        "<td align=\"right\" style=\"padding:10px 12px;font-size:15px;font-weight:700;color:#4a1f7a;\">" +
+        escapeHtml(formatRand(pay.deposit)) +
+        "</td></tr>" +
+        "<tr><td style=\"padding:10px 12px;color:#5c4e6a;font-size:14px;\">Balance when you approve the design</td>" +
+        "<td align=\"right\" style=\"padding:10px 12px;font-size:14px;font-weight:600;\">" +
+        escapeHtml(formatRand(pay.balance)) +
+        "</td></tr>",
     "<tr>",
-    "<td style=\"padding:14px 12px;font-size:16px;font-weight:700;vertical-align:middle;\">Total due</td>",
+    "<td style=\"padding:14px 12px;font-size:16px;font-weight:700;vertical-align:middle;\">" +
+      (isInvoice(doc) ? "Total due" : "Pay now") +
+      "</td>",
     "<td align=\"right\" style=\"padding:14px 12px;font-size:16px;font-weight:800;color:#160c22;vertical-align:middle;\">" +
-      escapeHtml(formatRand(doc.amount)) +
+      escapeHtml(formatRand(dueNowAmount(doc))) +
       "</td></tr>",
     note,
     "</table>",
@@ -469,9 +519,13 @@ export function quoteHtml(doc, opts) {
       escapeHtml(doc.number) +
       "</td></tr>",
     "</table>",
-    "<p style=\"margin:14px 0 0;color:#cbbfd8;font-size:13px;\">Payment starts the work. <a href=\"" +
+    "<p style=\"margin:14px 0 0;color:#cbbfd8;font-size:13px;\">" +
+      (isInvoice(doc)
+        ? "Pay this invoice in full."
+        : "Pay 50% now to start the design. The other 50% is due when you approve it.") +
+      ' <a href="' +
       SITE +
-      "/terms.html\" style=\"color:#ff8a1a;\">Terms</a></p>",
+      '/terms.html" style="color:#ff8a1a;">Terms</a></p>',
     "</td></tr></table>",
     "<p style=\"margin:22px 0 0;color:#5c4e6a;font-size:12px;line-height:1.5;\">" +
       escapeHtml(doc.bank.legalName) +
@@ -674,7 +728,7 @@ export async function quotePdf(doc, logos) {
     });
     y -= 10;
     need(16);
-    drawText(page, "Payment accepts this scope. Changes after payment are a new quote.", 36, y, 9, font, muted);
+    drawText(page, "Paying the 50% deposit accepts this scope. Changes after that are a new quote.", 36, y, 9, font, muted);
     footer(page);
     page = pdf.addPage([width, height]);
   }
@@ -706,10 +760,9 @@ export async function quotePdf(doc, logos) {
   }
 
   y -= 26;
-  const intro =
-    doc.kind === "invoice"
-      ? "Please pay this invoice to the account below."
-      : "Pay this quote to start. It stays open for 14 days.";
+  const intro = isInvoice(doc)
+    ? "Please pay this invoice to the account below."
+    : "Pay 50% to start the design. It stays open for 14 days. The other 50% is due when you approve the design.";
   wrapLines(intro, font, 11, width - 72).forEach(function (line) {
     drawText(page, line, 36, y, 11, font, ink);
     y -= 14;
@@ -726,7 +779,7 @@ export async function quotePdf(doc, logos) {
     if (i === 0) drawText(page, formatRand(doc.amount), 455, y, 14, bold, purple);
     y -= 15;
   });
-  drawText(page, "Once-off - South African Rand", 48, y, 10, font, muted);
+  drawText(page, isInvoice(doc) ? "Once-off - South African Rand" : "Once-off - 50% to start design", 48, y, 10, font, muted);
   y -= 14;
   page.drawLine({
     start: { x: 36, y: y },
@@ -734,9 +787,18 @@ export async function quotePdf(doc, logos) {
     thickness: 1,
     color: rgb(0.93, 0.9, 0.96),
   });
+  const schedule = designDeposit(doc.amount);
+  if (!isInvoice(doc)) {
+    y -= 18;
+    drawText(page, "Due now - 50% to start design", 48, y, 10, font, muted);
+    drawText(page, formatRand(schedule.deposit), 455, y, 12, bold, purple);
+    y -= 16;
+    drawText(page, "Balance when you approve the design", 48, y, 10, font, muted);
+    drawText(page, formatRand(schedule.balance), 455, y, 12, font, ink);
+  }
   y -= 22;
-  drawText(page, "Total due", 48, y + 2, 13, bold, ink);
-  drawText(page, formatRand(doc.amount), 430, y, 16, bold, ink);
+  drawText(page, isInvoice(doc) ? "Total due" : "Pay now", 48, y + 2, 13, bold, ink);
+  drawText(page, formatRand(dueNowAmount(doc)), 430, y, 16, bold, ink);
 
   if (doc.note) {
     y -= 22;
@@ -755,6 +817,7 @@ export async function quotePdf(doc, logos) {
   ];
   if (doc.bank.branch) pay.push(["Branch", doc.bank.branch]);
   if (doc.bank.swift) pay.push(["SWIFT", doc.bank.swift]);
+  if (!isInvoice(doc)) pay.push(["Pay now (50%)", formatRand(schedule.deposit)]);
   pay.push(["Reference", doc.number]);
   const boxH = 32 + pay.length * 18 + 18;
   y -= 28;
@@ -765,12 +828,23 @@ export async function quotePdf(doc, logos) {
   drawText(page, "PAY BY EFT", 52, rowY, 9, bold, teal);
   rowY -= 20;
   pay.forEach(function (row) {
+    const hot = row[0] === "Reference" || row[0].indexOf("Pay now") === 0;
     drawText(page, row[0], 52, rowY, 10, font, rgb(0.8, 0.75, 0.85));
-    drawText(page, row[1], 250, rowY, 11, bold, row[0] === "Reference" ? teal : white);
+    drawText(page, row[1], 250, rowY, 11, bold, hot ? teal : white);
     rowY -= 18;
   });
   y = boxBottom - 20;
-  drawText(page, "Payment starts the work. Terms: vibeit-intel.net/terms.html", 36, y, 10, font, muted);
+  drawText(
+    page,
+    isInvoice(doc)
+      ? "Pay this invoice in full. Terms: vibeit-intel.net/terms.html"
+      : "50% starts the design. Balance is due when you approve it. Terms: vibeit-intel.net/terms.html",
+    36,
+    y,
+    10,
+    font,
+    muted
+  );
   y -= 14;
   drawText(page, "VibeIt-Intel  -  support@vibeit-intel.net  -  WhatsApp 068 943 4124", 36, y, 10, font, muted);
   footer(page);
