@@ -195,9 +195,9 @@
                 <input
                   type="radio"
                   name="Domain plan"
-                  value="Move it onto our xneelo (from R400, quoted first)"
+                  value="Move it to us (from R400, quoted first)"
                 />
-                Move it onto our xneelo (from R400, quoted first)
+                Move it to us (from R400, quoted first)
               </label>
             </div>
             <p class="brief-help" id="domain-move-note" hidden>
@@ -682,7 +682,7 @@
         function syncMoveNote() {
           const have = !haveWrap.hidden;
           const move = document.querySelector('input[name="Domain plan"]:checked');
-          moveNote.hidden = !(have && move && /xneelo/i.test(move.value));
+          moveNote.hidden = !(have && move && /^Move it to us/i.test(move.value));
         }
 
         function sync() {
