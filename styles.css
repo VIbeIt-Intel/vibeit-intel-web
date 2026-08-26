@@ -164,7 +164,10 @@ body.splash {
   bottom: max(0.9rem, calc(env(safe-area-inset-bottom, 0px) + 0.55rem));
   z-index: 2;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.75rem;
   width: min(
     calc(100% - 1.4rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)),
     44rem
@@ -173,6 +176,41 @@ body.splash {
   pointer-events: none;
   text-align: center;
   transform: translateX(-50%);
+}
+
+.splash-cta {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.88rem 1.55rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    var(--teal) 0%,
+    #2a8ad4 32%,
+    var(--purple) 68%,
+    var(--orange) 100%
+  );
+  box-shadow:
+    0 8px 22px rgb(74 31 122 / 40%),
+    0 4px 14px rgb(0 200 201 / 28%);
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.splash-cta:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.splash-cta:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 3px;
 }
 
 .status {
@@ -219,6 +257,12 @@ body.splash {
 @media (max-height: 430px) {
   .overlay {
     bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
+    gap: 0.5rem;
+  }
+
+  .splash-cta {
+    padding: 0.7rem 1.25rem;
+    font-size: 0.92rem;
   }
 
   .note {
@@ -1917,57 +1961,12 @@ html.from-it .foot {
 }
 
 .brief-vibe {
-  display: inline-block;
+  display: inline;
   font-weight: 800;
   font-style: italic;
-  letter-spacing: -0.04em;
-  background-image: linear-gradient(
-    90deg,
-    var(--teal),
-    var(--orange),
-    var(--purple),
-    var(--teal),
-    var(--orange),
-    var(--purple),
-    var(--teal)
-  );
-  background-size: 280% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  filter:
-    drop-shadow(0 0 7px rgb(0 200 201 / 90%))
-    drop-shadow(0 0 14px rgb(255 138 26 / 45%));
-  animation:
-    brief-vibe-flow 4s linear infinite,
-    brief-vibe-glow 5s ease-in-out infinite;
-}
-
-@keyframes brief-vibe-flow {
-  to {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes brief-vibe-glow {
-  0%,
-  100% {
-    filter:
-      drop-shadow(0 0 7px rgb(0 200 201 / 90%))
-      drop-shadow(0 0 14px rgb(255 138 26 / 45%));
-  }
-  33% {
-    filter:
-      drop-shadow(0 0 7px rgb(255 138 26 / 95%))
-      drop-shadow(0 0 16px rgb(0 200 201 / 40%));
-  }
-  66% {
-    filter:
-      drop-shadow(0 0 8px rgb(180 120 255 / 90%))
-      drop-shadow(0 0 16px rgb(74 31 122 / 70%));
-  }
+  letter-spacing: -0.02em;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
 }
 
 .brief-foot {
@@ -2173,7 +2172,6 @@ html.from-it .foot {
   .steps li::after,
   .steps h3,
   .steps p,
-  .brief-vibe,
   .it-link.is-lure::before,
   .it-link.is-lure,
   .it-link.is-opening,
@@ -2182,13 +2180,6 @@ html.from-it .foot {
   html.from-it main,
   html.from-it .foot {
     animation: none;
-  }
-
-  .brief-vibe {
-    background-position: 28% 50%;
-    filter:
-      drop-shadow(0 0 7px rgb(0 200 201 / 85%))
-      drop-shadow(0 0 12px rgb(255 138 26 / 45%));
   }
 
   .it-link.is-lure::before {

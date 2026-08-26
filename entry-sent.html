@@ -2,12 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script src="https-upgrade.js"></script>
     <meta http-equiv="refresh" content="0; url=brief-sent.html" />
     <meta name="robots" content="noindex" />
     <link rel="canonical" href="https://vibeit-intel.net/brief-sent.html" />
     <title>Form submitted — VibeIt-Intel</title>
     <script>
-      location.replace("brief-sent.html");
+      if (
+        location.protocol !== "http:" ||
+        (location.hostname !== "vibeit-intel.net" &&
+          location.hostname !== "www.vibeit-intel.net")
+      ) {
+        location.replace("brief-sent.html");
+      }
     </script>
   </head>
   <body>
