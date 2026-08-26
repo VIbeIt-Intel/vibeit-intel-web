@@ -6,6 +6,8 @@ import {
   quoteHtml,
   quoteCoverHtml,
   quotePdf,
+  quoteFileName,
+  quoteScope,
   quoteSubject,
   quoteText,
   loadLogoBytes,
@@ -948,6 +950,7 @@ function displayDate(iso) {
 }
 
 function quoteDoc(row, invoice, bank, toEmail) {
+  const logoIndex = clientLogoIndex(row);
   return {
     kind: invoice.kind,
     number: invoice.number,
@@ -958,7 +961,43 @@ function quoteDoc(row, invoice, bank, toEmail) {
     toEmail: toEmail,
     createdAt: displayDate(invoice.created_at),
     bank: bank,
+    scope: quoteScope(row),
+    clientLogoUrl: logoIndex >= 0 ? "/api/briefs/" + row.id + "/file/" + logoIndex : "",
   };
+}
+
+function clientLogoIndex(row) {
+  const files = parseFiles(row.files);
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    const type = String((file && file.type) || "").toLowerCase();
+    if (type.indexOf("image/") !== 0 || type.indexOf("svg") !== -1) continue;
+    const blob =
+      String((file && file.label) || "") +
+      " " +
+      String((file && file.name) || "") +
+      " " +
+      String((file && file.originalName) || "");
+    if (/logo/i.test(blob)) return i;
+  }
+  return -1;
+}
+
+async function loadClientLogo(env, row) {
+  const files = parseFiles(row.files);
+  const index = clientLogoIndex(row);
+  if (index < 0) return null;
+  const file = files[index];
+  if (!file || !file.key) return null;
+  const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
+  if (!object || !object.byteLength) return null;
+  return { bytes: new Uint8Array(object), type: String(file.type || "image/png") };
+}
+
+async function renderQuotePdf(env, row, doc) {
+  const brandBytes = await loadLogoBytes();
+  const clientLogo = await loadClientLogo(env, row);
+  return quotePdf(doc, { brandBytes: brandBytes, clientLogo: clientLogo });
 }
 
 async function sendQuote(request, env, id) {
@@ -1016,12 +1055,10 @@ async function sendQuote(request, env, id) {
     )
     .run();
 
-  const logoBytes = await loadLogoBytes();
-  const fileName =
-    "VibeIt-" + (kind === "invoice" ? "Invoice" : "Quote") + "-" + invoice.number + ".pdf";
+  const fileName = quoteFileName(kind, doc.businessName);
   let pdfBytes = null;
   try {
-    pdfBytes = await quotePdf(doc, logoBytes);
+    pdfBytes = await renderQuotePdf(env, row, doc);
   } catch (err) {}
 
   const coverHtml = quoteCoverHtml(doc);
@@ -1063,6 +1100,7 @@ async function sendQuote(request, env, id) {
     mailto: "",
     printUrl: "/api/briefs/" + id + "/quote/" + invoice.id,
     pdfUrl: "/api/briefs/" + id + "/quote/" + invoice.id + ".pdf",
+    fileName: fileName,
     quote: {
       id: invoice.id,
       kind: invoice.kind,
@@ -1083,6 +1121,7 @@ async function loadQuoteDoc(env, briefId, quoteId) {
   if (!row || !invoice) return null;
   return {
     invoice: invoice,
+    row: row,
     doc: quoteDoc(row, invoice, bankFromEnv(env), invoice.to_email || row.email || ""),
   };
 }
@@ -1106,21 +1145,24 @@ async function getQuotePdf(request, env, briefId, quoteId) {
   if (!email) return json({ error: "Login required" }, 401);
   const loaded = await loadQuoteDoc(env, briefId, quoteId);
   if (!loaded) return json({ error: "Not found" }, 404);
-  const bytes = await quotePdf(loaded.doc);
-  const name =
-    "VibeIt-" +
-    (loaded.invoice.kind === "invoice" ? "Invoice" : "Quote") +
-    "-" +
-    loaded.invoice.number +
-    ".pdf";
+  const bytes = await renderQuotePdf(env, loaded.row, loaded.doc);
+  const name = quoteFileName(loaded.invoice.kind, loaded.doc.businessName);
   return new Response(bytes, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": 'attachment; filename="' + name + '"',
+      "Content-Disposition": attachmentName(name),
       "Cache-Control": "private, no-store",
       "X-Robots-Tag": "noindex",
     },
   });
+}
+
+function attachmentName(name) {
+  const ascii = String(name || "Quote.pdf")
+    .replace(/[^\x20-\x7E]/g, "_")
+    .replace(/"/g, "");
+  const encoded = encodeURIComponent(name || "Quote.pdf");
+  return 'attachment; filename="' + ascii + "\"; filename*=UTF-8''" + encoded;
 }
 
 async function tryResend(env, to, subject, html, text, attachments) {

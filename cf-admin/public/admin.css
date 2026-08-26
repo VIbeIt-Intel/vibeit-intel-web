@@ -466,6 +466,26 @@ h1 {
   min-width: 0;
 }
 
+.bill-gmail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: rgb(246 241 251 / 78%);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bill-gmail input {
+  min-width: 12rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.7rem;
+  background: #12091a;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
 .bill-row .btn {
   margin-top: 0;
   width: auto;

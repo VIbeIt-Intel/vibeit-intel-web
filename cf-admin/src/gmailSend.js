@@ -62,6 +62,25 @@ async function loadCreds(env) {
   return null;
 }
 
+function withTimeout(promise, ms, message) {
+  let timer = 0;
+  return new Promise(function (resolve, reject) {
+    timer = setTimeout(function () {
+      reject(new Error(message));
+    }, ms);
+    promise.then(
+      function (value) {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      function (err) {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 export async function sendViaGmail(env, message) {
   const creds = await loadCreds(env);
   if (!creds) return { sent: false };
@@ -70,7 +89,15 @@ export async function sendViaGmail(env, message) {
     if (api.sent) return api;
     if (!creds.appPassword) return api;
   }
-  if (creds.appPassword) return sendGmailSmtp(creds, buildMime(creds.email, message, false), message);
+  if (creds.appPassword) {
+    return withTimeout(
+      sendGmailSmtp(creds, buildMime(creds.email, message, false), message),
+      12000,
+      "Gmail timed out."
+    ).catch(function (err) {
+      return { sent: false, error: err.message || "Gmail timed out." };
+    });
+  }
   return { sent: false };
 }
 
@@ -163,7 +190,7 @@ async function sendGmailApi(env, creds, raw) {
     });
     return { sent: false, error: body.error && body.error.message ? body.error.message : "Gmail did not send." };
   }
-  return { sent: true, via: "gmail" };
+  return { sent: true, via: "sent" };
 }
 
 async function gmailAccessToken(env, refreshToken) {
@@ -187,63 +214,90 @@ async function gmailAccessToken(env, refreshToken) {
 }
 
 async function sendGmailSmtp(creds, raw, message) {
-  const socket = connect({
-    hostname: "smtp.gmail.com",
-    port: 465,
-    secureTransport: "on",
-  });
-  const writer = socket.writable.getWriter();
-  const reader = socket.readable.getReader();
-  const read = makeReader(reader);
+  const attempts = [
+    { port: 465, secureTransport: "on" },
+    { port: 587, secureTransport: "starttls" },
+  ];
+  let lastError = "Gmail did not send.";
+  for (let i = 0; i < attempts.length; i += 1) {
+    const result = await smtpOnce(creds, raw, message, attempts[i]);
+    if (result.sent) return result;
+    lastError = result.error || lastError;
+  }
+  return { sent: false, error: lastError };
+}
+
+async function smtpOnce(creds, raw, message, opt) {
+  let socket = connect(
+    { hostname: "smtp.gmail.com", port: opt.port },
+    { secureTransport: opt.secureTransport }
+  );
   try {
+    await withTimeout(socket.opened, 4000, "Gmail timed out.");
+    let writer = socket.writable.getWriter();
+    let read = makeReader(socket.readable.getReader(), 5000);
     await expect(read, writer, null, [220]);
     await expect(read, writer, "EHLO vibeit-intel.net", [250]);
-    await expect(read, writer, "AUTH LOGIN", [334]);
-    await expect(read, writer, toB64(encoder.encode(creds.email)), [334]);
-    await expect(read, writer, toB64(encoder.encode(creds.appPassword)), [235]);
+    if (opt.secureTransport === "starttls") {
+      await expect(read, writer, "STARTTLS", [220]);
+      try {
+        writer.releaseLock();
+      } catch (err) {}
+      socket = socket.startTls();
+      await withTimeout(socket.opened, 4000, "Gmail TLS timed out.");
+      writer = socket.writable.getWriter();
+      read = makeReader(socket.readable.getReader(), 5000);
+      await expect(read, writer, "EHLO vibeit-intel.net", [250]);
+    }
+    const plain = toB64(encoder.encode("\u0000" + creds.email + "\u0000" + creds.appPassword));
+    await expect(read, writer, "AUTH PLAIN " + plain, [235]);
     await expect(read, writer, "MAIL FROM:<" + creds.email + ">", [250]);
     await expect(read, writer, "RCPT TO:<" + message.to + ">", [250]);
     if (message.bcc) await expect(read, writer, "RCPT TO:<" + message.bcc + ">", [250, 251]);
     await expect(read, writer, "DATA", [354]);
-    await writer.write(encoder.encode(raw.replace(/^\./gm, "..") + "\r\n.\r\n"));
+    await writer.write(encoder.encode(dotStuff(raw) + "\r\n.\r\n"));
     await expect(read, writer, null, [250]);
     await expect(read, writer, "QUIT", [221, 250]);
-    return { sent: true, via: "gmail" };
+    return { sent: true, via: "sent" };
   } catch (err) {
     return { sent: false, error: err.message || "Gmail did not send." };
   } finally {
-    try {
-      writer.releaseLock();
-    } catch (err) {}
     try {
       await socket.close();
     } catch (err) {}
   }
 }
 
-function makeReader(reader) {
+function makeReader(reader, ms) {
   let buf = "";
   return async function readResponse() {
-    while (true) {
-      const done = buf.split("\n").some(function (line) {
-        return /^\d{3} /.test(line.replace(/\r$/, ""));
-      });
-      if (done) {
-        const lines = [];
-        while (buf) {
-          const idx = buf.indexOf("\n");
-          if (idx === -1) break;
-          const line = buf.slice(0, idx).replace(/\r$/, "");
-          buf = buf.slice(idx + 1);
-          lines.push(line);
-          if (/^\d{3} /.test(line)) return lines.join("\n");
+    const work = (async function () {
+      while (true) {
+        const done = buf.split("\n").some(function (line) {
+          return /^\d{3} /.test(line.replace(/\r$/, ""));
+        });
+        if (done) {
+          const lines = [];
+          while (buf) {
+            const idx = buf.indexOf("\n");
+            if (idx === -1) break;
+            const line = buf.slice(0, idx).replace(/\r$/, "");
+            buf = buf.slice(idx + 1);
+            lines.push(line);
+            if (/^\d{3} /.test(line)) return lines.join("\n");
+          }
         }
+        const next = await reader.read();
+        if (next.done) throw new Error("Gmail closed the connection.");
+        buf += decoder.decode(next.value, { stream: true });
       }
-      const next = await reader.read();
-      if (next.done) throw new Error("Gmail closed the connection.");
-      buf += decoder.decode(next.value, { stream: true });
-    }
+    })();
+    return withTimeout(work, ms || 5000, "Gmail timed out.");
   };
+}
+
+function dotStuff(raw) {
+  return String(raw || "").replace(/^\./gm, "..");
 }
 
 async function expect(read, writer, command, ok) {

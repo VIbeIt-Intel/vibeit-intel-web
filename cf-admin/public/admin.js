@@ -21,12 +21,78 @@
   }
 
   function api(path, options) {
-    return fetch(path, Object.assign({ credentials: "same-origin" }, options || {})).then(function (res) {
-      return res.json().then(function (body) {
-        if (!res.ok) throw new Error(body.error || "Request failed");
-        return body;
+    const ctrl = new AbortController();
+    const wait = (options && options.timeout) || 20000;
+    const timeoutError =
+      (options && options.timeoutError) || "That took too long. Refresh and try again.";
+    const timer = setTimeout(function () {
+      ctrl.abort();
+    }, wait);
+    const next = Object.assign({ credentials: "same-origin", signal: ctrl.signal }, options || {});
+    delete next.timeout;
+    delete next.timeoutError;
+    return fetch(path, next)
+      .then(function (res) {
+        return res.json().then(function (body) {
+          if (!res.ok) throw new Error(body.error || "Request failed");
+          return body;
+        });
+      })
+      .catch(function (err) {
+        if (err && (err.name === "AbortError" || err.message === "The user aborted a request.")) {
+          throw new Error(timeoutError);
+        }
+        throw err;
+      })
+      .finally(function () {
+        clearTimeout(timer);
       });
-    });
+  }
+
+  function agentIdFrom(cursorUrl, agentId) {
+    if (agentId) return String(agentId);
+    const match = String(cursorUrl || "").match(/agents\/(bc-[a-z0-9-]+)/i);
+    return match ? match[1] : "";
+  }
+
+  function cursorAgentHref(cursorUrl, agentId) {
+    const id = agentIdFrom(cursorUrl, agentId);
+    if (id) return "cursor://anysphere.cursor-deeplink/background-agent?bcId=" + encodeURIComponent(id);
+    return cursorUrl || "";
+  }
+
+  function openCursorAgent(cursorUrl, agentId) {
+    const href = cursorAgentHref(cursorUrl, agentId);
+    if (!href) return;
+    window.location.href = href;
+  }
+
+  function setBuildLinks(repoUrl, cursorUrl, agentId, started) {
+    const cursorLink = document.getElementById("d-cursor-link");
+    const githubLink = document.getElementById("d-github-link");
+    const buildBtn = document.getElementById("d-build");
+    const href = cursorAgentHref(cursorUrl, agentId);
+    if (href) {
+      cursorLink.href = href;
+      cursorLink.classList.remove("hidden");
+    } else {
+      cursorLink.classList.add("hidden");
+    }
+    if (githubLink) {
+      if (repoUrl) {
+        githubLink.href = repoUrl;
+        githubLink.classList.remove("hidden");
+      } else {
+        githubLink.classList.add("hidden");
+      }
+    }
+    if (started) {
+      buildBtn.textContent = "Started";
+      buildBtn.disabled = true;
+    } else {
+      buildBtn.textContent = "Start website";
+      buildBtn.disabled = false;
+    }
   }
 
   function labelStatus(status) {
@@ -119,6 +185,17 @@
     return "R" + String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
+  function quoteDownloadName(brief, item) {
+    const kind = item && item.kind === "invoice" ? "Invoice" : "Quote";
+    const who =
+      String((brief && brief.businessName) || "Client")
+        .replace(/[\\/:*?"<>|]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 80) || "Client";
+    return kind + " - " + who + ".pdf";
+  }
+
   function fillBill(brief, billing) {
     const kind = document.getElementById("d-bill-kind");
     const amount = document.getElementById("d-bill-amount");
@@ -126,7 +203,7 @@
     const open = document.getElementById("d-bill-open");
     const msg = document.getElementById("d-bill-msg");
     const sent = document.getElementById("d-bill-sent");
-    const gmailBtn = document.getElementById("d-gmail-connect");
+    const gmailWrap = document.getElementById("d-gmail-wrap");
     canEmailQuote = Boolean(billing && (billing.gmail || billing.email));
     kind.value = "quote";
     send.disabled = false;
@@ -140,11 +217,13 @@
       const li = document.createElement("li");
       const label = item.kind === "invoice" ? "Invoice" : "Quote";
       const via =
-        item.sentVia === "gmail"
+        item.sentVia === "sent"
           ? "emailed from Gmail"
           : item.sentVia === "email"
             ? "emailed with PDF"
-            : "";
+            : item.sentVia === "gmail"
+              ? "opened Gmail (not sent)"
+              : "";
       li.textContent =
         label +
         " " +
@@ -156,10 +235,10 @@
     });
     if (quotes[0]) {
       open.href = "/api/briefs/" + brief.id + "/quote/" + quotes[0].id + ".pdf";
-      open.setAttribute("download", "");
+      open.setAttribute("download", quoteDownloadName(brief, quotes[0]));
       open.classList.remove("hidden");
     }
-    if (gmailBtn) gmailBtn.classList.toggle("hidden", Boolean(billing && billing.gmail));
+    if (gmailWrap) gmailWrap.classList.toggle("hidden", Boolean(billing && billing.gmail));
     if (!billing.bank) {
       msg.textContent =
         "Add your VibeIt bank details in Cloudflare first (account name, bank, account number). Then you can send a quote.";
@@ -171,7 +250,8 @@
       msg.textContent = "Send emails the branded PDF from Gmail. Bank details stay on the invoice.";
       msg.classList.remove("hidden");
     } else {
-      msg.textContent = "Connect Gmail once. After that, Send quote emails the PDF from your inbox.";
+      msg.textContent =
+        "Gmail is not connected, so quotes are not sent. Paste a Gmail app password for support@vibeit-intel.net, then Send quote.";
       msg.classList.remove("hidden");
     }
   }
@@ -525,8 +605,6 @@
         typeSelect.value = typeVal;
       }
       actionSelect.value = syncActionOptions(isEntryPackage(brief, fields), actionVal);
-      const cursorLink = document.getElementById("d-cursor-link");
-      const buildBtn = document.getElementById("d-build");
       const buildMsg = document.getElementById("d-build-msg");
       const buildRow = document.getElementById("d-build-row");
       const formatNote = document.getElementById("d-format-note");
@@ -537,17 +615,9 @@
         formatNote.textContent =
           "This is an Advance enquiry. WhatsApp them or send a quote — do not start a standard website.";
         formatNote.classList.remove("hidden");
-        cursorLink.classList.add("hidden");
-      } else if (brief.cursorUrl) {
-        cursorLink.href = brief.cursorUrl;
-        cursorLink.classList.remove("hidden");
-        buildBtn.textContent = "Started";
-        buildBtn.disabled = true;
-        syncFormatNote();
+        setBuildLinks("", "", "", false);
       } else {
-        cursorLink.classList.add("hidden");
-        buildBtn.textContent = "Start website";
-        buildBtn.disabled = false;
+        setBuildLinks(brief.githubRepo, brief.cursorUrl, brief.cursorAgentId, Boolean(brief.cursorUrl));
         syncFormatNote();
       }
       document.getElementById("d-status").textContent = labelStatus(brief.status);
@@ -749,18 +819,17 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: type, action: action }),
+      timeout: 90000,
+      timeoutError:
+        "Start website is still creating the repo. Refresh in a minute, then hit Open in Cursor to watch the agent.",
     })
       .then(function (body) {
-        const link = document.getElementById("d-cursor-link");
-        if (body.cursorUrl) {
-          link.href = body.cursorUrl;
-          link.classList.remove("hidden");
-        }
-        btn.textContent = "Started";
-        msg.textContent = body.repoUrl
-          ? "Repo and Cursor agent are up. Open in Cursor to review the draft."
-          : "Cursor agent started.";
+        setBuildLinks(body.repoUrl, body.cursorUrl, body.agentId, true);
+        msg.textContent = body.cursorUrl
+          ? "Agent is running under VIbeIt-Intel. Open in Cursor to watch it work."
+          : "GitHub repo is ready under VIbeIt-Intel.";
         msg.classList.remove("hidden");
+        if (body.cursorUrl || body.agentId) openCursorAgent(body.cursorUrl, body.agentId);
       })
       .catch(function (err) {
         btn.disabled = false;
@@ -778,9 +847,18 @@
       .then(function (res) {
         if (!res.ok) throw new Error("Could not download the PDF.");
         const header = res.headers.get("Content-Disposition") || "";
+        const star = header.match(/filename\*=UTF-8''([^;]+)/i);
         const match = header.match(/filename="([^"]+)"/);
+        let name = fallbackName;
+        if (star && star[1]) {
+          try {
+            name = decodeURIComponent(star[1]);
+          } catch (err) {}
+        } else if (match && match[1]) {
+          name = match[1];
+        }
         return res.blob().then(function (blob) {
-          return { blob: blob, name: (match && match[1]) || fallbackName };
+          return { blob: blob, name: name };
         });
       })
       .then(function (file) {
@@ -796,6 +874,18 @@
       });
   }
 
+  document.getElementById("d-bill-open").addEventListener("click", function (event) {
+    event.preventDefault();
+    const link = event.currentTarget;
+    const url = link.getAttribute("href");
+    if (!url) return;
+    downloadPdf(url, link.getAttribute("download") || "Quote.pdf").catch(function (err) {
+      const note = document.getElementById("d-bill-msg");
+      note.textContent = err.message || "Could not download the PDF.";
+      note.classList.remove("hidden");
+    });
+  });
+
   document.getElementById("d-bill-kind").addEventListener("change", function () {
     const kind = document.getElementById("d-bill-kind").value;
     document.getElementById("d-bill-send").textContent = kind === "invoice" ? "Send invoice" : "Send quote";
@@ -806,53 +896,87 @@
     const amount = Number(document.getElementById("d-bill-amount").value);
     const msg = document.getElementById("d-bill-msg");
     const btn = document.getElementById("d-bill-send");
+    const gmailPass = document.getElementById("d-gmail-pass");
     if (!amount || amount < 1) {
       msg.textContent = "Enter the amount in rand.";
       msg.classList.remove("hidden");
       return;
     }
+    function showResult(body) {
+      return openBrief(currentId).then(function () {
+        const note = document.getElementById("d-bill-msg");
+        const link = document.getElementById("d-bill-open");
+        document.getElementById("d-bill-send").disabled = false;
+        document.getElementById("d-bill-send").textContent =
+          kind === "invoice" ? "Send invoice" : "Send quote";
+        if (body.pdfUrl) {
+          link.href = body.pdfUrl;
+          link.setAttribute("download", body.fileName || quoteDownloadName({ businessName: document.getElementById("d-name").textContent }, body.quote));
+          link.classList.remove("hidden");
+        }
+        if (body.sent) {
+          note.textContent =
+            (kind === "invoice" ? "Invoice " : "Quote ") +
+            body.quote.number +
+            " emailed from Gmail with the branded PDF attached.";
+        } else {
+          note.textContent =
+            (body.mailError ? body.mailError + " " : "") +
+            (body.needGmail
+              ? "Gmail is not connected, so nothing was sent. Paste a Gmail app password, then Send quote."
+              : "The PDF is ready. Nothing was emailed.");
+        }
+        note.classList.remove("hidden");
+      });
+    }
+    function postQuote() {
+      return api("/api/briefs/" + currentId + "/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: kind, amount: amount }),
+        timeout: 18000,
+        timeoutError: "Gmail took too long. Refresh and hit Send quote again.",
+      }).then(showResult);
+    }
     btn.disabled = true;
     btn.textContent = "Sending…";
     msg.classList.add("hidden");
     if (!canEmailQuote) {
-      location.href = "/auth/gmail";
-      return;
-    }
-    api("/api/briefs/" + currentId + "/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: kind, amount: amount }),
-    })
-      .then(function (body) {
-        return openBrief(currentId).then(function () {
-          const note = document.getElementById("d-bill-msg");
-          const link = document.getElementById("d-bill-open");
-          document.getElementById("d-bill-send").disabled = false;
-          document.getElementById("d-bill-send").textContent =
-            kind === "invoice" ? "Send invoice" : "Send quote";
-          if (body.pdfUrl) {
-            link.href = body.pdfUrl;
-            link.classList.remove("hidden");
-          }
-          if (body.sent) {
-            note.textContent =
-              (kind === "invoice" ? "Invoice " : "Quote ") +
-              body.quote.number +
-              " emailed from Gmail with the branded PDF attached. Bank details are on the invoice, not in the mail body.";
-          } else if (body.needGmail) {
-            note.textContent = "Connect Gmail once, then send again. The PDF is ready.";
-          } else {
-            note.textContent = (body.mailError ? body.mailError + " " : "") + "The PDF is ready if you need to send it yourself.";
-          }
-          note.classList.remove("hidden");
-        });
-      })
-      .catch(function (err) {
+      const pass = gmailPass ? String(gmailPass.value || "").trim() : "";
+      if (!pass) {
+        const wrap = document.getElementById("d-gmail-wrap");
+        if (wrap) wrap.classList.remove("hidden");
         btn.disabled = false;
         btn.textContent = kind === "invoice" ? "Send invoice" : "Send quote";
-        msg.textContent = err.message || "Could not send.";
+        msg.textContent =
+          "Nothing was emailed. Paste a Gmail app password for support@vibeit-intel.net (Google → Security → 2-Step Verification → App passwords), then Send quote.";
         msg.classList.remove("hidden");
-      });
+        return;
+      }
+      api("/api/gmail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appPassword: pass }),
+      })
+        .then(function () {
+          canEmailQuote = true;
+          if (gmailPass) gmailPass.value = "";
+          return postQuote();
+        })
+        .catch(function (err) {
+          btn.disabled = false;
+          btn.textContent = kind === "invoice" ? "Send invoice" : "Send quote";
+          msg.textContent = err.message || "Could not connect Gmail.";
+          msg.classList.remove("hidden");
+        });
+      return;
+    }
+    postQuote().catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = kind === "invoice" ? "Send invoice" : "Send quote";
+      msg.textContent = err.message || "Could not send.";
+      msg.classList.remove("hidden");
+    });
   });
 
   document.getElementById("back").addEventListener("click", function () {

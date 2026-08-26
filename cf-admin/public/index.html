@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin.css?v=12" />
+    <link rel="stylesheet" href="/admin.css?v=13" />
   </head>
   <body>
     <div class="vibe" aria-hidden="true">
@@ -122,7 +122,8 @@
               <option>Buy</option>
             </select>
             <button id="d-build" class="btn btn-hot" type="button">Start website</button>
-            <a id="d-cursor-link" class="btn btn-ghost hidden" target="_blank" rel="noopener">Open in Cursor</a>
+            <a id="d-cursor-link" class="btn btn-ghost hidden">Open in Cursor</a>
+            <a id="d-github-link" class="btn btn-ghost hidden" target="_blank" rel="noopener">GitHub</a>
           </div>
           <p id="d-format-note" class="format-note hidden"></p>
           <p id="d-build-msg" class="note hidden"></p>
@@ -144,7 +145,10 @@
             </label>
             <button id="d-bill-send" class="btn btn-hot" type="button">Send quote</button>
             <a id="d-bill-open" class="btn btn-ghost hidden" target="_blank" rel="noopener">PDF</a>
-            <a id="d-gmail-connect" class="btn btn-ghost hidden" href="/auth/gmail">Connect Gmail</a>
+            <label id="d-gmail-wrap" class="bill-gmail hidden">
+              Gmail app password
+              <input id="d-gmail-pass" type="password" autocomplete="off" spellcheck="false" />
+            </label>
           </div>
           <p id="d-bill-msg" class="note hidden"></p>
           <ul id="d-bill-sent" class="bill-sent hidden"></ul>
@@ -196,6 +200,6 @@
       </article>
     </div>
 
-    <script src="/admin.js?v=22"></script>
+    <script src="/admin.js?v=27"></script>
   </body>
 </html>
