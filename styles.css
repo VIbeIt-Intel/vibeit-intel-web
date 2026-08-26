@@ -709,8 +709,8 @@ html.from-it .foot {
     0 0 16px 2px rgb(255 138 26 / 40%),
     0 0 26px 3px rgb(74 31 122 / 45%);
   animation:
-    step-line 6s linear infinite,
-    step-bridge 6s ease-in-out infinite;
+    step-line 9s linear infinite,
+    step-bridge 9s ease-in-out infinite;
 }
 
 .steps::before {
@@ -719,7 +719,7 @@ html.from-it .foot {
 
 .steps::after {
   left: calc(var(--step-c) * 1.5 + var(--step-g) + var(--step-r));
-  animation-delay: 0s, 2s;
+  animation-delay: 0s, 3s;
 }
 
 .steps li::after {
@@ -760,7 +760,7 @@ html.from-it .foot {
   color: #fff;
   font-size: 1.2rem;
   font-weight: 800;
-  animation: step-hit 6s ease-in-out infinite;
+  animation: step-hit 9s ease-in-out infinite;
 }
 
 .step-orbit {
@@ -790,39 +790,39 @@ html.from-it .foot {
     drop-shadow(0 0 3px rgb(0 200 201 / 95%))
     drop-shadow(0 0 8px rgb(255 138 26 / 70%));
   animation:
-    step-orbit-spin 1.15s linear infinite,
-    step-orbit-show 6s ease-in-out infinite;
+    step-orbit-spin 1.7s linear infinite,
+    step-orbit-show 9s ease-in-out infinite;
 }
 
 .steps li:nth-child(2) .step-num {
-  animation-delay: 2s;
+  animation-delay: 3s;
 }
 
 .steps li:nth-child(3) .step-num {
-  animation-delay: 4s;
+  animation-delay: 6s;
 }
 
 .steps li:nth-child(2) .step-orbit-run {
-  animation-delay: 0s, 2s;
+  animation-delay: 0s, 3s;
 }
 
 .steps li:nth-child(3) .step-orbit-run {
-  animation-delay: 0s, 4s;
+  animation-delay: 0s, 6s;
 }
 
 .steps h3,
 .steps p {
-  animation: step-copy 6s ease-in-out infinite;
+  animation: step-copy 9s ease-in-out infinite;
 }
 
 .steps li:nth-child(2) h3,
 .steps li:nth-child(2) p {
-  animation-delay: 2s;
+  animation-delay: 3s;
 }
 
 .steps li:nth-child(3) h3,
 .steps li:nth-child(3) p {
-  animation-delay: 4s;
+  animation-delay: 6s;
 }
 
 .steps h3 {
@@ -2100,13 +2100,13 @@ html.from-it .foot {
       0 0 8px 1px rgb(0 200 201 / 65%),
       0 0 16px 2px rgb(255 138 26 / 40%);
     animation:
-      step-line-vert 6s linear infinite,
-      step-bridge-vert 6s ease-in-out infinite;
+      step-line-vert 9s linear infinite,
+      step-bridge-vert 9s ease-in-out infinite;
     z-index: 0;
   }
 
   .steps li:nth-child(2)::after {
-    animation-delay: 0s, 2s;
+    animation-delay: 0s, 3s;
   }
 
   .steps li {
