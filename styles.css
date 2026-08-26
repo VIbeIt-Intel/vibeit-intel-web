@@ -695,7 +695,9 @@ html.from-it .foot {
     var(--teal)
   );
   background-size: 200% 100%;
-  animation: step-line 8s linear infinite;
+  animation:
+    step-line 6s linear infinite,
+    step-progress 6s ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -735,15 +737,30 @@ html.from-it .foot {
   font-weight: 800;
   animation:
     wa-border-flow 6s linear infinite,
-    wa-mark-glow 5s ease-in-out infinite;
+    step-hit 6s ease-in-out infinite;
 }
 
 .steps li:nth-child(2) .step-num {
-  animation-delay: -2s, -1.6s;
+  animation-delay: 0s, 2s;
 }
 
 .steps li:nth-child(3) .step-num {
-  animation-delay: -4s, -3.2s;
+  animation-delay: 0s, 4s;
+}
+
+.steps h3,
+.steps p {
+  animation: step-copy 6s ease-in-out infinite;
+}
+
+.steps li:nth-child(2) h3,
+.steps li:nth-child(2) p {
+  animation-delay: 2s;
+}
+
+.steps li:nth-child(3) h3,
+.steps li:nth-child(3) p {
+  animation-delay: 4s;
 }
 
 .steps h3 {
@@ -767,6 +784,79 @@ html.from-it .foot {
 @keyframes step-line-vert {
   to {
     background-position: 0 200%;
+  }
+}
+
+@keyframes step-progress {
+  0%,
+  6% {
+    clip-path: inset(0 100% 0 0);
+  }
+  30% {
+    clip-path: inset(0 50% 0 0);
+  }
+  62%,
+  90% {
+    clip-path: inset(0);
+  }
+  100% {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes step-progress-vert {
+  0%,
+  6% {
+    clip-path: inset(0 0 100% 0);
+  }
+  30% {
+    clip-path: inset(0 0 50% 0);
+  }
+  62%,
+  90% {
+    clip-path: inset(0);
+  }
+  100% {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+@keyframes step-hit {
+  0%,
+  4% {
+    opacity: 0.42;
+    transform: scale(1);
+    box-shadow: 0 0 10px rgb(0 200 201 / 16%);
+  }
+  8%,
+  26% {
+    opacity: 1;
+    transform: scale(1.07);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 16%),
+      0 0 20px rgb(0 200 201 / 55%),
+      0 0 34px rgb(255 138 26 / 32%);
+  }
+  32%,
+  100% {
+    opacity: 0.42;
+    transform: scale(1);
+    box-shadow: 0 0 10px rgb(0 200 201 / 16%);
+  }
+}
+
+@keyframes step-copy {
+  0%,
+  4% {
+    opacity: 0.48;
+  }
+  8%,
+  26% {
+    opacity: 1;
+  }
+  32%,
+  100% {
+    opacity: 0.48;
   }
 }
 
@@ -1912,7 +2002,7 @@ html.from-it .foot {
       var(--teal)
     );
     background-size: 100% 200%;
-    animation-name: step-line-vert;
+    animation-name: step-line-vert, step-progress-vert;
   }
 
   .steps li {
@@ -1974,6 +2064,8 @@ html.from-it .foot {
   .dock-orb,
   .step-num,
   .steps::before,
+  .steps h3,
+  .steps p,
   .brief-vibe,
   .it-link.is-lure::before,
   .it-link.is-lure,
