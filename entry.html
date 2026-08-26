@@ -51,7 +51,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=cool32" />
+    <link rel="stylesheet" href="styles.css?v=cool33" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -144,20 +144,20 @@
               No, I need one
             </label>
           </div>
-          <label class="brief-field" id="domain-name-wrap" hidden>
-            Domain or the name you want
-            <input
-              type="text"
-              name="Domain name"
-              placeholder="e.g. mybusiness.co.za"
-              autocomplete="off"
-            />
-          </label>
           <div id="domain-have-wrap" hidden>
             <p class="brief-help">
-              After the site is built we contact you to add it on your domain. You log in. We type the records. No PIN unless you chose a move.
+              After the site is built we WhatsApp you. You log in to wherever you bought the address. We type what’s needed. You watch.
             </p>
-            <p class="brief-help">Mail on this domain?</p>
+            <label class="brief-field">
+              Your web address
+              <input
+                type="text"
+                name="Domain name"
+                placeholder="e.g. mybusiness.co.za"
+                autocomplete="off"
+              />
+            </label>
+            <p class="brief-help">Do you get email on this address?</p>
             <div class="brief-choices">
               <label class="brief-choice">
                 <input type="radio" name="Mail on this domain" value="Yes" />
@@ -171,22 +171,48 @@
             <p class="brief-help">What should we do?</p>
             <div class="brief-choices">
               <label class="brief-choice brief-choice-block">
-                <input type="radio" name="Domain plan" value="Point the website only (included)" />
-                Point the website only (included). We’ll WhatsApp you after the build to add the records together.
+                <input
+                  type="radio"
+                  name="Domain plan"
+                  value="Keep my address where it is. Hook the new site to it (included)."
+                />
+                Keep my address where it is. Hook the new site to it (included).
               </label>
               <label class="brief-choice brief-choice-block">
-                <input type="radio" name="Domain plan" value="Move it to our xneelo (from R400, quoted first)" />
-                Move it to our xneelo (from R400, quoted first)
+                <input
+                  type="radio"
+                  name="Domain plan"
+                  value="Move it onto our xneelo (from R400, quoted first)"
+                />
+                Move it onto our xneelo (from R400, quoted first)
               </label>
             </div>
-            <label class="brief-choice brief-choice-block">
+            <p class="brief-help" id="domain-move-note" hidden>
+              You’ll need to approve an email from the old provider.
+            </p>
+            <label class="brief-tick">
               <input
                 type="checkbox"
                 name="Domain login"
-                value="I can log in when you contact me. I will not send a password on this form."
+                value="I can log in when you WhatsApp me. I will not send a password on this form."
               />
-              I can log in when you contact me. I will not send a password on this form.
+              I can log in when you WhatsApp me. I will not send a password on this form.
             </label>
+          </div>
+          <div id="domain-need-wrap" hidden>
+            <p class="brief-help">
+              We register a new .co.za for you. Year one is in this package. After that about R105 a year, it depends on the name. You don’t have to buy it yourself.
+            </p>
+            <label class="brief-field">
+              The name you want
+              <input
+                type="text"
+                name="Domain name"
+                placeholder="e.g. mybusiness"
+                autocomplete="off"
+              />
+            </label>
+            <p class="brief-help">We add .co.za.</p>
           </div>
         </div>
 
@@ -400,10 +426,11 @@
         const MAX_LOGO = 5;
         const MAX_EDGE = 1600;
         const QUALITY = 0.72;
-        const wrap = document.getElementById("domain-name-wrap");
         const haveWrap = document.getElementById("domain-have-wrap");
-        const input = wrap.querySelector("input");
+        const needWrap = document.getElementById("domain-need-wrap");
         const haveFields = haveWrap.querySelectorAll("input");
+        const needFields = needWrap.querySelectorAll("input");
+        const moveNote = document.getElementById("domain-move-note");
         const radios = document.querySelectorAll('input[name="Domain"]');
         const form = document.querySelector(".brief-form");
         const submit = form.querySelector(".brief-submit");
@@ -417,28 +444,37 @@
         const subjectEl = form.querySelector('input[name="_subject"]');
         const subjectBase = subjectEl ? subjectEl.value : "VibeIt brief — Entry";
 
+        function setPath(wrap, fields, on) {
+          wrap.hidden = !on;
+          fields.forEach(function (el) {
+            el.disabled = !on;
+            if (el.name === "Domain name") {
+              el.required = on;
+              return;
+            }
+            if (el.type === "checkbox" || el.type === "radio") el.required = on;
+          });
+        }
+
+        function syncMoveNote() {
+          const have = !haveWrap.hidden;
+          const move = document.querySelector('input[name="Domain plan"]:checked');
+          moveNote.hidden = !(have && move && /xneelo/i.test(move.value));
+        }
+
         function sync() {
           const picked = document.querySelector('input[name="Domain"]:checked');
-          wrap.hidden = !picked;
           const have = Boolean(picked) && picked.value === "I already have a domain";
           const need = Boolean(picked) && picked.value === "I need a domain";
-          haveWrap.hidden = !have;
-          if (!picked) {
-            haveFields.forEach(function (el) {
-              el.required = false;
-            });
-            return;
-          }
-          input.required = true;
-          input.placeholder = need
-            ? "the name you want, e.g. mybusiness"
-            : "e.g. mybusiness.co.za";
-          haveFields.forEach(function (el) {
-            el.required = have;
-          });
+          setPath(haveWrap, haveFields, have);
+          setPath(needWrap, needFields, need);
+          syncMoveNote();
         }
         radios.forEach(function (radio) {
           radio.addEventListener("change", sync);
+        });
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Domain plan") syncMoveNote();
         });
         sync();
 
@@ -527,10 +563,10 @@
         }
 
         function val(name) {
-          const first = form.querySelector('[name="' + name + '"]');
+          const first = form.querySelector('[name="' + name + '"]:not(:disabled)');
           if (!first) return "";
           if (first.type === "radio") {
-            const picked = form.querySelector('input[name="' + name + '"]:checked');
+            const picked = form.querySelector('input[name="' + name + '"]:checked:not(:disabled)');
             return picked ? String(picked.value || "").trim() : "";
           }
           if (first.type === "checkbox") {

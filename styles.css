@@ -1488,23 +1488,41 @@ html.from-it .foot {
   margin-top: 0.2rem;
 }
 
-#domain-have-wrap {
+#domain-have-wrap,
+#domain-need-wrap {
   margin-top: 0.85rem;
 }
 
 #domain-have-wrap[hidden],
+#domain-need-wrap[hidden],
 #sell-products-wrap[hidden],
 #pay-eft-wrap[hidden],
 #pay-link-wrap[hidden] {
   display: none;
 }
 
-#domain-have-wrap .brief-help {
+#domain-have-wrap .brief-help,
+#domain-need-wrap .brief-help {
   margin-top: 0.85rem;
 }
 
-#domain-have-wrap .brief-choice {
-  margin-top: 0.55rem;
+.brief-tick {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 1.1rem;
+  padding: 0.1rem 0;
+  color: rgb(246 241 251 / 82%);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.brief-tick input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  accent-color: var(--teal);
 }
 
 #sell-products-wrap,
