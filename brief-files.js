@@ -487,7 +487,7 @@
       const nextEl = formEl && formEl.querySelector('input[name="_next"]');
       const next =
         (nextEl && nextEl.value) ||
-        "https://vibeit-intel.net/entry-sent.html";
+        "https://vibeit-intel.net/brief-sent.html";
       const action =
         (formEl && formEl.getAttribute("action")) ||
         "https://formsubmit.co/support@vibeit-intel.net";
