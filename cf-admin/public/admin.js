@@ -182,6 +182,29 @@
     });
   }
 
+  function waMe(value) {
+    let digits = String(value || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.indexOf("0") === 0) digits = "27" + digits.slice(1);
+    return "https://wa.me/" + digits;
+  }
+
+  function addContactLink(parent, href, text, className) {
+    if (!href || !text) return;
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = text;
+    if (className) a.className = className;
+    if (href.indexOf("http") === 0) {
+      a.target = "_blank";
+      a.rel = "noopener";
+    }
+    a.addEventListener("click", function (event) {
+      event.stopPropagation();
+    });
+    parent.appendChild(a);
+  }
+
   function renderList(briefs) {
     list.innerHTML = "";
     empty.classList.toggle("hidden", Boolean(briefs.length));
@@ -201,6 +224,12 @@
       btn.addEventListener("click", function () {
         openBrief(item.id);
       });
+      const contacts = document.createElement("div");
+      contacts.className = "item-contact";
+      const email = String(item.email || "").trim();
+      const waNumber = String(item.whatsapp || item.phone || "").trim();
+      addContactLink(contacts, email ? "mailto:" + email : "", email);
+      addContactLink(contacts, waMe(waNumber), waNumber, email ? "ghost" : "");
       const actions = document.createElement("div");
       actions.className = "item-actions";
       function act(label, className, handler) {
@@ -229,6 +258,7 @@
         });
       });
       li.appendChild(btn);
+      if (contacts.childNodes.length) li.appendChild(contacts);
       li.appendChild(actions);
       list.appendChild(li);
     });

@@ -231,8 +231,8 @@ async function listBriefs(request, env) {
   const status = new URL(request.url).searchParams.get("status") || "";
   const sql =
     status && /^(new|in_progress|done|declined)$/.test(status)
-      ? "SELECT id, created_at, status, package, business_name, email, phone, subject, files FROM briefs WHERE status = ? ORDER BY created_at DESC LIMIT 200"
-      : "SELECT id, created_at, status, package, business_name, email, phone, subject, files FROM briefs ORDER BY created_at DESC LIMIT 200";
+      ? "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files FROM briefs WHERE status = ? ORDER BY created_at DESC LIMIT 200"
+      : "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files FROM briefs ORDER BY created_at DESC LIMIT 200";
   const result = status && /^(new|in_progress|done|declined)$/.test(status)
     ? await env.DB.prepare(sql).bind(status).all()
     : await env.DB.prepare(sql).all();
@@ -1005,8 +1005,9 @@ function shapeBrief(row) {
     status: row.status,
     package: row.package,
     businessName: row.business_name,
-    email: row.email,
-    phone: row.phone,
+    email: String(row.email || fieldFromBrief(briefText, "Email") || "").trim(),
+    phone: String(row.phone || fieldFromBrief(briefText, "Phone") || "").trim(),
+    whatsapp: String(fieldFromBrief(briefText, "WhatsApp") || "").trim(),
     subject: row.subject,
     briefText: briefText,
     files: enrichFiles(parseFiles(row.files), briefText),

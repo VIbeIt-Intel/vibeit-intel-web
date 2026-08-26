@@ -242,6 +242,24 @@ h1 {
   padding: 0 1.1rem 0.95rem;
 }
 
+.item-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  padding: 0 1.1rem 0.7rem;
+}
+
+.item-contact a {
+  color: var(--teal);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.item-contact a.ghost {
+  color: rgb(246 241 251 / 78%);
+}
+
 .btn-mini {
   margin-top: 0;
   width: auto;
