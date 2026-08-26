@@ -601,10 +601,19 @@ html.from-it .foot {
   font-weight: 800;
   line-height: 1.08;
   letter-spacing: -0.03em;
-  background: linear-gradient(120deg, #fff 10%, var(--teal) 48%, var(--orange) 92%);
+  background: linear-gradient(
+    90deg,
+    var(--teal),
+    var(--orange),
+    var(--purple),
+    var(--teal)
+  );
+  background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
   color: transparent;
+  animation: step-line 8s linear infinite;
 }
 
 .path h2,
@@ -1957,6 +1966,7 @@ html.from-it .foot {
   .vibe-blob,
   .back-orb,
   .pack-jump,
+  .intro h1,
   .wa-hero,
   .wa-hero-mark,
   .wa-hero-mark::before,
