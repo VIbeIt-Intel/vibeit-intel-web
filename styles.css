@@ -781,7 +781,7 @@ html.from-it .foot {
 
 .packs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.1rem;
   align-items: stretch;
 }
@@ -797,12 +797,29 @@ html.from-it .foot {
   box-shadow: 0 18px 50px rgb(10 4 18 / 28%);
 }
 
+@supports (grid-template-rows: subgrid) {
+  .packs {
+    grid-template-rows: auto auto auto auto 1fr auto auto;
+  }
+
+  .pack {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 7;
+    height: 100%;
+  }
+
+  .pack-cta {
+    margin-top: 0;
+  }
+}
+
 .pack-entry {
   border-top: 5px solid var(--teal);
 }
 
 .pack-mid {
-  transform: translateY(-0.45rem);
+  padding-top: calc(1.45rem + 3px);
   border: 2px solid transparent;
   background:
     linear-gradient(#fff, #fff) padding-box,
@@ -819,6 +836,7 @@ html.from-it .foot {
 
 .pack-badge {
   position: absolute;
+  z-index: 2;
   top: -0.7rem;
   left: 50%;
   transform: translateX(-50%);
@@ -841,10 +859,6 @@ html.from-it .foot {
   text-transform: uppercase;
 }
 
-.pack-mid .pack-kicker {
-  margin-top: 0.45rem;
-}
-
 .pack h3 {
   margin: 0.35rem 0 0.4rem;
   font-size: 1.45rem;
@@ -861,7 +875,9 @@ html.from-it .foot {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  align-content: start;
   gap: 0.4rem;
+  width: 100%;
   margin: 1rem 0 1.05rem;
   padding-bottom: 0.95rem;
   border-bottom: 1px solid rgb(43 36 48 / 10%);
@@ -888,6 +904,7 @@ html.from-it .foot {
 .pack-list {
   display: grid;
   gap: 0.75rem;
+  align-self: start;
   margin-bottom: 1.25rem;
   list-style: none;
 }
@@ -929,6 +946,7 @@ html.from-it .foot {
 .pack-cta {
   margin-top: auto;
   display: block;
+  width: 100%;
   padding: 0.88rem 0.7rem;
   border-radius: 999px;
   background: var(--charcoal);
@@ -1854,6 +1872,16 @@ html.from-it .foot {
   .steps,
   .packs {
     grid-template-columns: 1fr;
+  }
+
+  .packs {
+    grid-template-rows: none;
+  }
+
+  .pack {
+    display: flex;
+    flex-direction: column;
+    grid-row: auto;
   }
 
   .steps {
