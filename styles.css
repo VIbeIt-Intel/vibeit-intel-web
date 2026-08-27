@@ -178,41 +178,6 @@ body.splash {
   transform: translateX(-50%);
 }
 
-.splash-cta {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.88rem 1.55rem;
-  border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    var(--teal) 0%,
-    #2a8ad4 32%,
-    var(--purple) 68%,
-    var(--orange) 100%
-  );
-  box-shadow:
-    0 8px 22px rgb(74 31 122 / 40%),
-    0 4px 14px rgb(0 200 201 / 28%);
-  color: #fff;
-  font-size: 1.02rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
-  text-decoration: none;
-}
-
-.splash-cta:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-}
-
-.splash-cta:focus-visible {
-  outline: 2px solid var(--teal);
-  outline-offset: 3px;
-}
-
 .status {
   display: inline-flex;
   align-items: center;
@@ -258,11 +223,6 @@ body.splash {
   .overlay {
     bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
     gap: 0.5rem;
-  }
-
-  .splash-cta {
-    padding: 0.7rem 1.25rem;
-    font-size: 0.92rem;
   }
 
   .note {

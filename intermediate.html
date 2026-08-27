@@ -287,7 +287,7 @@
           <p class="brief-help">What should a customer do on the site?</p>
           <div class="brief-choices brief-actions">
             <label class="brief-choice">
-              <input type="radio" name="Customer action" value="Call" />
+              <input type="radio" name="Customer action" value="Call" required />
               Call
             </label>
             <label class="brief-choice">
@@ -295,7 +295,7 @@
               WhatsApp
             </label>
             <label class="brief-choice">
-              <input type="radio" name="Customer action" value="Book" required checked />
+              <input type="radio" name="Customer action" value="Book" />
               Book
             </label>
             <label class="brief-choice">
@@ -408,14 +408,14 @@
         <div class="brief-block">
           <p class="brief-kicker">8. Bookings</p>
           <p class="brief-help">
-            What should customers be able to book on the site?
+            What should customers be able to book on the site? Skip this if you
+            only need a shop or payments.
           </p>
           <label class="brief-field">
             Services, time slots, and staff
             <textarea
               name="What customers can book"
               rows="5"
-              required
               placeholder="e.g. haircut 45 min with any stylist, or a 2-hour consult with Nomsa only. List each service, how long it takes, and who does it if that matters."
             ></textarea>
           </label>
@@ -428,7 +428,6 @@
             <textarea
               name="Booking hours"
               rows="4"
-              required
               placeholder="e.g. Tue–Sat 9:00–17:00, closed Sunday and Monday. Lunch 13:00–14:00."
             ></textarea>
           </label>
@@ -442,14 +441,13 @@
           <div class="brief-row">
             <label class="brief-field">
               Name
-              <input type="text" name="Booking admin name" required autocomplete="name" />
+              <input type="text" name="Booking admin name" autocomplete="name" />
             </label>
             <label class="brief-field">
               Role
               <input
                 type="text"
                 name="Booking admin role"
-                required
                 placeholder="e.g. owner, receptionist"
                 autocomplete="organization-title"
               />
@@ -729,6 +727,21 @@
           if (e.target && e.target.name === "Sells products") syncSellProducts();
         });
         syncSellProducts();
+
+        const bookingFields = form.querySelectorAll(
+          'textarea[name="What customers can book"], textarea[name="Booking hours"], input[name="Booking admin name"], input[name="Booking admin role"]'
+        );
+        function syncBookings() {
+          const picked = form.querySelector('input[name="Customer action"]:checked');
+          const on = Boolean(picked && picked.value === "Book");
+          bookingFields.forEach(function (el) {
+            el.required = on;
+          });
+        }
+        form.addEventListener("change", function (e) {
+          if (e.target && e.target.name === "Customer action") syncBookings();
+        });
+        syncBookings();
 
         function syncGoogle() {
           const picked = document.querySelector('input[name="Google profile"]:checked');
