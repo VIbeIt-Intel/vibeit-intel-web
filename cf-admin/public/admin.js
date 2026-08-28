@@ -559,6 +559,18 @@
     return "";
   }
 
+  function facebookHref(value) {
+    if (!value) return "";
+    if (/^https?:\/\//i.test(value)) return value;
+    const handle = String(value)
+      .replace(/^@/, "")
+      .replace(/^(https?:\/\/)?(www\.)?facebook\.com\//i, "")
+      .replace(/^\//, "")
+      .trim();
+    if (!handle || /\s/.test(handle)) return "";
+    return "https://www.facebook.com/" + handle;
+  }
+
   function fillCopy(id, lines) {
     const text = (lines || []).join("\n").trim();
     document.getElementById(id).textContent = text;
@@ -686,6 +698,7 @@
       addField(contactList, "Phone", phone, phone ? "tel:" + phone.replace(/\s+/g, "") : "");
       addField(contactList, "WhatsApp", whatsapp);
       addField(contactList, "Email", email, email ? "mailto:" + email : "");
+      addField(contactList, "Facebook", fields.Facebook, facebookHref(fields.Facebook));
       addField(contactList, "Agreed to terms", fields["Agreed to terms"]);
       showPanel("d-contact-panel", contactList.childNodes.length > 0);
 

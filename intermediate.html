@@ -247,7 +247,7 @@
           <p class="brief-kicker">3. About</p>
           <label class="brief-field">
             Business name
-            <input type="text" name="Business name" required autocomplete="organization" />
+            <input type="text" name="Business name" autocomplete="organization" />
           </label>
           <label class="brief-field">
             Registration number
@@ -269,7 +269,16 @@
           </div>
           <label class="brief-field">
             Email
-            <input type="email" name="email" required autocomplete="email" />
+            <input type="email" name="email" autocomplete="email" />
+          </label>
+          <label class="brief-field">
+            Facebook page name
+            <input
+              type="text"
+              name="Facebook page name"
+              placeholder="e.g. your business page"
+              autocomplete="off"
+            />
           </label>
         </div>
 
@@ -879,6 +888,7 @@
             add(lines, "Phone", val("Phone"));
             add(lines, "WhatsApp", val("WhatsApp"));
             add(lines, "Email", val("email"));
+            add(lines, "Facebook", val("Facebook page name"));
           });
 
           section(lines, "WEBSITE", function () {
