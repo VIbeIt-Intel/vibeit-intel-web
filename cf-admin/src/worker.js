@@ -66,6 +66,7 @@ async function handle(request, env, url) {
 
   const buildMatch = path.match(/^\/api\/briefs\/([^/]+)\/build$/);
   if (buildMatch && method === "POST") return startBuild(request, env, buildMatch[1]);
+  if (buildMatch && method === "GET") return getBuild(request, env, buildMatch[1]);
 
   const quotePdfPage = path.match(/^\/api\/briefs\/([^/]+)\/quote\/([^/]+)\.pdf$/);
   if (quotePdfPage && method === "GET") return getQuotePdf(request, env, quotePdfPage[1], quotePdfPage[2]);
@@ -372,8 +373,10 @@ async function listBriefs(request, env) {
 async function getBrief(request, env, id) {
   const email = await currentUser(request, env);
   if (!email) return json({ error: "Login required" }, 401);
-  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  await ensureBriefColumns(env);
+  let row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
   if (!row) return json({ error: "Not found" }, 404);
+  row = (await refreshPreview(env, row)) || row;
   const quotes = await listQuotes(env, id);
   const bank = bankFromEnv(env);
   const gmail = await gmailStatus(env);
@@ -387,6 +390,25 @@ async function getBrief(request, env, id) {
       email: Boolean(gmail.connected || env.RESEND_API_KEY),
       gmail: gmail.connected,
     },
+  });
+}
+
+async function getBuild(request, env, id) {
+  const email = await currentUser(request, env);
+  if (!email) return json({ error: "Login required" }, 401);
+  await ensureBriefColumns(env);
+  let row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return json({ error: "Not found" }, 404);
+  row = (await refreshPreview(env, row)) || row;
+  const brief = shapeBrief(row);
+  return json({
+    ok: true,
+    repoUrl: brief.githubRepo,
+    cursorUrl: brief.cursorUrl,
+    agentId: brief.cursorAgentId,
+    previewUrl: brief.previewUrl,
+    previewStatus: brief.previewStatus,
+    buildError: brief.buildError,
   });
 }
 
@@ -460,14 +482,22 @@ async function startBuild(request, env, id) {
     );
   }
 
-  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  await ensureBriefColumns(env);
+  let row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
   if (!row) return json({ error: "Not found" }, 404);
+
   if (row.cursor_url) {
+    row = (await refreshPreview(env, row)) || row;
+    const brief = shapeBrief(row);
     return json({
       ok: true,
-      repoUrl: row.github_repo || "",
-      cursorUrl: row.cursor_url,
-      agentId: row.cursor_agent_id || "",
+      alreadyStarted: true,
+      repoUrl: brief.githubRepo,
+      cursorUrl: brief.cursorUrl,
+      agentId: brief.cursorAgentId,
+      previewUrl: brief.previewUrl,
+      previewStatus: brief.previewStatus,
+      buildError: brief.buildError,
     });
   }
 
@@ -491,58 +521,111 @@ async function startBuild(request, env, id) {
       400
     );
   }
+  const invalid = validateJob(row);
+  if (invalid) return json({ error: invalid }, 400);
 
   const businessName = String(row.business_name || "client").trim();
-  let repoUrl = String(row.github_repo || "").trim();
-  if (!repoUrl) {
-    try {
-      repoUrl = await createGithubRepo(env, slugify(businessName), "VibeIt site for " + businessName);
-      await sleep(1200);
-      await seedClientRepo(env, repoUrl, row, type, action, instructions);
-    } catch (err) {
-      return json({ error: err.message || "Could not create the client repo" }, 502);
-    }
+  let repo;
+  try {
+    repo = await openOrCreateClientRepo(env, row);
+    await saveJobBuild(env, id, {
+      repoUrl: repo.repoUrl,
+      previewUrl: pagesUrl(repo.owner, repo.repo),
+      previewStatus: "pending",
+      buildError: "",
+      markProgress: true,
+    });
+  } catch (err) {
+    const message = err.message || "Could not create or open the client GitHub repo.";
+    await saveJobBuild(env, id, { buildError: message });
+    return json({ error: message }, 502);
   }
 
+  try {
+    const seeded = await githubFileExists(env, repo.owner, repo.repo, "index.html");
+    if (!seeded) {
+      await seedClientRepo(env, repo.repoUrl, row, type, action, instructions);
+    }
+  } catch (err) {
+    const message = "Repo is pinned, but seeding failed: " + (err.message || "could not write starter files.");
+    await saveJobBuild(env, id, { repoUrl: repo.repoUrl, buildError: message, markProgress: true });
+    return json({ error: message, repoUrl: repo.repoUrl }, 502);
+  }
+
+  const pages = await enableGithubPages(env, repo.owner, repo.repo);
+  await saveJobBuild(env, id, {
+    repoUrl: repo.repoUrl,
+    previewUrl: pages.url,
+    previewStatus: pages.ok ? "live" : "pending",
+    buildError: pages.ok ? "" : pages.error,
+    markProgress: true,
+  });
+
   const images = await collectPromptImages(env, parseFiles(row.files));
-  const promptText = buildSitePrompt(row, type, action, repoUrl, instructions);
-  const agentRes = await fetch("https://api.cursor.com/v1/agents", {
-    method: "POST",
-    headers: {
-      Authorization: "Basic " + btoa(String(env.CURSOR_API_KEY) + ":"),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: ("VibeIt — " + businessName).slice(0, 100),
-      prompt: { text: promptText, images: images },
-      model: { id: "composer-2.5" },
-      repos: [{ url: repoUrl, startingRef: "main" }],
-      autoCreatePR: true,
-      skipReviewerRequest: true,
-    }),
-  });
-  const agentBody = await agentRes.json().catch(function () {
-    return {};
-  });
-  const agent = agentBody.agent || agentBody;
+  const promptText = buildSitePrompt(row, type, action, repo.repoUrl, pages.url, instructions);
+  let agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
+  if (!agentRes.ok) {
+    await sleep(2500);
+    agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
+  }
+  const agent = agentRes.body.agent || agentRes.body;
   const cursorUrl = agent.url || "";
   const agentId = agent.id || "";
   if (!agentRes.ok || !cursorUrl) {
-    await saveBuild(env, id, repoUrl, "", "");
+    const message =
+      (agentRes.body.error && agentRes.body.error.message) ||
+      agentRes.body.message ||
+      "Cursor did not start the agent. The GitHub repo is pinned. Check the API key and that the GitHub app can see VIbeIt-Intel.";
+    await saveJobBuild(env, id, {
+      repoUrl: repo.repoUrl,
+      previewUrl: pages.url,
+      previewStatus: pages.ok ? "live" : "pending",
+      buildError: message,
+      markProgress: true,
+    });
     return json(
       {
-        error:
-          (agentBody.error && agentBody.error.message) ||
-          agentBody.message ||
-          "Cursor did not start the agent. Check the API key and that the GitHub app can see this org.",
-        repoUrl: repoUrl,
+        error: message,
+        repoUrl: repo.repoUrl,
+        previewUrl: pages.url,
+        previewStatus: pages.ok ? "live" : "pending",
       },
       502
     );
   }
 
-  await saveBuild(env, id, repoUrl, agentId, cursorUrl);
-  return json({ ok: true, repoUrl: repoUrl, cursorUrl: cursorUrl, agentId: agentId });
+  await saveJobBuild(env, id, {
+    repoUrl: repo.repoUrl,
+    agentId: agentId,
+    cursorUrl: cursorUrl,
+    previewUrl: pages.url,
+    previewStatus: pages.ok ? "live" : "pending",
+    buildError: pages.ok ? "" : pages.error,
+    markProgress: true,
+  });
+  return json({
+    ok: true,
+    repoUrl: repo.repoUrl,
+    cursorUrl: cursorUrl,
+    agentId: agentId,
+    previewUrl: pages.url,
+    previewStatus: pages.ok ? "live" : "pending",
+    buildError: pages.ok ? "" : pages.error,
+  });
+}
+
+function validateJob(row) {
+  const name = String(row.business_name || "").trim();
+  const brief = String(row.brief_text || "").trim();
+  const pkg = String(row.package || "").trim();
+  const email = String(row.email || fieldFromBrief(brief, "Email") || "").trim();
+  const phone = String(row.phone || fieldFromBrief(brief, "Phone") || "").trim();
+  const whatsapp = String(fieldFromBrief(brief, "WhatsApp") || "").trim();
+  if (!name) return "This job has no business name.";
+  if (!brief) return "This job has no brief.";
+  if (!pkg) return "This job has no package.";
+  if (!email && !phone && !whatsapp) return "This job has no contact (email, phone, or WhatsApp).";
+  return "";
 }
 
 function packageTier(row) {
@@ -552,19 +635,21 @@ function packageTier(row) {
   return "Entry";
 }
 
-function buildSitePrompt(row, type, action, repoUrl, instructions) {
+function buildSitePrompt(row, type, action, repoUrl, previewUrl, instructions) {
   const pkg = packageTier(row);
   const name = String(row.business_name || "this business").trim();
   const extra = String(instructions || "").trim();
+  const expectedPreview = previewUrl || "";
   const lines = [
-    "You are building a production website for VibeIt-Intel, a South African studio that ships SME sites.",
-    "The client brief, logos, and photos are already in this repo. Do not ask anyone to paste or drag files.",
+    "You are a VibeIt-Intel cloud agent building one client website.",
+    "Work only in this exact GitHub repo. Open it. Do not create another repo. Do not fork. Do not rename.",
+    "Repo: " + repoUrl,
+    expectedPreview ? "Expected public preview: " + expectedPreview : "Expected public preview: GitHub Pages on main for this repo.",
     "",
     "Business: " + name,
     "Kind of business: " + type,
     "Primary customer action: " + action,
     "Package: " + pkg,
-    "Repo: " + repoUrl,
   ];
   if (extra) {
     lines.push("", "SPECIAL INSTRUCTIONS FROM VIBEIT ADMIN (follow these):", extra);
@@ -574,7 +659,8 @@ function buildSitePrompt(row, type, action, repoUrl, instructions) {
     formatPlaybook(type),
     "",
     "Hard rules:",
-    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md, FORMAT.md, and assets/. Customize that starter. Do not throw the layout away and start from a blank page.",
+    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md, FORMAT.md, PREVIEW.md, and assets/. Customise that starter. Do not start from a blank page.",
+    "- Keep a single index.html. Do not add a framework or extra HTML pages.",
     "- Follow FORMAT.md. A hairdresser, a maintenance trade, and a food seller must not share the same page structure.",
     "- The main button and contact path must drive this action: " + action + "."
   );
@@ -585,7 +671,7 @@ function buildSitePrompt(row, type, action, repoUrl, instructions) {
   }
   lines.push(
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
-    "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
+    "- Use files in assets/ for the logo and gallery. Do not invent a different logo. Do not ask anyone to paste or drag files.",
     "- If assets/ has a Word, Excel, PDF, CSV, or photo price list, use it for services and prices. Do not ignore it.",
     "- Services and products are different. Treatments, repairs, and bookings go under Services. Items they sell (food, nail products, parts, merch) go under Shop. Hide Shop if they do not sell items.",
     "- South African English. Mobile-first. WhatsApp-friendly where a number exists. If the customer action is Email, the main button must be mailto: the client's email from the brief.",
@@ -593,6 +679,8 @@ function buildSitePrompt(row, type, action, repoUrl, instructions) {
     "- Only show a pay link or bank details if they appear in the brief. Do not invent PayFast, iKhoka, SnapScan, or a checkout. If they pay cash or with a card machine, say that. If payment details are missing, tell customers to WhatsApp, email, or call.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
     "- If the brief copy is placeholder junk (dddd, test, asdf), do not invent a fake brand story. Use honest generic copy for that trade and leave a short TODO comment.",
+    "- Publish a public preview. GitHub Pages may already be enabled on main. Do not loop on the Pages API. Maximum 2 attempts to enable or rebuild Pages. If Pages fails, still ship the site files and write the expected URL into PREVIEW.md.",
+    "- Return the public preview URL in your final message.",
     "- Open a PR when the first draft is ready.",
     "",
     "CLIENT BRIEF:",
@@ -622,35 +710,243 @@ async function collectPromptImages(env, files) {
   return images;
 }
 
-async function createGithubRepo(env, name, description) {
-  const org = String(env.GITHUB_ORG || "").trim();
-  const endpoints = [];
-  if (org) endpoints.push("https://api.github.com/orgs/" + encodeURIComponent(org) + "/repos");
-  endpoints.push("https://api.github.com/user/repos");
-  let lastError = "GitHub could not create the repo";
-  const names = [name, name + "-site", name + "-" + new Date().getFullYear()];
-  const payload = {
-    description: String(description || "").slice(0, 350),
-    private: true,
-    auto_init: false,
+async function createCursorAgent(env, businessName, promptText, images, repoUrl) {
+  const res = await fetch("https://api.cursor.com/v1/agents", {
+    method: "POST",
+    headers: {
+      Authorization: "Basic " + btoa(String(env.CURSOR_API_KEY) + ":"),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: ("VibeIt — " + businessName).slice(0, 100),
+      prompt: { text: promptText, images: images },
+      model: { id: "composer-2.5" },
+      repos: [{ url: repoUrl, startingRef: "main" }],
+      autoCreatePR: true,
+      skipReviewerRequest: true,
+    }),
+  });
+  const body = await res.json().catch(function () {
+    return {};
+  });
+  return { ok: res.ok, body: body };
+}
+
+function githubOrg(env) {
+  return String(env.GITHUB_ORG || "VIbeIt-Intel").trim();
+}
+
+function parseRepo(repoUrl) {
+  const match = String(repoUrl || "").match(/github\.com\/([^/]+)\/([^/#?]+)/i);
+  if (!match) return null;
+  return { owner: match[1], repo: String(match[2] || "").replace(/\.git$/i, "") };
+}
+
+function pagesUrl(owner, repo) {
+  return "https://" + String(owner || "").toLowerCase() + ".github.io/" + repo + "/";
+}
+
+async function githubRequest(env, method, path, payload) {
+  const res = await fetch("https://api.github.com" + path, {
+    method: method,
+    headers: Object.assign({}, githubHeaders(env), payload ? { "Content-Type": "application/json" } : {}),
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+  const data = await res.json().catch(function () {
+    return {};
+  });
+  return { ok: res.ok, status: res.status, data: data };
+}
+
+async function getGithubRepo(env, owner, repo) {
+  const res = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo);
+  if (!res.ok) return null;
+  return {
+    owner: res.data.owner && res.data.owner.login ? res.data.owner.login : owner,
+    repo: res.data.name || repo,
+    htmlUrl: res.data.html_url || "https://github.com/" + owner + "/" + repo,
+    repoUrl: res.data.html_url || "https://github.com/" + owner + "/" + repo,
+    defaultBranch: res.data.default_branch || "main",
   };
-  for (let e = 0; e < endpoints.length; e++) {
-    for (let i = 0; i < names.length; i++) {
-      const res = await fetch(endpoints[e], {
-        method: "POST",
-        headers: githubHeaders(env),
-        body: JSON.stringify(Object.assign({ name: names[i] }, payload)),
+}
+
+async function waitForRepo(env, owner, repo) {
+  for (let i = 0; i < 6; i++) {
+    const found = await getGithubRepo(env, owner, repo);
+    if (found) return found;
+    await sleep(800);
+  }
+  return null;
+}
+
+async function openOrCreateClientRepo(env, row) {
+  const org = githubOrg(env);
+  if (!org) throw new Error("GITHUB_ORG is not set. Client repos must live under VIbeIt-Intel.");
+  const pinned = parseRepo(row.github_repo);
+  const owner = pinned ? pinned.owner : org;
+  const repo = pinned ? pinned.repo : slugify(row.business_name);
+  if (!repo) throw new Error("Could not make a GitHub repo name from this business.");
+
+  let info = await getGithubRepo(env, owner, repo);
+  if (info) return info;
+
+  if (pinned) {
+    throw new Error("Pinned repo " + owner + "/" + repo + " was not found. The GitHub token may not see VIbeIt-Intel.");
+  }
+
+  const created = await githubRequest(env, "POST", "/orgs/" + encodeURIComponent(org) + "/repos", {
+    name: repo,
+    description: ("VibeIt site for " + String(row.business_name || repo)).slice(0, 350),
+    private: true,
+    auto_init: true,
+  });
+  if (created.ok) {
+    const ready = await waitForRepo(env, org, created.data.name || repo);
+    if (ready) return ready;
+    return {
+      owner: org,
+      repo: created.data.name || repo,
+      htmlUrl: created.data.html_url || "https://github.com/" + org + "/" + repo,
+      repoUrl: created.data.html_url || "https://github.com/" + org + "/" + repo,
+      defaultBranch: "main",
+    };
+  }
+  if (created.status === 422) {
+    const existing = await getGithubRepo(env, org, repo);
+    if (existing) return existing;
+  }
+  const detail = created.data.message || "GitHub could not create the repo";
+  if (created.status === 404 || created.status === 403) {
+    throw new Error(
+      "GitHub token cannot create repos in " + org + ". Grant org repo access, then try Start website again. (" + detail + ")"
+    );
+  }
+  throw new Error(detail);
+}
+
+async function githubFileExists(env, owner, repo, path) {
+  const res = await fetch(
+    "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path,
+    { headers: githubHeaders(env) }
+  );
+  return res.ok;
+}
+
+async function githubFileSha(env, owner, repo, path) {
+  const res = await fetch(
+    "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path,
+    { headers: githubHeaders(env) }
+  );
+  if (!res.ok) return "";
+  const body = await res.json().catch(function () {
+    return {};
+  });
+  return body.sha || "";
+}
+
+async function enableGithubPages(env, owner, repo) {
+  const expected = pagesUrl(owner, repo);
+  let lastError = "GitHub Pages is not live yet.";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const created = await githubRequest(env, "POST", "/repos/" + owner + "/" + repo + "/pages", {
+      source: { branch: "main", path: "/" },
+    });
+    if (created.ok || created.status === 409) {
+      const site = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo + "/pages");
+      const url = (site.data && (site.data.html_url || site.data.url)) || expected;
+      if (site.ok) {
+        const status = String(site.data.status || "");
+        return {
+          ok: status === "built",
+          url: url,
+          error:
+            status === "errored"
+              ? "GitHub Pages reported an error building this site."
+              : status === "built"
+                ? ""
+                : "Preview pending. GitHub Pages is enabled on main and still building.",
+        };
+      }
+    }
+    lastError = (created.data && created.data.message) || lastError;
+    await sleep(800);
+  }
+  return {
+    ok: false,
+    url: expected,
+    error: "Preview pending: " + lastError + " Repo is ready. Pages can be enabled on main.",
+  };
+}
+
+function previewUrlFromText(text) {
+  const match = String(text || "").match(/https?:\/\/[a-z0-9-]+\.github\.io\/[^\s)\]'"]+/i);
+  return match ? match[0].replace(/[.,;]+$/, "") : "";
+}
+
+async function refreshPreview(env, row) {
+  if (!row || !row.github_repo) return row;
+  try {
+    const parsed = parseRepo(row.github_repo);
+    if (!parsed) return row;
+    let previewUrl = String(row.preview_url || pagesUrl(parsed.owner, parsed.repo));
+    let previewStatus = String(row.preview_status || "pending");
+    let buildError = String(row.build_error || "");
+
+    const site = await githubRequest(env, "GET", "/repos/" + parsed.owner + "/" + parsed.repo + "/pages");
+    if (site.ok) {
+      previewUrl = site.data.html_url || site.data.url || previewUrl;
+      const status = String(site.data.status || "");
+      if (status === "built") previewStatus = "live";
+      else if (status === "errored") {
+        previewStatus = "error";
+        buildError = buildError || "GitHub Pages failed to build.";
+      } else previewStatus = previewStatus === "live" ? "live" : "pending";
+    }
+
+    const agentId = String(row.cursor_agent_id || "").trim();
+    if (agentId && env.CURSOR_API_KEY && previewStatus !== "live") {
+      const agentRes = await fetch("https://api.cursor.com/v1/agents/" + encodeURIComponent(agentId), {
+        headers: { Authorization: "Basic " + btoa(String(env.CURSOR_API_KEY) + ":") },
       });
-      const body = await res.json().catch(function () {
+      const agent = await agentRes.json().catch(function () {
         return {};
       });
-      if (res.ok) return body.html_url || body.clone_url;
-      lastError = body.message || lastError;
-      if (res.status === 404 || res.status === 403) break;
-      if (res.status !== 422) break;
+      const runId = agent.latestRunId || "";
+      if (runId) {
+        const runRes = await fetch(
+          "https://api.cursor.com/v1/agents/" + encodeURIComponent(agentId) + "/runs/" + encodeURIComponent(runId),
+          { headers: { Authorization: "Basic " + btoa(String(env.CURSOR_API_KEY) + ":") } }
+        );
+        const run = await runRes.json().catch(function () {
+          return {};
+        });
+        const found = previewUrlFromText(run.result || "");
+        if (found) {
+          previewUrl = found;
+          previewStatus = "live";
+        }
+      }
     }
-  }
-  throw new Error(lastError);
+
+    if (
+      previewUrl !== String(row.preview_url || "") ||
+      previewStatus !== String(row.preview_status || "") ||
+      buildError !== String(row.build_error || "")
+    ) {
+      await saveJobBuild(env, row.id, {
+        repoUrl: row.github_repo,
+        agentId: row.cursor_agent_id,
+        cursorUrl: row.cursor_url,
+        previewUrl: previewUrl,
+        previewStatus: previewStatus,
+        buildError: buildError,
+      });
+      row.preview_url = previewUrl;
+      row.preview_status = previewStatus;
+      row.build_error = buildError;
+    }
+  } catch (err) {}
+  return row;
 }
 
 async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
@@ -737,6 +1033,7 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
     C3: colours[2] || "#f6f1ea",
   };
 
+  const preview = pagesUrl(owner, repo);
   const briefMd = [
     "# " + name,
     "",
@@ -757,6 +1054,15 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
     "README.md": fillTokens(STARTER_FILES["README.md"], values),
     "FORMAT.md": formatMarkdown(type),
     "BRIEF.md": briefMd.join("\n"),
+    "PREVIEW.md": [
+      "# Client preview",
+      "",
+      "Public preview (no GitHub login):",
+      preview,
+      "",
+      "GitHub Pages is served from `main`. If this URL 404s, Pages is still building or not enabled yet. The site files are in index.html.",
+      "",
+    ].join("\n"),
   };
 
   const names = Object.keys(textFiles);
@@ -776,17 +1082,31 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
 }
 
 async function putGithubFile(env, owner, repo, path, content, message) {
-  const res = await fetch(
+  const sha = await githubFileSha(env, owner, repo, path);
+  const payload = {
+    message: message,
+    content: content,
+  };
+  if (sha) payload.sha = sha;
+  const headers = Object.assign({}, githubHeaders(env), { "Content-Type": "application/json" });
+  let res = await fetch(
     "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path,
     {
       method: "PUT",
-      headers: githubHeaders(env),
-      body: JSON.stringify({
-        message: message,
-        content: content,
-      }),
+      headers: headers,
+      body: JSON.stringify(payload),
     }
   );
+  if (!res.ok && (res.status === 409 || res.status === 422) && !sha) {
+    payload.sha = await githubFileSha(env, owner, repo, path);
+    if (payload.sha) {
+      res = await fetch("https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path, {
+        method: "PUT",
+        headers: headers,
+        body: JSON.stringify(payload),
+      });
+    }
+  }
   if (!res.ok) {
     const body = await res.json().catch(function () {
       return {};
@@ -1266,14 +1586,47 @@ async function tryResend(env, to, subject, html, text, attachments) {
   }
 }
 
+async function ensureBriefColumns(env) {
+  const alters = [
+    "ALTER TABLE briefs ADD COLUMN github_repo TEXT",
+    "ALTER TABLE briefs ADD COLUMN cursor_agent_id TEXT",
+    "ALTER TABLE briefs ADD COLUMN cursor_url TEXT",
+    "ALTER TABLE briefs ADD COLUMN preview_url TEXT",
+    "ALTER TABLE briefs ADD COLUMN preview_status TEXT",
+    "ALTER TABLE briefs ADD COLUMN build_error TEXT",
+  ];
+  for (let i = 0; i < alters.length; i++) {
+    try {
+      await env.DB.prepare(alters[i]).run();
+    } catch (err) {}
+  }
+}
+
+async function saveJobBuild(env, id, fields) {
+  await ensureBriefColumns(env);
+  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return;
+  const repo = fields.repoUrl != null ? fields.repoUrl : row.github_repo || "";
+  const agentId = fields.agentId != null ? fields.agentId : row.cursor_agent_id || "";
+  const cursorUrl = fields.cursorUrl != null ? fields.cursorUrl : row.cursor_url || "";
+  const previewUrl = fields.previewUrl != null ? fields.previewUrl : row.preview_url || "";
+  const previewStatus = fields.previewStatus != null ? fields.previewStatus : row.preview_status || "";
+  const buildError = fields.buildError != null ? fields.buildError : row.build_error || "";
+  const sql = fields.markProgress
+    ? "UPDATE briefs SET github_repo = ?, cursor_agent_id = ?, cursor_url = ?, preview_url = ?, preview_status = ?, build_error = ?, status = CASE WHEN status = 'new' THEN 'in_progress' ELSE status END WHERE id = ?"
+    : "UPDATE briefs SET github_repo = ?, cursor_agent_id = ?, cursor_url = ?, preview_url = ?, preview_status = ?, build_error = ? WHERE id = ?";
+  await env.DB.prepare(sql)
+    .bind(repo, agentId, cursorUrl, previewUrl, previewStatus, buildError, id)
+    .run();
+}
+
 async function saveBuild(env, id, repo, agentId, cursorUrl) {
-  try {
-    await env.DB.prepare(
-      "UPDATE briefs SET github_repo = ?, cursor_agent_id = ?, cursor_url = ?, status = CASE WHEN status = 'new' THEN 'in_progress' ELSE status END WHERE id = ?"
-    )
-      .bind(repo || "", agentId || "", cursorUrl || "", id)
-      .run();
-  } catch (err) {}
+  await saveJobBuild(env, id, {
+    repoUrl: repo,
+    agentId: agentId,
+    cursorUrl: cursorUrl,
+    markProgress: true,
+  });
 }
 
 function slugify(name) {
@@ -1318,6 +1671,9 @@ function shapeBrief(row) {
     githubRepo: row.github_repo || "",
     cursorAgentId: row.cursor_agent_id || "",
     cursorUrl: row.cursor_url || "",
+    previewUrl: row.preview_url || "",
+    previewStatus: row.preview_status || "",
+    buildError: row.build_error || "",
   };
 }
 

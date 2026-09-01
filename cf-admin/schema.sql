@@ -11,7 +11,10 @@ CREATE TABLE IF NOT EXISTS briefs (
   files TEXT NOT NULL DEFAULT '[]',
   github_repo TEXT,
   cursor_agent_id TEXT,
-  cursor_url TEXT
+  cursor_url TEXT,
+  preview_url TEXT,
+  preview_status TEXT,
+  build_error TEXT
 );
 
 CREATE INDEX IF NOT EXISTS briefs_created_at ON briefs (created_at DESC);

@@ -13,6 +13,7 @@
   let currentId = "";
   let currentEmail = "";
   let canEmailQuote = false;
+  let previewTimer = null;
 
   function show(el) {
     login.classList.add("hidden");
@@ -35,7 +36,13 @@
     return fetch(path, next)
       .then(function (res) {
         return res.json().then(function (body) {
-          if (!res.ok) throw new Error(body.error || "Request failed");
+          if (!res.ok) {
+            const err = new Error(body.error || "Request failed");
+            err.repoUrl = body.repoUrl || "";
+            err.previewUrl = body.previewUrl || "";
+            err.previewStatus = body.previewStatus || "";
+            throw err;
+          }
           return body;
         });
       })
@@ -68,10 +75,43 @@
     window.location.href = href;
   }
 
-  function setBuildLinks(repoUrl, cursorUrl, agentId, started) {
+  function stopPreviewPoll() {
+    if (previewTimer) {
+      clearInterval(previewTimer);
+      previewTimer = null;
+    }
+  }
+
+  function startPreviewPoll() {
+    stopPreviewPoll();
+    previewTimer = setInterval(function () {
+      if (!currentId || detail.classList.contains("hidden")) {
+        stopPreviewPoll();
+        return;
+      }
+      api("/api/briefs/" + currentId + "/build")
+        .then(function (body) {
+          setBuildLinks(
+            body.repoUrl,
+            body.cursorUrl,
+            body.agentId,
+            Boolean(body.cursorUrl),
+            body.previewUrl,
+            body.previewStatus,
+            body.buildError
+          );
+          if (body.previewStatus === "live") stopPreviewPoll();
+        })
+        .catch(function () {});
+    }, 15000);
+  }
+
+  function setBuildLinks(repoUrl, cursorUrl, agentId, started, previewUrl, previewStatus, buildError) {
     const cursorLink = document.getElementById("d-cursor-link");
     const githubLink = document.getElementById("d-github-link");
+    const previewLink = document.getElementById("d-preview-link");
     const buildBtn = document.getElementById("d-build");
+    const msg = document.getElementById("d-build-msg");
     const href = cursorAgentHref(cursorUrl, agentId);
     if (href) {
       cursorLink.href = href;
@@ -87,6 +127,14 @@
         githubLink.classList.add("hidden");
       }
     }
+    if (previewLink) {
+      if (previewUrl) {
+        previewLink.href = previewUrl;
+        previewLink.classList.remove("hidden");
+      } else {
+        previewLink.classList.add("hidden");
+      }
+    }
     const notes = document.getElementById("d-instructions");
     if (started) {
       buildBtn.textContent = "Started";
@@ -96,6 +144,22 @@
       buildBtn.textContent = "Start website";
       buildBtn.disabled = false;
       if (notes) notes.disabled = false;
+    }
+    if (msg) {
+      const pending = previewStatus === "pending" && repoUrl;
+      const failed = String(buildError || "").trim();
+      if (failed && !started) {
+        msg.textContent = failed;
+        msg.classList.remove("hidden");
+      } else if (pending && previewStatus !== "live") {
+        msg.textContent = failed
+          ? failed
+          : "Preview pending. GitHub is pinned. Client preview may 404 until Pages finishes.";
+        msg.classList.remove("hidden");
+      } else if (previewStatus === "live" && previewUrl && started) {
+        msg.textContent = "Agent is running under VIbeIt-Intel. Client preview is public — no GitHub login.";
+        msg.classList.remove("hidden");
+      }
     }
   }
 
@@ -645,10 +709,21 @@
         formatNote.textContent =
           "This is an Advance enquiry. WhatsApp them or send a quote — do not start a standard website.";
         formatNote.classList.remove("hidden");
+        stopPreviewPoll();
         setBuildLinks("", "", "", false);
       } else {
-        setBuildLinks(brief.githubRepo, brief.cursorUrl, brief.cursorAgentId, Boolean(brief.cursorUrl));
+        setBuildLinks(
+          brief.githubRepo,
+          brief.cursorUrl,
+          brief.cursorAgentId,
+          Boolean(brief.cursorUrl),
+          brief.previewUrl,
+          brief.previewStatus,
+          brief.buildError
+        );
         syncFormatNote();
+        if (brief.githubRepo && brief.previewStatus !== "live") startPreviewPoll();
+        else stopPreviewPoll();
       }
       document.getElementById("d-status").textContent = labelStatus(brief.status);
       document.querySelectorAll(".status-row .chip").forEach(function (chip) {
@@ -863,14 +938,26 @@
         "Start website is still creating the repo. Refresh in a minute, then hit Open in Cursor to watch the agent.",
     })
       .then(function (body) {
-        setBuildLinks(body.repoUrl, body.cursorUrl, body.agentId, true);
+        setBuildLinks(
+          body.repoUrl,
+          body.cursorUrl,
+          body.agentId,
+          true,
+          body.previewUrl,
+          body.previewStatus,
+          body.buildError
+        );
         msg.textContent = body.cursorUrl
-          ? "Agent is running under VIbeIt-Intel. Open in Cursor to watch it work."
-          : "GitHub repo is ready under VIbeIt-Intel.";
+          ? body.previewStatus === "live"
+            ? "Agent is running. Client preview is public — no GitHub login."
+            : "Agent is running under VIbeIt-Intel. Preview pending until GitHub Pages finishes."
+          : "GitHub repo is pinned under VIbeIt-Intel.";
         msg.classList.remove("hidden");
         if (body.cursorUrl || body.agentId) openCursorAgent(body.cursorUrl, body.agentId);
+        if (body.repoUrl) startPreviewPoll();
       })
       .catch(function (err) {
+        setBuildLinks(err.repoUrl, "", "", false, err.previewUrl, err.previewStatus || "pending", err.message);
         btn.disabled = false;
         btn.textContent = "Start website";
         const raw = err.message || "Could not start the website.";
@@ -1019,6 +1106,7 @@
   });
 
   document.getElementById("back").addEventListener("click", function () {
+    stopPreviewPoll();
     show(app);
     loadList();
   });
