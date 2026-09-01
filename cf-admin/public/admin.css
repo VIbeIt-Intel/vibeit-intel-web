@@ -396,12 +396,49 @@ h1 {
   font-weight: 600;
 }
 
+.build-block {
+  margin-top: 0.9rem;
+}
+
 .build-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  margin-top: 0.9rem;
+}
+
+.build-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  color: rgb(246 241 251 / 78%);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.build-notes textarea {
+  width: 100%;
+  min-height: 4.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.7rem;
+  background: #12091a;
+  color: #fff;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.build-notes textarea:focus {
+  outline: 2px solid rgb(0 200 201 / 45%);
+  outline-offset: 1px;
+}
+
+.build-notes textarea:disabled {
+  opacity: 0.55;
 }
 
 .build-row select {

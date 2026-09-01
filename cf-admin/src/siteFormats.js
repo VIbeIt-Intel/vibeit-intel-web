@@ -117,7 +117,7 @@ const FORMATS = {
     title: "Professional services",
     look: "Quiet trust. What they do, who they help, the process, then contact. Less gallery, more clarity.",
     sections: [
-      "Hero with Call / Enquire as the main button",
+      "Hero with Call / Email / Enquire as the main button",
       "Services",
       "Who they help",
       "How it works / process",

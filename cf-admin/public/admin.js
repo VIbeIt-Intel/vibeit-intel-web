@@ -11,6 +11,7 @@
   const setup = document.getElementById("setup");
   let filter = "";
   let currentId = "";
+  let currentEmail = "";
   let canEmailQuote = false;
 
   function show(el) {
@@ -86,12 +87,15 @@
         githubLink.classList.add("hidden");
       }
     }
+    const notes = document.getElementById("d-instructions");
     if (started) {
       buildBtn.textContent = "Started";
       buildBtn.disabled = true;
+      if (notes) notes.disabled = true;
     } else {
       buildBtn.textContent = "Start website";
       buildBtn.disabled = false;
+      if (notes) notes.disabled = false;
     }
   }
 
@@ -136,7 +140,7 @@
     "Gym or fitness": "Cursor will build a gym: classes, trainers, and how to join.",
     "Retail shop": "Cursor will build a shop: products and how to visit or buy.",
     "Professional services":
-      "Cursor will build a professional site: what they do, who they help, then enquire.",
+      "Cursor will build a professional site: what they do, who they help, then enquire or email.",
     "Cleaning or home services":
       "Cursor will build a cleaning site: packages, areas, and a quote.",
     "Events or photography":
@@ -590,13 +594,15 @@
       document.getElementById("d-name").textContent = brief.businessName || fields.Name || "New client";
       document.getElementById("d-meta").textContent = when(brief.createdAt);
       const email = brief.email || fields.Email || "";
+      currentEmail = email;
       const phone = brief.phone || fields.Phone || "";
       const whatsapp = fields.WhatsApp || "";
       const typeVal = fields.Type || "";
       const actionVal =
         fields["Customer action"] ||
         (whatsapp ? "WhatsApp" : "") ||
-        (phone ? "Call" : "");
+        (phone ? "Call" : "") ||
+        (email ? "Email" : "");
       const sellsVal = fields["Sells products"] || "";
       const facts = document.getElementById("d-facts");
       clearNode(facts);
@@ -617,12 +623,24 @@
         typeSelect.value = typeVal;
       }
       actionSelect.value = syncActionOptions(isEntryPackage(brief, fields), actionVal);
+      if (actionVal && actionSelect.value !== actionVal) {
+        const opt = document.createElement("option");
+        opt.value = actionVal;
+        opt.textContent = actionVal;
+        actionSelect.appendChild(opt);
+        actionSelect.value = syncActionOptions(isEntryPackage(brief, fields), actionVal);
+      }
       const buildMsg = document.getElementById("d-build-msg");
-      const buildRow = document.getElementById("d-build-row");
+      const buildBlock = document.getElementById("d-build-block");
       const formatNote = document.getElementById("d-format-note");
+      const notes = document.getElementById("d-instructions");
       buildMsg.classList.add("hidden");
+      if (notes && notes.getAttribute("data-brief") !== id) {
+        notes.value = "";
+        notes.setAttribute("data-brief", id);
+      }
       const advance = packageKind(brief, fields) === "Advance";
-      if (buildRow) buildRow.classList.toggle("hidden", advance);
+      if (buildBlock) buildBlock.classList.toggle("hidden", advance);
       if (advance) {
         formatNote.textContent =
           "This is an Advance enquiry. WhatsApp them or send a quote — do not start a standard website.";
@@ -818,10 +836,18 @@
   document.getElementById("d-build").addEventListener("click", function () {
     const type = document.getElementById("d-type").value;
     const action = document.getElementById("d-action").value;
+    const notes = document.getElementById("d-instructions");
+    const instructions = notes ? String(notes.value || "").trim() : "";
     const msg = document.getElementById("d-build-msg");
     const btn = document.getElementById("d-build");
     if (!type || !action) {
       msg.textContent = "Pick the site format and what customers should do, then start.";
+      msg.classList.remove("hidden");
+      return;
+    }
+    if (action === "Email" && String(currentEmail || "").indexOf("@") === -1) {
+      msg.textContent =
+        "This brief has no contact email, so Email cannot be the customer action. Pick Call, WhatsApp, or Get a quote.";
       msg.classList.remove("hidden");
       return;
     }
@@ -831,7 +857,7 @@
     api("/api/briefs/" + currentId + "/build", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: type, action: action }),
+      body: JSON.stringify({ type: type, action: action, instructions: instructions }),
       timeout: 90000,
       timeoutError:
         "Start website is still creating the repo. Refresh in a minute, then hit Open in Cursor to watch the agent.",

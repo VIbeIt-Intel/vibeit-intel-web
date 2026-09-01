@@ -476,12 +476,20 @@ async function startBuild(request, env, id) {
   });
   const type = String(body.type || "").trim();
   const action = String(body.action || "").trim();
+  const instructions = String(body.instructions || "").trim().slice(0, 4000);
   if (!type || !action) return json({ error: "Pick a site format and customer action" }, 400);
   if (packageTier(row) === "Advance") {
     return json({ error: "Advance is a custom enquiry. WhatsApp them or send a quote — do not start a standard website." }, 400);
   }
   if (packageTier(row) === "Entry" && (action === "Book" || action === "Buy")) {
-    return json({ error: "Entry is Call, WhatsApp, or Get a quote. Book and Buy are Intermediate." }, 400);
+    return json({ error: "Entry is Call, WhatsApp, Email, or Get a quote. Book and Buy are Intermediate." }, 400);
+  }
+  const siteEmail = String(row.email || fieldFromBrief(String(row.brief_text || ""), "Email") || "").trim();
+  if (action === "Email" && siteEmail.indexOf("@") === -1) {
+    return json(
+      { error: "This brief has no contact email. Pick Call, WhatsApp, or Get a quote, or the site cannot use Email as the main button." },
+      400
+    );
   }
 
   const businessName = String(row.business_name || "client").trim();
@@ -490,14 +498,14 @@ async function startBuild(request, env, id) {
     try {
       repoUrl = await createGithubRepo(env, slugify(businessName), "VibeIt site for " + businessName);
       await sleep(1200);
-      await seedClientRepo(env, repoUrl, row, type, action);
+      await seedClientRepo(env, repoUrl, row, type, action, instructions);
     } catch (err) {
       return json({ error: err.message || "Could not create the client repo" }, 502);
     }
   }
 
   const images = await collectPromptImages(env, parseFiles(row.files));
-  const promptText = buildSitePrompt(row, type, action, repoUrl);
+  const promptText = buildSitePrompt(row, type, action, repoUrl, instructions);
   const agentRes = await fetch("https://api.cursor.com/v1/agents", {
     method: "POST",
     headers: {
@@ -544,10 +552,11 @@ function packageTier(row) {
   return "Entry";
 }
 
-function buildSitePrompt(row, type, action, repoUrl) {
+function buildSitePrompt(row, type, action, repoUrl, instructions) {
   const pkg = packageTier(row);
   const name = String(row.business_name || "this business").trim();
-  return [
+  const extra = String(instructions || "").trim();
+  const lines = [
     "You are building a production website for VibeIt-Intel, a South African studio that ships SME sites.",
     "The client brief, logos, and photos are already in this repo. Do not ask anyone to paste or drag files.",
     "",
@@ -556,27 +565,44 @@ function buildSitePrompt(row, type, action, repoUrl) {
     "Primary customer action: " + action,
     "Package: " + pkg,
     "Repo: " + repoUrl,
+  ];
+  if (extra) {
+    lines.push("", "SPECIAL INSTRUCTIONS FROM VIBEIT ADMIN (follow these):", extra);
+  }
+  lines.push(
     "",
     formatPlaybook(type),
     "",
     "Hard rules:",
     "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md, FORMAT.md, and assets/. Customize that starter. Do not throw the layout away and start from a blank page.",
     "- Follow FORMAT.md. A hairdresser, a maintenance trade, and a food seller must not share the same page structure.",
-    "- The main button and contact path must drive this action: " + action + ".",
+    "- The main button and contact path must drive this action: " + action + "."
+  );
+  if (extra) {
+    lines.push(
+      "- Follow the special instructions from VibeIt admin above. They override layout defaults where they conflict, but never invent prices, payment details, or VibeIt fees."
+    );
+  }
+  lines.push(
     "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo.",
     "- If assets/ has a Word, Excel, PDF, CSV, or photo price list, use it for services and prices. Do not ignore it.",
     "- Services and products are different. Treatments, repairs, and bookings go under Services. Items they sell (food, nail products, parts, merch) go under Shop. Hide Shop if they do not sell items.",
-    "- South African English. Mobile-first. WhatsApp-friendly where a number exists.",
+    "- South African English. Mobile-first. WhatsApp-friendly where a number exists. If the customer action is Email, the main button must be mailto: the client's email from the brief.",
     "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
-    "- Only show a pay link or bank details if they appear in the brief. Do not invent PayFast, iKhoka, SnapScan, or a checkout. If they pay cash or with a card machine, say that. If payment details are missing, tell customers to WhatsApp or call.",
+    "- Only show a pay link or bank details if they appear in the brief. Do not invent PayFast, iKhoka, SnapScan, or a checkout. If they pay cash or with a card machine, say that. If payment details are missing, tell customers to WhatsApp, email, or call.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
     "- If the brief copy is placeholder junk (dddd, test, asdf), do not invent a fake brand story. Use honest generic copy for that trade and leave a short TODO comment.",
     "- Open a PR when the first draft is ready.",
     "",
     "CLIENT BRIEF:",
-    String(row.brief_text || "").trim(),
-  ].join("\n");
+    String(row.brief_text || "").trim()
+  );
+  return lines
+    .filter(function (line, i, all) {
+      return line !== "" || all[i - 1] !== "";
+    })
+    .join("\n");
 }
 
 async function collectPromptImages(env, files) {
@@ -627,7 +653,7 @@ async function createGithubRepo(env, name, description) {
   throw new Error(lastError);
 }
 
-async function seedClientRepo(env, repoUrl, row, type, action) {
+async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
   const parts = String(repoUrl).replace(/\.git$/, "").split("/");
   const repo = parts.pop();
   const owner = parts.pop();
@@ -711,21 +737,26 @@ async function seedClientRepo(env, repoUrl, row, type, action) {
     C3: colours[2] || "#f6f1ea",
   };
 
+  const briefMd = [
+    "# " + name,
+    "",
+    "Type: " + type,
+    "Site format: " + type,
+    "Customer action: " + action,
+    "Package: " + String(row.package || ""),
+  ];
+  const extraNotes = String(instructions || "").trim();
+  if (extraNotes) {
+    briefMd.push("", "Special instructions from VibeIt admin:", extraNotes);
+  }
+  briefMd.push("", briefText);
+
   const textFiles = {
     "index.html": fillTokens(STARTER_FILES["index.html"], values),
     "styles.css": fillTokens(STARTER_FILES["styles.css"], values),
     "README.md": fillTokens(STARTER_FILES["README.md"], values),
     "FORMAT.md": formatMarkdown(type),
-    "BRIEF.md": [
-      "# " + name,
-      "",
-      "Type: " + type,
-      "Site format: " + type,
-      "Customer action: " + action,
-      "Package: " + String(row.package || ""),
-      "",
-      briefText,
-    ].join("\n"),
+    "BRIEF.md": briefMd.join("\n"),
   };
 
   const names = Object.keys(textFiles);
@@ -851,6 +882,7 @@ function ctaFromAction(action, phone, email, whatsapp) {
   const label = action || "Contact";
   if (action === "Call" && phone) return { label: label, href: "tel:" + phone.replace(/\s+/g, "") };
   if (action === "WhatsApp" && whatsapp) return { label: label, href: whatsappHref(whatsapp) };
+  if (action === "Email" && email) return { label: label, href: "mailto:" + email };
   if (action === "Book") return { label: label, href: "#bookings" };
   if (action === "Buy") return { label: label, href: "#services" };
   if (email) return { label: label, href: "mailto:" + email };
@@ -950,7 +982,10 @@ function displayDate(iso) {
 }
 
 function quoteDoc(row, invoice, bank, toEmail) {
-  const logoIndex = clientLogoIndex(row);
+  const images = quoteImageEntries(row);
+  const logo = images.find(function (item) {
+    return /logo/i.test(item.label);
+  });
   return {
     kind: invoice.kind,
     number: invoice.number,
@@ -962,42 +997,75 @@ function quoteDoc(row, invoice, bank, toEmail) {
     createdAt: displayDate(invoice.created_at),
     bank: bank,
     scope: quoteScope(row),
-    clientLogoUrl: logoIndex >= 0 ? "/api/briefs/" + row.id + "/file/" + logoIndex : "",
+    clientImages: images.map(function (item) {
+      return { url: item.url, label: item.label };
+    }),
+    clientLogoUrl: (logo || images[0] || {}).url || "",
   };
 }
 
-function clientLogoIndex(row) {
-  const files = parseFiles(row.files);
-  for (let i = 0; i < files.length; i += 1) {
-    const file = files[i];
-    const type = String((file && file.type) || "").toLowerCase();
-    if (type.indexOf("image/") !== 0 || type.indexOf("svg") !== -1) continue;
-    const blob =
-      String((file && file.label) || "") +
-      " " +
-      String((file && file.name) || "") +
-      " " +
-      String((file && file.originalName) || "");
-    if (/logo/i.test(blob)) return i;
-  }
-  return -1;
+function isQuoteRaster(file) {
+  const type = String((file && file.type) || "").toLowerCase();
+  const name = String((file && file.name) || "") + " " + String((file && file.originalName) || "");
+  if (type.indexOf("svg") !== -1 || /\.svg(\s|$)/i.test(name)) return false;
+  if (type.indexOf("png") !== -1 || type.indexOf("jpeg") !== -1 || type.indexOf("jpg") !== -1) return true;
+  if (type.indexOf("image/") === 0 && type.indexOf("gif") === -1 && type.indexOf("webp") === -1) return true;
+  return /\.(png|jpe?g)(\s|$)/i.test(name);
 }
 
-async function loadClientLogo(env, row) {
+function quoteFileLabel(file) {
+  const label = String((file && file.label) || "").trim();
+  if (label && !/^file$/i.test(label)) return label;
+  const blob = String((file && file.name) || "") + " " + String((file && file.originalName) || "");
+  if (/logo/i.test(blob)) return "Logo";
+  if (/storefront/i.test(blob)) return "Storefront";
+  if (/product/i.test(blob)) return "Products";
+  if (/interior/i.test(blob)) return "Interior";
+  if (/vibe/i.test(blob)) return "Vibe photo";
+  return "Photo";
+}
+
+function quoteImageEntries(row) {
   const files = parseFiles(row.files);
-  const index = clientLogoIndex(row);
-  if (index < 0) return null;
-  const file = files[index];
-  if (!file || !file.key) return null;
-  const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
-  if (!object || !object.byteLength) return null;
-  return { bytes: new Uint8Array(object), type: String(file.type || "image/png") };
+  const entries = [];
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    if (!isQuoteRaster(file)) continue;
+    entries.push({
+      file: file,
+      label: quoteFileLabel(file),
+      url: "/api/briefs/" + row.id + "/file/" + i,
+    });
+  }
+  entries.sort(function (a, b) {
+    const aLogo = /logo/i.test(a.label) ? 0 : 1;
+    const bLogo = /logo/i.test(b.label) ? 0 : 1;
+    return aLogo - bLogo;
+  });
+  return entries.slice(0, 8);
+}
+
+async function loadClientImages(env, row) {
+  const entries = quoteImageEntries(row);
+  const out = [];
+  for (let i = 0; i < entries.length; i += 1) {
+    const file = entries[i].file;
+    if (!file || !file.key) continue;
+    const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
+    if (!object || !object.byteLength) continue;
+    out.push({
+      bytes: new Uint8Array(object),
+      type: String(file.type || "image/png"),
+      label: entries[i].label,
+    });
+  }
+  return out;
 }
 
 async function renderQuotePdf(env, row, doc) {
   const brandBytes = await loadLogoBytes();
-  const clientLogo = await loadClientLogo(env, row);
-  return quotePdf(doc, { brandBytes: brandBytes, clientLogo: clientLogo });
+  const clientPhotos = await loadClientImages(env, row);
+  return quotePdf(doc, { brandBytes: brandBytes, clientPhotos: clientPhotos });
 }
 
 async function sendQuote(request, env, id) {

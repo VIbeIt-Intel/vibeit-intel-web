@@ -1,4 +1,4 @@
-﻿import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const LOGO_URL = "https://vibeit-intel.net/assets/v-it-mark.png";
 const SITE = "https://vibeit-intel.net";
@@ -146,6 +146,7 @@ export function quoteScope(row) {
   add("Sells items", briefField(text, "Sells products"));
   add("Phone", (row && row.phone) || briefField(text, "Phone"));
   add("WhatsApp", briefField(text, "WhatsApp"));
+  add("Facebook", briefField(text, "Facebook"));
   add("Registration", briefField(text, "Registration"));
   add("Address", briefField(text, "Address"));
   add("Domain", briefField(text, "Domain"));
@@ -339,11 +340,38 @@ function wrapLines(text, font, size, maxWidth) {
 
 function quoteScopeHtml(doc) {
   const scope = doc && doc.scope;
-  if (!scope || (!scope.facts.length && !scope.sections.length && !doc.clientLogoUrl)) return "";
-  const logo = doc.clientLogoUrl
-    ? '<div style="margin:14px 0 8px;"><img src="' +
-      escapeHtml(doc.clientLogoUrl) +
-      '" alt="Logo" style="max-height:80px;max-width:200px;display:block;border:0;" /></div>'
+  const photos = Array.isArray(doc && doc.clientImages) ? doc.clientImages : [];
+  if (!scope || (!scope.facts.length && !scope.sections.length && !photos.length && !doc.clientLogoUrl)) return "";
+  const gallery = (photos.length
+    ? photos
+    : doc.clientLogoUrl
+      ? [{ url: doc.clientLogoUrl, label: "Logo" }]
+      : []
+  )
+    .map(function (item) {
+      return (
+        '<td style="padding:6px 8px 10px 0;width:50%;vertical-align:top;">' +
+        '<img src="' +
+        escapeHtml(item.url) +
+        '" alt="' +
+        escapeHtml(item.label || "Photo") +
+        '" style="max-height:110px;max-width:100%;display:block;border:0;" />' +
+        '<div style="margin-top:6px;font-size:11px;font-weight:600;color:#5c4e6a;">' +
+        escapeHtml(item.label || "Photo") +
+        "</div></td>"
+      );
+    })
+    .reduce(function (rows, cell, i) {
+      if (i % 2 === 0) rows.push([cell]);
+      else rows[rows.length - 1].push(cell);
+      return rows;
+    }, [])
+    .map(function (row) {
+      return "<tr>" + row.join("") + (row.length === 1 ? "<td></td>" : "") + "</tr>";
+    })
+    .join("");
+  const logo = gallery
+    ? '<table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 4px;">' + gallery + "</table>"
     : "";
   const rows = (scope.facts || [])
     .map(function (item) {
@@ -542,6 +570,13 @@ function drawText(page, text, x, y, size, font, color) {
   page.drawText(value, { x: x, y: y, size: size, font: font, color: color });
 }
 
+function drawRight(page, text, rightX, y, size, font, color) {
+  const value = pdfSafe(text);
+  if (!value) return;
+  const w = font.widthOfTextAtSize(value, size);
+  page.drawText(value, { x: rightX - w, y: y, size: size, font: font, color: color });
+}
+
 function fitBox(img, maxW, maxH) {
   let h = maxH;
   let w = (img.width / img.height) * h;
@@ -606,7 +641,16 @@ export async function quotePdf(doc, logos) {
         ? logos
         : await loadLogoBytes();
   const brandImg = await embedRaster(pdf, { bytes: brandBytes, type: "image/png" });
-  const clientImg = await embedRaster(pdf, logos && logos.clientLogo);
+  const photoInputs = Array.isArray(logos && logos.clientPhotos)
+    ? logos.clientPhotos
+    : logos && logos.clientLogo
+      ? [Object.assign({ label: "Logo" }, logos.clientLogo)]
+      : [];
+  const clientImgs = [];
+  for (let i = 0; i < photoInputs.length; i += 1) {
+    const img = await embedRaster(pdf, photoInputs[i]);
+    if (img) clientImgs.push({ img: img, label: photoInputs[i].label || "Photo" });
+  }
   let page = pdf.addPage([width, height]);
   let y = 0;
 
@@ -668,7 +712,7 @@ export async function quotePdf(doc, logos) {
 
   const scope = doc.scope || { facts: [], sections: [] };
   const hasRequest = Boolean(
-    clientImg || (scope.facts && scope.facts.length) || (scope.sections && scope.sections.length)
+    clientImgs.length || (scope.facts && scope.facts.length) || (scope.sections && scope.sections.length)
   );
 
   if (hasRequest) {
@@ -682,12 +726,27 @@ export async function quotePdf(doc, logos) {
         y -= 14;
       }
     );
-    if (clientImg) {
+    if (clientImgs.length) {
       y -= 8;
-      const fit = fitBox(clientImg, 220, 96);
-      need(fit.h + 12);
-      page.drawImage(clientImg, { x: 36, y: y - fit.h, width: fit.w, height: fit.h });
-      y -= fit.h + 16;
+      const gap = 14;
+      const colW = (width - 72 - gap) / 2;
+      const maxH = 108;
+      for (let i = 0; i < clientImgs.length; i += 2) {
+        const left = clientImgs[i];
+        const right = clientImgs[i + 1];
+        const leftFit = fitBox(left.img, colW, maxH);
+        const rightFit = right ? fitBox(right.img, colW, maxH) : { w: 0, h: 0 };
+        const rowH = Math.max(leftFit.h, rightFit.h) + 16;
+        need(rowH + 8);
+        page.drawImage(left.img, { x: 36, y: y - leftFit.h, width: leftFit.w, height: leftFit.h });
+        drawText(page, left.label, 36, y - leftFit.h - 12, 8, font, muted);
+        if (right) {
+          const rightX = 36 + colW + gap;
+          page.drawImage(right.img, { x: rightX, y: y - rightFit.h, width: rightFit.w, height: rightFit.h });
+          drawText(page, right.label, rightX, y - rightFit.h - 12, 8, font, muted);
+        }
+        y -= rowH + 8;
+      }
     }
     scope.facts.forEach(function (item) {
       const chips = [];
@@ -769,14 +828,15 @@ export async function quotePdf(doc, logos) {
   });
 
   y -= 16;
+  const amountRight = width - 48;
   page.drawRectangle({ x: 36, y: y - 8, width: width - 72, height: 26, color: rgb(0.96, 0.94, 0.98) });
   drawText(page, "DESCRIPTION", 48, y, 9, bold, muted);
-  drawText(page, "AMOUNT", 490, y, 9, bold, muted);
+  drawRight(page, "AMOUNT", amountRight, y, 9, bold, muted);
   y -= 32;
   const descLines = wrapLines(doc.description || "VibeIt website", font, 12, 390);
   descLines.forEach(function (line, i) {
     drawText(page, line, 48, y, 12, font, ink);
-    if (i === 0) drawText(page, formatRand(doc.amount), 455, y, 14, bold, purple);
+    if (i === 0) drawRight(page, formatRand(doc.amount), amountRight, y, 14, bold, purple);
     y -= 15;
   });
   drawText(page, isInvoice(doc) ? "Once-off - South African Rand" : "Once-off - 50% to start design", 48, y, 10, font, muted);
@@ -791,14 +851,14 @@ export async function quotePdf(doc, logos) {
   if (!isInvoice(doc)) {
     y -= 18;
     drawText(page, "Due now - 50% to start design", 48, y, 10, font, muted);
-    drawText(page, formatRand(schedule.deposit), 455, y, 12, bold, purple);
+    drawRight(page, formatRand(schedule.deposit), amountRight, y, 12, bold, purple);
     y -= 16;
     drawText(page, "Balance when you approve the design", 48, y, 10, font, muted);
-    drawText(page, formatRand(schedule.balance), 455, y, 12, font, ink);
+    drawRight(page, formatRand(schedule.balance), amountRight, y, 12, font, ink);
   }
   y -= 22;
   drawText(page, isInvoice(doc) ? "Total due" : "Pay now", 48, y + 2, 13, bold, ink);
-  drawText(page, formatRand(dueNowAmount(doc)), 430, y, 16, bold, ink);
+  drawRight(page, formatRand(dueNowAmount(doc)), amountRight, y, 16, bold, ink);
 
   if (doc.note) {
     y -= 22;
@@ -830,7 +890,7 @@ export async function quotePdf(doc, logos) {
   pay.forEach(function (row) {
     const hot = row[0] === "Reference" || row[0].indexOf("Pay now") === 0;
     drawText(page, row[0], 52, rowY, 10, font, rgb(0.8, 0.75, 0.85));
-    drawText(page, row[1], 250, rowY, 11, bold, hot ? teal : white);
+    drawRight(page, row[1], width - 52, rowY, 11, bold, hot ? teal : white);
     rowY -= 18;
   });
   y = boxBottom - 20;
