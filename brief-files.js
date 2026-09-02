@@ -24,7 +24,7 @@
   }
 
   function bind(fileInput, options) {
-    const max = options.max || (fileInput.multiple ? 10 : 1);
+    const max = options.max || (fileInput.multiple ? 20 : 1);
     const nouns = options.nouns || (max > 1 ? "files" : "file");
     const previews = options.previews;
     let current = Array.from(fileInput.files || []);
@@ -470,7 +470,7 @@
       const ctrl = new AbortController();
       const timer = setTimeout(function () {
         ctrl.abort();
-      }, 20000);
+      }, 45000);
       return fetch(endpoint, {
         method: "POST",
         body: data,
@@ -498,7 +498,7 @@
       const ctrl = new AbortController();
       const timer = setTimeout(function () {
         ctrl.abort();
-      }, 12000);
+      }, 25000);
 
       function go() {
         window.location.assign(next);
