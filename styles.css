@@ -96,6 +96,63 @@ body.splash {
   pointer-events: none;
 }
 
+.intro-copy {
+  display: none;
+}
+
+@media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
+  .hero-video {
+    object-position: center 28%;
+    -webkit-mask-image: linear-gradient(#000 54%, transparent 88%);
+    mask-image: linear-gradient(#000 54%, transparent 88%);
+  }
+
+  .intro-copy {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 5.8rem 1.4rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(
+      to top,
+      rgb(22 12 34 / 90%) 0%,
+      rgb(22 12 34 / 62%) 38%,
+      transparent 100%
+    );
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .intro-kicker {
+    color: #f3edf8;
+    font-size: clamp(0.92rem, 3.8vw, 1.05rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .intro-headline {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    color: #fff;
+    font-size: clamp(1.05rem, 5.4vw, 1.45rem);
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+}
+
+body.is-opening .intro-copy {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
 body.is-intro .hero {
   opacity: 0;
 }
@@ -117,6 +174,10 @@ body.is-intro .it-link {
   body.is-intro .it-link {
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .intro-copy {
+    display: none !important;
   }
 }
 
