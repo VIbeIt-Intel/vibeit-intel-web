@@ -69,6 +69,14 @@ body.splash {
   height: 100dvh;
 }
 
+body.splash .page {
+  cursor: pointer;
+}
+
+body.splash.is-opening .page {
+  cursor: default;
+}
+
 .hero,
 .hero-image {
   position: absolute;

@@ -76,11 +76,11 @@
     }
   }
 
-  function goToServices() {
+  function goToServices(x, y) {
     if (document.body.classList.contains("is-opening")) return;
     clearIntroTimers();
     stopIdle();
-    link.click();
+    openServices(null, x, y);
   }
 
   function armIntroLimit() {
@@ -287,33 +287,36 @@
     });
   }
 
-  startLure();
-  playIntro();
-
-  link.addEventListener("click", function (event) {
+  function openServices(event, x, y) {
     stopIdle();
     if (
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      event.button
+      event &&
+      (event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey ||
+        event.button)
     ) {
       return;
     }
     pauseIntro();
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (!event || event.currentTarget !== link) {
+        window.location.assign("/services/?from=it");
+      }
       return;
     }
     if (document.body.classList.contains("is-opening")) {
-      event.preventDefault();
+      if (event) event.preventDefault();
       return;
     }
 
-    event.preventDefault();
-    const box = link.getBoundingClientRect();
-    const x = box.left + box.width / 2;
-    const y = box.top + box.height / 2;
+    if (event) event.preventDefault();
+    if (x == null || y == null) {
+      const box = link.getBoundingClientRect();
+      x = box.left + box.width / 2;
+      y = box.top + box.height / 2;
+    }
     const radius = Math.hypot(window.innerWidth, window.innerHeight) * 1.2;
     document.body.style.setProperty("--it-x", x + "px");
     document.body.style.setProperty("--it-y", y + "px");
@@ -329,5 +332,20 @@
       goTimer = 0;
       window.location.assign("/services/?from=it");
     }, 920);
+  }
+
+  startLure();
+  playIntro();
+
+  link.addEventListener("click", function (event) {
+    openServices(event);
   });
+
+  const page = document.querySelector(".page");
+  if (page) {
+    page.addEventListener("click", function (event) {
+      if (event.target.closest(".it-link")) return;
+      openServices(event, event.clientX, event.clientY);
+    });
+  }
 })();
