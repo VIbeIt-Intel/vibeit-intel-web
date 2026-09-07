@@ -162,21 +162,38 @@
     });
   }
 
-  function playIntro() {
+  function showStaticSplash() {
+    document.body.classList.remove("is-intro", "is-intro-wait");
+  }
+
+  function revealIntroVideo() {
+    document.body.classList.remove("is-intro-wait");
+    document.body.classList.add("is-intro");
+  }
+
+  function playIntro(force) {
     if (reduceMotion || phoneIntro()) {
-      document.body.classList.remove("is-intro");
+      showStaticSplash();
       startIdle();
       return;
     }
 
     const clip = activeVideo();
     if (!clip) {
+      showStaticSplash();
       startIdle();
       return;
     }
 
+    // pageshow fires on first load as well as bfcache restores.
+    // Restarting here made the intro play twice in a row.
+    if (!force && !clip.paused && clip.currentTime > 0) {
+      return;
+    }
+
     stopIdle();
-    document.body.classList.add("is-intro");
+    document.body.classList.add("is-intro-wait");
+    document.body.classList.remove("is-intro");
     eachVideo(function (other) {
       other.pause();
       other.muted = true;
@@ -188,7 +205,7 @@
     });
     clip.preload = "auto";
     armIntroLimit();
-    const pack = phoneIntro() && phoneVideos.length ? phoneVideos : [clip];
+    const pack = [clip];
     let playPromise = null;
     for (let i = 0; i < pack.length; i++) {
       pack[i].preload = "auto";
@@ -198,7 +215,7 @@
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(function () {
         clearIntroTimers();
-        document.body.classList.remove("is-intro");
+        showStaticSplash();
         startIdle();
       });
     }
@@ -207,7 +224,7 @@
   function restoreSplash() {
     resetOpening();
     startLure();
-    playIntro();
+    playIntro(true);
     place();
   }
 
@@ -220,7 +237,10 @@
   // so Back cannot restore a mid-open splash. pageshow / popstate
   // cover persisted restores and same-document history moves.
   window.addEventListener("pagehide", resetOpening);
-  window.addEventListener("pageshow", restoreSplash);
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    restoreSplash();
+  });
   window.addEventListener("popstate", restoreSplash);
   document.addEventListener("visibilitychange", function () {
     if (!idleOn) return;
@@ -234,18 +254,17 @@
       armIdle();
     }
   });
-  startLure();
-  playIntro();
 
   if (videos.length) {
     eachVideo(function (clip) {
       clip.muted = true;
       clip.addEventListener("playing", function () {
+        if (clip !== activeVideo()) return;
         if (stallTimer) {
           window.clearTimeout(stallTimer);
           stallTimer = 0;
         }
-        document.body.classList.add("is-intro");
+        revealIntroVideo();
       });
       clip.addEventListener("waiting", function () {
         if (clip !== activeVideo()) return;
@@ -262,11 +281,14 @@
       clip.addEventListener("error", function () {
         if (clip !== activeVideo()) return;
         clearIntroTimers();
-        document.body.classList.remove("is-intro");
+        showStaticSplash();
         startIdle();
       });
     });
   }
+
+  startLure();
+  playIntro();
 
   link.addEventListener("click", function (event) {
     stopIdle();

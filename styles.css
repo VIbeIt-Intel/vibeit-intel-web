@@ -100,9 +100,22 @@ body.splash {
   display: none;
 }
 
+body.is-intro-wait .overlay,
+body.is-intro-wait .it-link {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}
+
 @media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
   .hero-video {
     display: none !important;
+  }
+
+  body.is-intro-wait .overlay,
+  body.is-intro-wait .it-link {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   body.is-intro .hero {
@@ -143,6 +156,8 @@ body.is-intro .it-link {
     display: none;
   }
 
+  body.is-intro-wait .overlay,
+  body.is-intro-wait .it-link,
   body.is-intro .hero,
   body.is-intro .overlay,
   body.is-intro .it-link {
