@@ -107,9 +107,35 @@ body.is-intro-wait .it-link {
   animation: none;
 }
 
+body.is-intro-wait .hero {
+  opacity: 0;
+}
+
+.intro-poster {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  pointer-events: none;
+}
+
+body.is-intro-wait .intro-poster {
+  display: block;
+}
+
 @media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
-  .hero-video {
+  .hero-video,
+  .intro-poster,
+  body.is-intro-wait .intro-poster {
     display: none !important;
+  }
+
+  body.is-intro-wait .hero {
+    opacity: 1;
   }
 
   body.is-intro-wait .overlay,
@@ -152,7 +178,9 @@ body.is-intro .it-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-video {
+  .hero-video,
+  .intro-poster,
+  body.is-intro-wait .intro-poster {
     display: none;
   }
 

@@ -62,7 +62,9 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=splash-desk-once1" />
+    <link rel="preload" as="image" href="assets/splash-poster.jpg?v=poster1" fetchpriority="high" />
+    <link rel="preload" as="video" href="assets/splash.mp4" type="video/mp4" />
+    <link rel="stylesheet" href="styles.css?v=splash-poster1" />
   </head>
   <body class="splash is-intro-wait">
     <main class="page">
@@ -83,12 +85,20 @@
           alt="VibeIt-Intel"
         />
       </picture>
+      <img
+        class="intro-poster"
+        src="assets/splash-poster.jpg?v=poster1"
+        alt=""
+        fetchpriority="high"
+        decoding="async"
+      />
       <video
         class="hero-video hero-video--desk"
         muted
         playsinline
         webkit-playsinline
         preload="auto"
+        poster="assets/splash-poster.jpg?v=poster1"
         disablepictureinpicture
         aria-hidden="true"
       >
@@ -141,6 +151,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=splash-desk-once1"></script>
+    <script src="it-hotspot.js?v=splash-poster1"></script>
   </body>
 </html>
