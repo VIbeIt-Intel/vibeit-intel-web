@@ -58,7 +58,7 @@ html:has(body.splash) {
 body.splash {
   height: 100%;
   overflow: hidden;
-  background: #160c22;
+  background: var(--vibe-wash);
 }
 
 .page {
@@ -92,13 +92,22 @@ body.splash {
   height: 100%;
   object-fit: cover;
   object-position: center 42%;
-  background: #160c22;
+  background: transparent;
   pointer-events: none;
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
   .hero-video {
-    object-position: 56% 40%;
+    inset: auto;
+    top: 50%;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: 64dvh;
+    object-fit: cover;
+    object-position: center center;
+    transform: translateY(-50%);
   }
 }
 
