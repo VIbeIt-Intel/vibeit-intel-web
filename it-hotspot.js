@@ -1,6 +1,8 @@
 (function () {
   const img = document.querySelector(".hero-image");
   const link = document.querySelector(".it-link");
+  const video = document.querySelector(".hero-video");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
   // Wordmark It slot on the 1536x1024 / 1024x1536 art, shifted a
@@ -11,9 +13,13 @@
   };
 
   const IDLE_MS = 5000;
+  const INTRO_LIMIT_MS = 18000;
+  const STALL_MS = 5000;
   let lureTimer = 0;
   let goTimer = 0;
   let idleTimer = 0;
+  let introTimer = 0;
+  let stallTimer = 0;
   let idleOn = false;
   let idleRemain = IDLE_MS;
   let idleTick = 0;
@@ -42,14 +48,57 @@
 
   function resetOpening() {
     document.body.classList.remove("is-opening");
+    document.body.classList.remove("is-intro");
     link.classList.remove("is-opening");
     document.body.style.removeProperty("--it-x");
     document.body.style.removeProperty("--it-y");
     document.body.style.removeProperty("--it-r");
+    if (video) {
+      video.pause();
+    }
+    clearIntroTimers();
     if (goTimer) {
       window.clearTimeout(goTimer);
       goTimer = 0;
     }
+  }
+
+  function clearIntroTimers() {
+    if (introTimer) {
+      window.clearTimeout(introTimer);
+      introTimer = 0;
+    }
+    if (stallTimer) {
+      window.clearTimeout(stallTimer);
+      stallTimer = 0;
+    }
+  }
+
+  function goToServices() {
+    if (document.body.classList.contains("is-opening")) return;
+    clearIntroTimers();
+    stopIdle();
+    link.click();
+  }
+
+  function armIntroLimit() {
+    if (introTimer) {
+      window.clearTimeout(introTimer);
+    }
+    introTimer = window.setTimeout(function () {
+      introTimer = 0;
+      goToServices();
+    }, INTRO_LIMIT_MS);
+  }
+
+  function armStall() {
+    if (stallTimer) {
+      window.clearTimeout(stallTimer);
+    }
+    stallTimer = window.setTimeout(function () {
+      stallTimer = 0;
+      goToServices();
+    }, STALL_MS);
   }
 
   function startLure() {
@@ -90,10 +139,40 @@
     armIdle();
   }
 
+  function pauseIntro() {
+    if (video) {
+      video.pause();
+    }
+  }
+
+  function playIntro() {
+    if (!video || reduceMotion) {
+      startIdle();
+      return;
+    }
+
+    stopIdle();
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    try {
+      video.currentTime = 0;
+    } catch (e) {}
+    armIntroLimit();
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(function () {
+        clearIntroTimers();
+        document.body.classList.remove("is-intro");
+        startIdle();
+      });
+    }
+  }
+
   function restoreSplash() {
     resetOpening();
     startLure();
-    startIdle();
+    playIntro();
     place();
   }
 
@@ -121,7 +200,26 @@
     }
   });
   startLure();
-  startIdle();
+  playIntro();
+
+  if (video) {
+    video.muted = true;
+    video.addEventListener("playing", function () {
+      if (stallTimer) {
+        window.clearTimeout(stallTimer);
+        stallTimer = 0;
+      }
+      document.body.classList.add("is-intro");
+    });
+    video.addEventListener("waiting", armStall);
+    video.addEventListener("stalled", armStall);
+    video.addEventListener("ended", goToServices);
+    video.addEventListener("error", function () {
+      clearIntroTimers();
+      document.body.classList.remove("is-intro");
+      startIdle();
+    });
+  }
 
   link.addEventListener("click", function (event) {
     stopIdle();
@@ -134,6 +232,7 @@
     ) {
       return;
     }
+    pauseIntro();
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return;
     }
