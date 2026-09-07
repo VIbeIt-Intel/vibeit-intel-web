@@ -159,7 +159,7 @@
     }
     goTimer = window.setTimeout(function () {
       goTimer = 0;
-      window.location.assign("services.html?from=it");
+      window.location.assign("/services/?from=it");
     }, 920);
   });
 })();
