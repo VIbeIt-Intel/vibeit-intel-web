@@ -2,7 +2,7 @@
   const img = document.querySelector(".hero-image");
   const link = document.querySelector(".it-link");
   const videos = document.querySelectorAll(".hero-video");
-  const video = document.querySelector(".hero-video--fit") || videos[0];
+  const video = videos[0];
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
@@ -49,7 +49,6 @@
 
   function resetOpening() {
     document.body.classList.remove("is-opening");
-    document.body.classList.remove("is-intro");
     link.classList.remove("is-opening");
     document.body.style.removeProperty("--it-x");
     document.body.style.removeProperty("--it-y");
@@ -159,6 +158,7 @@
     }
 
     stopIdle();
+    document.body.classList.add("is-intro");
     eachVideo(function (clip) {
       clip.muted = true;
       clip.defaultMuted = true;

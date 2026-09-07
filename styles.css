@@ -91,31 +91,14 @@ body.splash {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center center;
+  object-position: center 42%;
   background: #160c22;
   pointer-events: none;
 }
 
-.hero-video--bleed {
-  display: none;
-}
-
 @media (orientation: portrait) {
-  .hero-video--bleed {
-    display: block;
-    object-fit: cover;
-    filter: blur(28px) saturate(1.25) brightness(0.78);
-    transform: scale(1.2);
-    transform-origin: center center;
-  }
-
-  .hero-video--fit {
-    z-index: 2;
-    object-fit: contain;
-    background: transparent;
-    filter: none;
-    transform: scale(1.7);
-    transform-origin: center center;
+  .hero-video {
+    object-position: 56% 40%;
   }
 }
 
