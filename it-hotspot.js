@@ -3,8 +3,6 @@
   const link = document.querySelector(".it-link");
   const videos = document.querySelectorAll(".hero-video");
   const deskVideo = document.querySelector(".hero-video--desk");
-  const phoneVideos = document.querySelectorAll(".hero-video--phone");
-  const phoneFit = document.querySelector(".hero-video--fit");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
@@ -146,8 +144,41 @@
   }
 
   function activeVideo() {
-    if (phoneFit && phoneIntro()) return phoneFit;
     return deskVideo || videos[0];
+  }
+
+  function loadFonts() {
+    if (document.querySelector("link[data-outfit]")) return;
+    const font = document.createElement("link");
+    font.rel = "stylesheet";
+    font.setAttribute("data-outfit", "1");
+    font.href =
+      "https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap";
+    document.head.appendChild(font);
+  }
+
+  function prefetchServices() {
+    if (document.getElementById("services-prefetch")) return;
+    const hint = document.createElement("link");
+    hint.id = "services-prefetch";
+    hint.rel = "prefetch";
+    hint.href = "/services/";
+    document.head.appendChild(hint);
+  }
+
+  function loadStaticArt() {
+    loadFonts();
+    const face = document.querySelector(".it-face");
+    if (face && !face.getAttribute("src") && face.dataset.src) {
+      const webp = link.querySelector("source");
+      if (webp && webp.dataset.srcset) webp.srcset = webp.dataset.srcset;
+      face.src = face.dataset.src;
+    }
+    if (!phoneIntro() && !img.getAttribute("src") && !img.currentSrc) {
+      img.src = "assets/hero-no-it.webp?v=splash-back";
+    }
+    prefetchServices();
+    place();
   }
 
   function eachVideo(fn) {
@@ -164,11 +195,13 @@
 
   function showStaticSplash() {
     document.body.classList.remove("is-intro", "is-intro-wait");
+    loadStaticArt();
   }
 
   function revealIntroVideo() {
     document.body.classList.remove("is-intro-wait");
     document.body.classList.add("is-intro");
+    prefetchServices();
   }
 
   function playIntro(force) {
@@ -188,6 +221,7 @@
     // pageshow fires on first load as well as bfcache restores.
     // Restarting here made the intro play twice in a row.
     if (!force && !clip.paused && clip.currentTime > 0) {
+      revealIntroVideo();
       return;
     }
 

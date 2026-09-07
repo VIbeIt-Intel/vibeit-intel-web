@@ -10,6 +10,8 @@
       content="VibeIt-Intel builds websites and digital systems for South African small and medium businesses."
     />
     <link rel="canonical" href="https://vibeit-intel.net/" />
+    <link rel="preload" as="video" href="assets/splash.mp4" type="video/mp4" fetchpriority="high" media="(orientation: landscape) and (min-aspect-ratio: 4/5)" />
+    <link rel="preload" as="image" href="assets/splash-poster.jpg?v=poster1" fetchpriority="high" media="(orientation: landscape) and (min-aspect-ratio: 4/5)" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,88 +57,78 @@
       href="https://vibeit-intel.net/assets/apple-touch-icon.png?v=vmark1"
       sizes="180x180"
     />
-    <link rel="prefetch" href="/services/" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="preload" as="image" href="assets/splash-poster.jpg?v=poster1" fetchpriority="high" />
-    <link rel="preload" as="video" href="assets/splash.mp4" type="video/mp4" />
-    <link rel="stylesheet" href="styles.css?v=splash-skip1" />
+    <link rel="stylesheet" href="styles.css?v=splash-fast1" />
   </head>
   <body class="splash is-intro-wait">
     <main class="page">
       <picture class="hero">
         <source
-          media="(orientation: portrait)"
+          media="(orientation: portrait), (max-aspect-ratio: 4/5)"
           type="image/webp"
           srcset="assets/hero-no-it-portrait.webp?v=splash-back"
         />
-        <source type="image/webp" srcset="assets/hero-no-it.webp?v=splash-back" />
         <source
-          media="(orientation: portrait)"
+          media="(orientation: portrait), (max-aspect-ratio: 4/5)"
           srcset="assets/hero-no-it-portrait.png?v=splash-back"
         />
         <img
           class="hero-image"
-          src="assets/hero-no-it.png?v=splash-back"
           alt="VibeIt-Intel"
+          width="1536"
+          height="1024"
         />
       </picture>
-      <img
-        class="intro-poster"
-        src="assets/splash-poster.jpg?v=poster1"
-        alt=""
-        fetchpriority="high"
-        decoding="async"
-      />
+      <picture class="intro-poster">
+        <source
+          media="(orientation: landscape) and (min-aspect-ratio: 4/5)"
+          srcset="assets/splash-poster.jpg?v=poster1"
+        />
+        <img alt="" fetchpriority="high" decoding="async" />
+      </picture>
       <video
         class="hero-video hero-video--desk"
         muted
         playsinline
         webkit-playsinline
         preload="auto"
-        poster="assets/splash-poster.jpg?v=poster1"
+        fetchpriority="high"
         disablepictureinpicture
         aria-hidden="true"
       >
-        <source src="assets/splash.mp4" type="video/mp4" />
+        <source
+          media="(orientation: landscape) and (min-aspect-ratio: 4/5)"
+          src="assets/splash.mp4"
+          type="video/mp4"
+        />
       </video>
-      <video
-        class="hero-video hero-video--phone hero-video--bleed"
-        muted
-        playsinline
-        webkit-playsinline
-        preload="metadata"
-        disablepictureinpicture
-        aria-hidden="true"
-      >
-        <source src="assets/splash-phone.mp4" type="video/mp4" />
-      </video>
-      <video
-        class="hero-video hero-video--phone hero-video--fit"
-        muted
-        playsinline
-        webkit-playsinline
-        preload="metadata"
-        disablepictureinpicture
-        aria-hidden="true"
-      >
-        <source src="assets/splash-phone.mp4" type="video/mp4" />
-      </video>
+      <script>
+        (function () {
+          var clip = document.querySelector(".hero-video--desk");
+          if (!clip) return;
+          if (
+            window.matchMedia(
+              "(orientation: portrait), (max-aspect-ratio: 4/5), (prefers-reduced-motion: reduce)"
+            ).matches
+          ) {
+            return;
+          }
+          clip.muted = true;
+          clip.defaultMuted = true;
+          clip.playsInline = true;
+          var play = clip.play();
+          if (play && play.catch) play.catch(function () {});
+        })();
+      </script>
 
       <a class="it-link" href="/services/" aria-label="Open VibeIt-Intel packages">
         <picture>
-          <source type="image/webp" srcset="assets/it-button.webp?v=it-soon1" />
+          <source type="image/webp" data-srcset="assets/it-button.webp?v=it-soon1" />
           <img
             class="it-face"
-            src="assets/it-button.png?v=it-soon1"
+            data-src="assets/it-button.png?v=it-soon1"
             alt="It"
             width="640"
             height="640"
-            fetchpriority="high"
           />
         </picture>
       </a>
@@ -151,6 +143,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=splash-skip1"></script>
+    <script src="it-hotspot.js?v=splash-fast1"></script>
   </body>
 </html>
