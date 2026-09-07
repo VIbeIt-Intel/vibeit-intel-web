@@ -1,7 +1,8 @@
 (function () {
   const img = document.querySelector(".hero-image");
   const link = document.querySelector(".it-link");
-  const video = document.querySelector(".hero-video");
+  const videos = document.querySelectorAll(".hero-video");
+  const video = document.querySelector(".hero-video--fit") || videos[0];
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
@@ -53,9 +54,9 @@
     document.body.style.removeProperty("--it-x");
     document.body.style.removeProperty("--it-y");
     document.body.style.removeProperty("--it-r");
-    if (video) {
-      video.pause();
-    }
+    eachVideo(function (clip) {
+      clip.pause();
+    });
     clearIntroTimers();
     if (goTimer) {
       window.clearTimeout(goTimer);
@@ -139,10 +140,16 @@
     armIdle();
   }
 
-  function pauseIntro() {
-    if (video) {
-      video.pause();
+  function eachVideo(fn) {
+    for (let i = 0; i < videos.length; i++) {
+      fn(videos[i]);
     }
+  }
+
+  function pauseIntro() {
+    eachVideo(function (clip) {
+      clip.pause();
+    });
   }
 
   function playIntro() {
@@ -152,14 +159,21 @@
     }
 
     stopIdle();
-    video.muted = true;
-    video.defaultMuted = true;
-    video.playsInline = true;
-    try {
-      video.currentTime = 0;
-    } catch (e) {}
+    eachVideo(function (clip) {
+      clip.muted = true;
+      clip.defaultMuted = true;
+      clip.playsInline = true;
+      try {
+        clip.currentTime = 0;
+      } catch (e) {}
+    });
     armIntroLimit();
     const playPromise = video.play();
+    eachVideo(function (clip) {
+      if (clip !== video) {
+        clip.play().catch(function () {});
+      }
+    });
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(function () {
         clearIntroTimers();
@@ -203,13 +217,15 @@
   playIntro();
 
   if (video) {
-    video.muted = true;
-    video.addEventListener("playing", function () {
-      if (stallTimer) {
-        window.clearTimeout(stallTimer);
-        stallTimer = 0;
-      }
-      document.body.classList.add("is-intro");
+    eachVideo(function (clip) {
+      clip.muted = true;
+      clip.addEventListener("playing", function () {
+        if (stallTimer) {
+          window.clearTimeout(stallTimer);
+          stallTimer = 0;
+        }
+        document.body.classList.add("is-intro");
+      });
     });
     video.addEventListener("waiting", armStall);
     video.addEventListener("stalled", armStall);
