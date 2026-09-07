@@ -1,9 +1,6 @@
 (function () {
   const img = document.querySelector(".hero-image");
   const link = document.querySelector(".it-link");
-  const videos = document.querySelectorAll(".hero-video");
-  const deskVideo = document.querySelector(".hero-video--desk");
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
   // Wordmark It slot on the 1536x1024 / 1024x1536 art, shifted a
@@ -14,13 +11,9 @@
   };
 
   const IDLE_MS = 5000;
-  const INTRO_LIMIT_MS = 22000;
-  const STALL_MS = 5000;
   let lureTimer = 0;
   let goTimer = 0;
   let idleTimer = 0;
-  let introTimer = 0;
-  let stallTimer = 0;
   let idleOn = false;
   let idleRemain = IDLE_MS;
   let idleTick = 0;
@@ -53,52 +46,10 @@
     document.body.style.removeProperty("--it-x");
     document.body.style.removeProperty("--it-y");
     document.body.style.removeProperty("--it-r");
-    eachVideo(function (clip) {
-      clip.pause();
-    });
-    clearIntroTimers();
     if (goTimer) {
       window.clearTimeout(goTimer);
       goTimer = 0;
     }
-  }
-
-  function clearIntroTimers() {
-    if (introTimer) {
-      window.clearTimeout(introTimer);
-      introTimer = 0;
-    }
-    if (stallTimer) {
-      window.clearTimeout(stallTimer);
-      stallTimer = 0;
-    }
-  }
-
-  function goToServices(x, y) {
-    if (document.body.classList.contains("is-opening")) return;
-    clearIntroTimers();
-    stopIdle();
-    openServices(null, x, y);
-  }
-
-  function armIntroLimit() {
-    if (introTimer) {
-      window.clearTimeout(introTimer);
-    }
-    introTimer = window.setTimeout(function () {
-      introTimer = 0;
-      goToServices();
-    }, INTRO_LIMIT_MS);
-  }
-
-  function armStall() {
-    if (stallTimer) {
-      window.clearTimeout(stallTimer);
-    }
-    stallTimer = window.setTimeout(function () {
-      stallTimer = 0;
-      goToServices();
-    }, STALL_MS);
   }
 
   function startLure() {
@@ -139,126 +90,10 @@
     armIdle();
   }
 
-  function phoneIntro() {
-    return window.matchMedia("(orientation: portrait), (max-aspect-ratio: 4/5)").matches;
-  }
-
-  function activeVideo() {
-    return deskVideo || videos[0];
-  }
-
-  function loadFonts() {
-    if (document.querySelector("link[data-outfit]")) return;
-    const font = document.createElement("link");
-    font.rel = "stylesheet";
-    font.setAttribute("data-outfit", "1");
-    font.href =
-      "https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap";
-    document.head.appendChild(font);
-  }
-
-  function prefetchServices() {
-    if (document.getElementById("services-prefetch")) return;
-    const hint = document.createElement("link");
-    hint.id = "services-prefetch";
-    hint.rel = "prefetch";
-    hint.href = "/services/";
-    document.head.appendChild(hint);
-  }
-
-  function loadStaticArt() {
-    loadFonts();
-    const face = document.querySelector(".it-face");
-    if (face && !face.getAttribute("src") && face.dataset.src) {
-      const webp = link.querySelector("source");
-      if (webp && webp.dataset.srcset) webp.srcset = webp.dataset.srcset;
-      face.src = face.dataset.src;
-    }
-    if (!phoneIntro() && !img.getAttribute("src") && !img.currentSrc) {
-      img.src = "assets/hero-no-it.webp?v=splash-back";
-    }
-    prefetchServices();
-    place();
-  }
-
-  function eachVideo(fn) {
-    for (let i = 0; i < videos.length; i++) {
-      fn(videos[i]);
-    }
-  }
-
-  function pauseIntro() {
-    eachVideo(function (clip) {
-      clip.pause();
-    });
-  }
-
-  function showStaticSplash() {
-    document.body.classList.remove("is-intro", "is-intro-wait");
-    loadStaticArt();
-  }
-
-  function revealIntroVideo() {
-    document.body.classList.remove("is-intro-wait");
-    document.body.classList.add("is-intro");
-    prefetchServices();
-  }
-
-  function playIntro(force) {
-    if (reduceMotion || phoneIntro()) {
-      showStaticSplash();
-      startIdle();
-      return;
-    }
-
-    const clip = activeVideo();
-    if (!clip) {
-      showStaticSplash();
-      startIdle();
-      return;
-    }
-
-    // pageshow fires on first load as well as bfcache restores.
-    // Restarting here made the intro play twice in a row.
-    if (!force && !clip.paused && clip.currentTime > 0) {
-      revealIntroVideo();
-      return;
-    }
-
-    stopIdle();
-    document.body.classList.add("is-intro-wait");
-    document.body.classList.remove("is-intro");
-    eachVideo(function (other) {
-      other.pause();
-      other.muted = true;
-      other.defaultMuted = true;
-      other.playsInline = true;
-      try {
-        other.currentTime = 0;
-      } catch (e) {}
-    });
-    clip.preload = "auto";
-    armIntroLimit();
-    const pack = [clip];
-    let playPromise = null;
-    for (let i = 0; i < pack.length; i++) {
-      pack[i].preload = "auto";
-      const next = pack[i].play();
-      if (pack[i] === clip) playPromise = next;
-    }
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(function () {
-        clearIntroTimers();
-        showStaticSplash();
-        startIdle();
-      });
-    }
-  }
-
   function restoreSplash() {
     resetOpening();
     startLure();
-    playIntro(true);
+    startIdle();
     place();
   }
 
@@ -271,10 +106,7 @@
   // so Back cannot restore a mid-open splash. pageshow / popstate
   // cover persisted restores and same-document history moves.
   window.addEventListener("pagehide", resetOpening);
-  window.addEventListener("pageshow", function (event) {
-    if (!event.persisted) return;
-    restoreSplash();
-  });
+  window.addEventListener("pageshow", restoreSplash);
   window.addEventListener("popstate", restoreSplash);
   document.addEventListener("visibilitychange", function () {
     if (!idleOn) return;
@@ -288,69 +120,32 @@
       armIdle();
     }
   });
+  startLure();
+  startIdle();
 
-  if (videos.length) {
-    eachVideo(function (clip) {
-      clip.muted = true;
-      clip.addEventListener("playing", function () {
-        if (clip !== activeVideo()) return;
-        if (stallTimer) {
-          window.clearTimeout(stallTimer);
-          stallTimer = 0;
-        }
-        revealIntroVideo();
-      });
-      clip.addEventListener("waiting", function () {
-        if (clip !== activeVideo()) return;
-        armStall();
-      });
-      clip.addEventListener("stalled", function () {
-        if (clip !== activeVideo()) return;
-        armStall();
-      });
-      clip.addEventListener("ended", function () {
-        if (clip !== activeVideo()) return;
-        goToServices();
-      });
-      clip.addEventListener("error", function () {
-        if (clip !== activeVideo()) return;
-        clearIntroTimers();
-        showStaticSplash();
-        startIdle();
-      });
-    });
-  }
-
-  function openServices(event, x, y) {
+  link.addEventListener("click", function (event) {
     stopIdle();
     if (
-      event &&
-      (event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey ||
-        event.button)
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      event.button
     ) {
       return;
     }
-    pauseIntro();
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      if (!event || event.currentTarget !== link) {
-        window.location.assign("/services/?from=it");
-      }
       return;
     }
     if (document.body.classList.contains("is-opening")) {
-      if (event) event.preventDefault();
+      event.preventDefault();
       return;
     }
 
-    if (event) event.preventDefault();
-    if (x == null || y == null) {
-      const box = link.getBoundingClientRect();
-      x = box.left + box.width / 2;
-      y = box.top + box.height / 2;
-    }
+    event.preventDefault();
+    const box = link.getBoundingClientRect();
+    const x = box.left + box.width / 2;
+    const y = box.top + box.height / 2;
     const radius = Math.hypot(window.innerWidth, window.innerHeight) * 1.2;
     document.body.style.setProperty("--it-x", x + "px");
     document.body.style.setProperty("--it-y", y + "px");
@@ -366,20 +161,5 @@
       goTimer = 0;
       window.location.assign("/services/?from=it");
     }, 920);
-  }
-
-  startLure();
-  playIntro();
-
-  link.addEventListener("click", function (event) {
-    openServices(event);
   });
-
-  const page = document.querySelector(".page");
-  if (page) {
-    page.addEventListener("click", function (event) {
-      if (event.target.closest(".it-link")) return;
-      openServices(event, event.clientX, event.clientY);
-    });
-  }
 })();
