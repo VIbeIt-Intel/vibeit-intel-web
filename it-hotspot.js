@@ -163,8 +163,14 @@
   }
 
   function playIntro() {
+    if (reduceMotion || phoneIntro()) {
+      document.body.classList.remove("is-intro");
+      startIdle();
+      return;
+    }
+
     const clip = activeVideo();
-    if (!clip || reduceMotion) {
+    if (!clip) {
       startIdle();
       return;
     }

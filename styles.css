@@ -101,27 +101,29 @@ body.splash {
 }
 
 @media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
-  .hero-video--desk {
-    display: none;
+  .hero-video {
+    display: none !important;
   }
 
-  .hero-video--phone {
-    display: block;
+  body.is-intro .hero {
+    opacity: 1;
   }
 
-  .hero-video--bleed {
-    object-fit: cover;
-    filter: blur(30px) saturate(1.28) brightness(0.7);
-    transform: scale(1.22);
-    transform-origin: center center;
+  body.is-intro .overlay {
+    opacity: 1;
   }
 
-  .hero-video--fit {
-    z-index: 2;
-    object-fit: contain;
-    object-position: center center;
-    filter: none;
-    transform: none;
+  body.is-intro .it-link {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  body.is-intro .it-link.is-ready {
+    animation: it-button-pulse 1.25s ease-in-out infinite;
+  }
+
+  body.is-intro .it-link.is-lure {
+    animation: it-button-pulse-lure 1.1s ease-in-out infinite;
   }
 }
 
