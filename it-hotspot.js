@@ -3,7 +3,8 @@
   const link = document.querySelector(".it-link");
   const videos = document.querySelectorAll(".hero-video");
   const deskVideo = document.querySelector(".hero-video--desk");
-  const phoneVideo = document.querySelector(".hero-video--phone");
+  const phoneVideos = document.querySelectorAll(".hero-video--phone");
+  const phoneFit = document.querySelector(".hero-video--fit");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
@@ -145,7 +146,7 @@
   }
 
   function activeVideo() {
-    if (phoneVideo && phoneIntro()) return phoneVideo;
+    if (phoneFit && phoneIntro()) return phoneFit;
     return deskVideo || videos[0];
   }
 
@@ -181,7 +182,13 @@
     });
     clip.preload = "auto";
     armIntroLimit();
-    const playPromise = clip.play();
+    const pack = phoneIntro() && phoneVideos.length ? phoneVideos : [clip];
+    let playPromise = null;
+    for (let i = 0; i < pack.length; i++) {
+      pack[i].preload = "auto";
+      const next = pack[i].play();
+      if (pack[i] === clip) playPromise = next;
+    }
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(function () {
         clearIntroTimers();

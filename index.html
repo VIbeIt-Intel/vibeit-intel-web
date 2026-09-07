@@ -62,7 +62,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=splash-phone1" />
+    <link rel="stylesheet" href="styles.css?v=splash-phone2" />
   </head>
   <body class="splash is-intro">
     <main class="page">
@@ -95,7 +95,18 @@
         <source src="assets/splash.mp4" type="video/mp4" />
       </video>
       <video
-        class="hero-video hero-video--phone"
+        class="hero-video hero-video--phone hero-video--bleed"
+        muted
+        playsinline
+        webkit-playsinline
+        preload="metadata"
+        disablepictureinpicture
+        aria-hidden="true"
+      >
+        <source src="assets/splash-phone.mp4" type="video/mp4" />
+      </video>
+      <video
+        class="hero-video hero-video--phone hero-video--fit"
         muted
         playsinline
         webkit-playsinline
@@ -130,6 +141,6 @@
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=splash-phone1"></script>
+    <script src="it-hotspot.js?v=splash-phone2"></script>
   </body>
 </html>

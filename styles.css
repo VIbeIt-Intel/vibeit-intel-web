@@ -108,6 +108,21 @@ body.splash {
   .hero-video--phone {
     display: block;
   }
+
+  .hero-video--bleed {
+    object-fit: cover;
+    filter: blur(30px) saturate(1.28) brightness(0.7);
+    transform: scale(1.22);
+    transform-origin: center center;
+  }
+
+  .hero-video--fit {
+    z-index: 2;
+    object-fit: contain;
+    object-position: center center;
+    filter: none;
+    transform: none;
+  }
 }
 
 body.is-intro .hero {
