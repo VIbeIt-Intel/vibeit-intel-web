@@ -62,7 +62,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=splash-video9" />
+    <link rel="stylesheet" href="styles.css?v=splash-phone1" />
   </head>
   <body class="splash is-intro">
     <main class="page">
@@ -84,16 +84,26 @@
         />
       </picture>
       <video
-        class="hero-video"
-        autoplay
+        class="hero-video hero-video--desk"
         muted
         playsinline
         webkit-playsinline
-        preload="auto"
+        preload="metadata"
         disablepictureinpicture
         aria-hidden="true"
       >
         <source src="assets/splash.mp4" type="video/mp4" />
+      </video>
+      <video
+        class="hero-video hero-video--phone"
+        muted
+        playsinline
+        webkit-playsinline
+        preload="metadata"
+        disablepictureinpicture
+        aria-hidden="true"
+      >
+        <source src="assets/splash-phone.mp4" type="video/mp4" />
       </video>
 
       <a class="it-link" href="/services/" aria-label="Open VibeIt-Intel packages">
@@ -115,16 +125,11 @@
         VibeIt-Intel builds websites and digital systems for South African SMEs.
       </p>
 
-      <div class="intro-copy" aria-hidden="true">
-        <p class="intro-kicker">Experience the Vibe</p>
-        <p class="intro-headline">Elevate Your Digital World</p>
-      </div>
-
       <div class="overlay">
         <p class="note">VibeIt-Intel. Websites and systems for growing businesses.</p>
       </div>
     </main>
     <div class="it-portal" aria-hidden="true"></div>
-    <script src="it-hotspot.js?v=splash-video6"></script>
+    <script src="it-hotspot.js?v=splash-phone1"></script>
   </body>
 </html>

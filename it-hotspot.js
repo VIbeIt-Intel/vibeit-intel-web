@@ -2,7 +2,8 @@
   const img = document.querySelector(".hero-image");
   const link = document.querySelector(".it-link");
   const videos = document.querySelectorAll(".hero-video");
-  const video = videos[0];
+  const deskVideo = document.querySelector(".hero-video--desk");
+  const phoneVideo = document.querySelector(".hero-video--phone");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!img || !link) return;
 
@@ -14,7 +15,7 @@
   };
 
   const IDLE_MS = 5000;
-  const INTRO_LIMIT_MS = 18000;
+  const INTRO_LIMIT_MS = 22000;
   const STALL_MS = 5000;
   let lureTimer = 0;
   let goTimer = 0;
@@ -139,6 +140,15 @@
     armIdle();
   }
 
+  function phoneIntro() {
+    return window.matchMedia("(orientation: portrait), (max-aspect-ratio: 4/5)").matches;
+  }
+
+  function activeVideo() {
+    if (phoneVideo && phoneIntro()) return phoneVideo;
+    return deskVideo || videos[0];
+  }
+
   function eachVideo(fn) {
     for (let i = 0; i < videos.length; i++) {
       fn(videos[i]);
@@ -152,28 +162,26 @@
   }
 
   function playIntro() {
-    if (!video || reduceMotion) {
+    const clip = activeVideo();
+    if (!clip || reduceMotion) {
       startIdle();
       return;
     }
 
     stopIdle();
     document.body.classList.add("is-intro");
-    eachVideo(function (clip) {
-      clip.muted = true;
-      clip.defaultMuted = true;
-      clip.playsInline = true;
+    eachVideo(function (other) {
+      other.pause();
+      other.muted = true;
+      other.defaultMuted = true;
+      other.playsInline = true;
       try {
-        clip.currentTime = 0;
+        other.currentTime = 0;
       } catch (e) {}
     });
+    clip.preload = "auto";
     armIntroLimit();
-    const playPromise = video.play();
-    eachVideo(function (clip) {
-      if (clip !== video) {
-        clip.play().catch(function () {});
-      }
-    });
+    const playPromise = clip.play();
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(function () {
         clearIntroTimers();
@@ -216,7 +224,7 @@
   startLure();
   playIntro();
 
-  if (video) {
+  if (videos.length) {
     eachVideo(function (clip) {
       clip.muted = true;
       clip.addEventListener("playing", function () {
@@ -226,14 +234,24 @@
         }
         document.body.classList.add("is-intro");
       });
-    });
-    video.addEventListener("waiting", armStall);
-    video.addEventListener("stalled", armStall);
-    video.addEventListener("ended", goToServices);
-    video.addEventListener("error", function () {
-      clearIntroTimers();
-      document.body.classList.remove("is-intro");
-      startIdle();
+      clip.addEventListener("waiting", function () {
+        if (clip !== activeVideo()) return;
+        armStall();
+      });
+      clip.addEventListener("stalled", function () {
+        if (clip !== activeVideo()) return;
+        armStall();
+      });
+      clip.addEventListener("ended", function () {
+        if (clip !== activeVideo()) return;
+        goToServices();
+      });
+      clip.addEventListener("error", function () {
+        if (clip !== activeVideo()) return;
+        clearIntroTimers();
+        document.body.classList.remove("is-intro");
+        startIdle();
+      });
     });
   }
 
