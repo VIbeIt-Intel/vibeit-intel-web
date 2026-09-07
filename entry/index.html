@@ -52,7 +52,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=vibe-read1" />
+    <link rel="stylesheet" href="/styles.css?v=brief-err1" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -107,6 +107,7 @@
         action="https://formsubmit.co/support@vibeit-intel.net"
         method="POST"
         enctype="multipart/form-data"
+        novalidate
         data-store="https://vibeit-admin.vibeit-intel.workers.dev/api/briefs"
       >
         <input type="hidden" name="_subject" value="VibeIt brief — Entry" />
@@ -433,7 +434,7 @@
         <a href="/privacy/">Privacy</a>
       </p>
     </footer>
-    <script src="/brief-files.js?v=files8"></script>
+    <script src="/brief-files.js?v=files9"></script>
     <script src="/brief-formats.js?v=fmt1"></script>
     <script>
       (function () {
@@ -744,6 +745,7 @@
 
         form.addEventListener("submit", function (event) {
           event.preventDefault();
+          if (!VibeBriefFiles.validate(form)) return;
           const logos = Array.from(logoInput.files || []).slice(0, MAX_LOGO);
           const extras = Array.from(extra.files || []).slice(0, MAX_EXTRA);
           if (!val("Products or services") && val("Sells products") !== "Yes") {

@@ -55,7 +55,7 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/styles.css?v=vibe-read1" />
+    <link rel="stylesheet" href="/styles.css?v=brief-err1" />
   </head>
   <body class="site">
     <div class="vibe" aria-hidden="true">
@@ -112,6 +112,7 @@
         action="https://formsubmit.co/support@vibeit-intel.net"
         method="POST"
         enctype="multipart/form-data"
+        novalidate
         data-store="https://vibeit-admin.vibeit-intel.workers.dev/api/briefs"
       >
         <input type="hidden" name="_subject" value="VibeIt brief — Advance" />
@@ -694,7 +695,7 @@
         <a href="/privacy/">Privacy</a>
       </p>
     </footer>
-    <script src="/brief-files.js?v=files8"></script>
+    <script src="/brief-files.js?v=files9"></script>
     <script src="/brief-formats.js?v=fmt1"></script>
     <script>
       (function () {
@@ -1108,6 +1109,7 @@
 
         form.addEventListener("submit", function (event) {
           event.preventDefault();
+          if (!VibeBriefFiles.validate(form)) return;
           if (!val("WhatsApp") && !val("Phone")) {
             window.alert("Add a WhatsApp number, or a phone number we can reach you on.");
             return;

@@ -1786,6 +1786,30 @@ html.from-it .foot {
   outline-offset: 2px;
 }
 
+.brief-error {
+  margin: 0.45rem 0 0;
+  color: #ffb4a2;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.brief-field.is-invalid input,
+.brief-field.is-invalid textarea,
+.brief-field.is-invalid select,
+.brief-field input.is-invalid,
+.brief-field textarea.is-invalid {
+  border-color: #ff8a6a;
+}
+
+.brief-choices.is-invalid,
+.format-grid.is-invalid,
+.brief-agree.is-invalid {
+  outline: 2px solid rgb(255 138 26 / 75%);
+  outline-offset: 4px;
+  border-radius: 1rem;
+}
+
 .brief-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -458,10 +458,135 @@
     return refresh;
   }
 
+  function messageFor(el) {
+    const name = el.name || "";
+    if (el.validity.typeMismatch && (el.type === "email" || name === "email")) {
+      return "Please enter a valid email address.";
+    }
+    if (el.validity.valueMissing) {
+      if (name === "Domain") return "Please say if you already have a web address.";
+      if (name === "Business type") {
+        return "Please pick the site format that matches your trade.";
+      }
+      if (name === "Customer action") {
+        return "Please pick what a customer should do on the site.";
+      }
+      if (name === "Sells products") {
+        return "Please say if you sell items, or services only.";
+      }
+      if (name === "Agree to terms") return "Please agree to the terms to send this.";
+      if (el.type === "radio") return "Please pick one.";
+      if (el.type === "checkbox") return "Please tick this to continue.";
+      return "Please fill this in.";
+    }
+    return el.validationMessage || "Please fill this in.";
+  }
+
+  function hostFor(el) {
+    if (el.type === "radio") {
+      return (
+        el.closest(".format-grid, .brief-choices, .brief-actions") ||
+        el.closest(".brief-block") ||
+        el.parentElement
+      );
+    }
+    if (el.type === "checkbox" && el.closest(".brief-agree")) {
+      return el.closest(".brief-agree");
+    }
+    return el.closest(".brief-field") || el.parentElement;
+  }
+
+  function clearHostError(host, el) {
+    if (host) {
+      const err = host.querySelector(":scope > .brief-error");
+      if (err) err.remove();
+      host.classList.remove("is-invalid");
+    }
+    if (el) el.classList.remove("is-invalid");
+  }
+
+  function clearErrors(form) {
+    form.querySelectorAll(".brief-error").forEach(function (node) {
+      node.remove();
+    });
+    form.querySelectorAll(".is-invalid").forEach(function (node) {
+      node.classList.remove("is-invalid");
+    });
+  }
+
+  function clearOne(el) {
+    if (!el) return;
+    const form = el.form || el.closest("form");
+    if (el.type === "radio" && el.name && form) {
+      form.querySelectorAll('input[name="' + el.name + '"]').forEach(function (radio) {
+        radio.classList.remove("is-invalid");
+      });
+    }
+    clearHostError(hostFor(el), el);
+  }
+
+  function showError(el, msg) {
+    el.classList.add("is-invalid");
+    const host = hostFor(el);
+    if (!host) return;
+    host.classList.add("is-invalid");
+    let err = host.querySelector(":scope > .brief-error");
+    if (!err) {
+      err = document.createElement("p");
+      err.className = "brief-error";
+      err.setAttribute("role", "alert");
+      host.appendChild(err);
+    }
+    err.textContent = msg;
+  }
+
+  function bindValidate(form) {
+    if (!form || form.getAttribute("data-brief-validate") === "1") return;
+    form.setAttribute("data-brief-validate", "1");
+    form.setAttribute("novalidate", "novalidate");
+    form.addEventListener("input", function (event) {
+      if (event.target) clearOne(event.target);
+    });
+    form.addEventListener("change", function (event) {
+      if (event.target) clearOne(event.target);
+    });
+  }
+
+  function validate(form) {
+    if (!form) return true;
+    bindValidate(form);
+    clearErrors(form);
+    const seen = {};
+    let first = null;
+    Array.prototype.forEach.call(form.elements, function (el) {
+      if (!el || el.disabled) return;
+      if (el.closest("[hidden]")) return;
+      if (el.classList.contains("brief-honey")) return;
+      if (typeof el.checkValidity !== "function") return;
+      if (el.checkValidity()) return;
+      if (el.type === "radio") {
+        if (seen[el.name]) return;
+        seen[el.name] = true;
+      }
+      showError(el, messageFor(el));
+      if (!first) first = el;
+    });
+    if (!first) return true;
+    try {
+      first.focus({ preventScroll: true });
+    } catch (err) {
+      first.focus();
+    }
+    const host = hostFor(first);
+    (host || first).scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
+
   global.VibeBriefFiles = {
     setFiles: setFiles,
     bind: bind,
     watchColours: watchColours,
+    validate: validate,
     storeBrief: function (formEl) {
       const endpoint =
         (formEl && formEl.getAttribute("data-store")) ||
