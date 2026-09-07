@@ -91,24 +91,9 @@ body.splash {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 42%;
+  object-position: center 40%;
   background: transparent;
   pointer-events: none;
-}
-
-@media (orientation: portrait), (max-aspect-ratio: 4 / 5) {
-  .hero-video {
-    inset: auto;
-    top: 50%;
-    right: 0;
-    bottom: auto;
-    left: 0;
-    width: 100%;
-    height: 52dvh;
-    object-fit: cover;
-    object-position: center center;
-    transform: translateY(-50%);
-  }
 }
 
 body.is-intro .hero {
