@@ -606,7 +606,8 @@ body:has(.brief) .vibe-grain {
 .pack-wa:focus-visible,
 .wa-hero:focus-visible,
 .dock-item:focus-visible,
-.cta:focus-visible {
+.cta:focus-visible,
+.qa-item summary:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 3px;
 }
@@ -998,6 +999,93 @@ body:has(.brief) .vibe-grain {
   text-decoration: none;
 }
 
+.qa {
+  padding: 2rem 6vw 1.4rem;
+  max-width: 42rem;
+  margin: 0 auto;
+  scroll-margin-top: 1.25rem;
+}
+
+.qa h2 {
+  margin-top: 0.35rem;
+  color: #fff;
+}
+
+.qa-lead {
+  margin: 0.45rem 0 0;
+  max-width: 40rem;
+  color: rgb(246 241 251 / 72%);
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.qa-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.qa-item {
+  min-width: 0;
+  border: 2px solid transparent;
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(#1a1026, #1a1026) padding-box,
+    linear-gradient(120deg, var(--teal), var(--orange), var(--purple)) border-box;
+}
+
+.qa-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+  padding: 1.05rem 1.15rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.3;
+}
+
+.qa-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.qa-item summary::after {
+  content: "+";
+  flex-shrink: 0;
+  color: var(--teal);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.qa-item[open] summary::after {
+  content: "–";
+}
+
+.qa-a {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0 1.15rem 1.15rem;
+  color: rgb(246 241 251 / 82%);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.qa-a a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.legal a {
+  color: var(--teal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .packs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1142,6 +1230,12 @@ body:has(.brief) .vibe-grain {
   margin-top: 0.15rem;
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.pack-list small a {
+  color: var(--purple);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .tick {
@@ -2164,6 +2258,7 @@ body:has(.brief) .vibe-grain {
   .intro,
   .path,
   .services,
+  .qa,
   .contact,
   .brief {
     padding-left: 5vw;
