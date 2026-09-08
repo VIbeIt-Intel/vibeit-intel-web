@@ -496,6 +496,19 @@
     return el.closest(".brief-field") || el.parentElement;
   }
 
+  function scrollTargetFor(el) {
+    const host = hostFor(el);
+    if (!host) return el;
+    const prev = host.previousElementSibling;
+    if (prev && prev.classList.contains("brief-help")) {
+      const kicker = prev.previousElementSibling;
+      if (kicker && kicker.classList.contains("brief-kicker")) return kicker;
+      return prev;
+    }
+    if (prev && prev.classList.contains("brief-kicker")) return prev;
+    return host;
+  }
+
   function clearHostError(host, el) {
     if (host) {
       const err = host.querySelector(":scope > .brief-error");
@@ -535,7 +548,11 @@
       err = document.createElement("p");
       err.className = "brief-error";
       err.setAttribute("role", "alert");
-      host.appendChild(err);
+      if (el.type === "radio") {
+        host.insertBefore(err, host.firstChild);
+      } else {
+        host.appendChild(err);
+      }
     }
     err.textContent = msg;
   }
@@ -577,8 +594,8 @@
     } catch (err) {
       first.focus();
     }
-    const host = hostFor(first);
-    (host || first).scrollIntoView({ behavior: "smooth", block: "center" });
+    const target = scrollTargetFor(first);
+    (target || first).scrollIntoView({ behavior: "smooth", block: "start" });
     return false;
   }
 

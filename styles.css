@@ -1634,6 +1634,14 @@ body:has(.brief) .vibe-grain {
   letter-spacing: 0.12em;
 }
 
+.brief-kicker,
+.brief-help,
+.brief-field,
+.brief-agree,
+.brief-choices {
+  scroll-margin-top: 1.25rem;
+}
+
 .brief-kicker {
   margin: 0 0 0.75rem;
   color: var(--teal);
@@ -1825,6 +1833,12 @@ body:has(.brief) .vibe-grain {
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.35;
+}
+
+.brief-choices > .brief-error:first-child,
+.format-grid > .brief-error:first-child {
+  margin: 0 0 0.55rem;
+  grid-column: 1 / -1;
 }
 
 .brief-field.is-invalid input,
