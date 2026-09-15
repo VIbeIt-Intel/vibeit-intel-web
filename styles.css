@@ -607,6 +607,8 @@ body:has(.brief) .vibe-grain {
 .wa-hero:focus-visible,
 .dock-item:focus-visible,
 .cta:focus-visible,
+.recent-work a:focus-visible,
+.work-open:focus-visible,
 .qa-item summary:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 3px;
@@ -615,6 +617,7 @@ body:has(.brief) .vibe-grain {
 .intro,
 .path,
 .services,
+.work,
 .contact {
   padding: 2rem 6vw 1rem;
   max-width: 72rem;
@@ -656,6 +659,7 @@ body:has(.brief) .vibe-grain {
 
 .path h2,
 .services h2,
+.work h2,
 .contact h2 {
   margin-top: 0.45rem;
   font-size: clamp(1.5rem, 3vw, 2.15rem);
@@ -680,7 +684,9 @@ body:has(.brief) .vibe-grain {
 }
 
 .pack-jump:hover,
-.pack-jump:focus-visible {
+.pack-jump:focus-visible,
+.recent-work a:hover,
+.recent-work a:focus-visible {
   color: #fff;
 }
 
@@ -703,6 +709,20 @@ body:has(.brief) .vibe-grain {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.recent-work {
+  margin-top: 0.55rem;
+  color: rgb(0 200 201 / 62%);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.recent-work a {
+  color: rgb(255 180 90 / 88%);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .path {
@@ -1084,6 +1104,138 @@ body:has(.brief) .vibe-grain {
   color: var(--teal);
   font-weight: 700;
   text-decoration: none;
+}
+
+.work {
+  scroll-margin-top: 1.25rem;
+}
+
+.work-lead {
+  margin-top: 0.55rem;
+  max-width: 40rem;
+  color: rgb(246 241 251 / 72%);
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.work-card {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr;
+  align-items: stretch;
+  margin-top: 1.35rem;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 1.4rem;
+  background:
+    linear-gradient(#1a1026, #1a1026) padding-box,
+    linear-gradient(120deg, var(--teal), var(--orange), var(--purple)) border-box;
+  box-shadow:
+    0 18px 50px rgb(10 4 18 / 42%),
+    0 0 36px rgb(255 138 26 / 10%);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.work-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 24px 58px rgb(10 4 18 / 50%),
+    0 0 42px rgb(0 200 201 / 18%);
+}
+
+.work-shot {
+  display: block;
+  min-height: 17rem;
+  overflow: hidden;
+  background: #12091a;
+}
+
+.work-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 17rem;
+  object-fit: cover;
+  object-position: 48% 38%;
+  transform: scale(1.06);
+}
+
+.work-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.55rem 1.5rem 1.5rem;
+}
+
+.work-kicker {
+  margin: 0;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.work-copy h3 {
+  margin: 0.4rem 0 0.45rem;
+  color: #fff;
+  font-size: clamp(1.55rem, 3vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.work-trade {
+  margin: 0;
+  color: rgb(255 180 90 / 82%);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.work-line {
+  margin: 0.85rem 0 1.2rem;
+  color: rgb(246 241 251 / 86%);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.work-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.work-open,
+.work-open:visited {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 9rem;
+  padding: 0.78rem 1.1rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    var(--teal) 0%,
+    #2a8ad4 32%,
+    var(--purple) 68%,
+    var(--orange) 100%
+  );
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.work-open:hover {
+  filter: brightness(1.08);
+}
+
+.work-actions .pack-wa {
+  width: auto;
+  flex: 1 1 9rem;
+  margin-top: 0;
 }
 
 .packs {
@@ -2176,8 +2328,18 @@ body:has(.brief) .vibe-grain {
   }
 
   .steps,
-  .packs {
+  .packs,
+  .work-card {
     grid-template-columns: 1fr;
+  }
+
+  .work-shot,
+  .work-shot img {
+    min-height: 13.5rem;
+  }
+
+  .work-shot img {
+    aspect-ratio: 16 / 10;
   }
 
   .packs {
@@ -2258,6 +2420,7 @@ body:has(.brief) .vibe-grain {
   .intro,
   .path,
   .services,
+  .work,
   .qa,
   .contact,
   .brief {
@@ -2306,6 +2469,12 @@ body:has(.brief) .vibe-grain {
   html.from-it main,
   html.from-it .foot {
     animation: none;
+  }
+
+  .work-card,
+  .work-shot img {
+    transform: none;
+    transition: none;
   }
 
   .it-link.is-lure::before {
