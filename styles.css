@@ -609,6 +609,7 @@ body:has(.brief) .vibe-grain {
 .cta:focus-visible,
 .recent-work a:focus-visible,
 .work-open:focus-visible,
+.pack-systems:focus-visible,
 .qa-item summary:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 3px;
@@ -659,6 +660,7 @@ body:has(.brief) .vibe-grain {
 
 .path h2,
 .services h2,
+.work h1,
 .work h2,
 .contact h2 {
   margin-top: 0.45rem;
@@ -1238,6 +1240,27 @@ body:has(.brief) .vibe-grain {
   margin-top: 0;
 }
 
+.systems-card {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 26rem;
+}
+
+.systems-card .work-copy h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.55rem, 3vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.systems-card .work-line {
+  margin-top: 0.45rem;
+}
+
+.systems-card .work-open {
+  flex: 0 1 auto;
+}
+
 .packs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1258,7 +1281,7 @@ body:has(.brief) .vibe-grain {
 
 @supports (grid-template-rows: subgrid) {
   .packs {
-    grid-template-rows: auto auto auto auto 1fr auto auto;
+    grid-template-rows: auto auto auto auto 1fr auto auto auto;
   }
 
   .pack {
@@ -1266,6 +1289,10 @@ body:has(.brief) .vibe-grain {
     grid-template-rows: subgrid;
     grid-row: span 7;
     height: 100%;
+  }
+
+  .pack-pro {
+    grid-row: span 8;
   }
 
   .pack-cta {
@@ -1491,6 +1518,23 @@ body:has(.brief) .vibe-grain {
 .pack-wa:hover {
   background: #25d366;
   color: #fff;
+}
+
+.pack-systems {
+  display: block;
+  margin-top: 0.9rem;
+  color: rgb(74 31 122 / 78%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.pack-systems:hover,
+.pack-systems:focus-visible {
+  color: var(--purple);
+  text-decoration: underline;
 }
 
 .contact {
