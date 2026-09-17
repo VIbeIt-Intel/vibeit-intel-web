@@ -609,6 +609,7 @@ body:has(.brief) .vibe-grain {
 .cta:focus-visible,
 .recent-work a:focus-visible,
 .work-open:focus-visible,
+.systems-shot:focus-visible,
 .pack-systems:focus-visible,
 .qa-item summary:focus-visible {
   outline: 2px solid var(--teal);
@@ -1241,20 +1242,33 @@ body:has(.brief) .vibe-grain {
 }
 
 .systems-card {
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 26rem;
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  max-width: 46rem;
+}
+
+.systems-shot {
+  display: grid;
+  place-items: center;
+  min-height: 17rem;
+  padding: 1.25rem 1rem;
+  background: #fff;
+}
+
+.systems-shot img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 92%;
+  max-height: 16.5rem;
+  object-fit: contain;
 }
 
 .systems-card .work-copy h2 {
-  margin: 0;
+  margin: 0.15rem 0 0.45rem;
   color: #fff;
   font-size: clamp(1.55rem, 3vw, 2.05rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-}
-
-.systems-card .work-line {
-  margin-top: 0.45rem;
 }
 
 .systems-card .work-open {
@@ -2384,6 +2398,15 @@ body:has(.brief) .vibe-grain {
 
   .work-shot img {
     aspect-ratio: 16 / 10;
+  }
+
+  .systems-shot {
+    min-height: 14rem;
+    padding: 1.2rem;
+  }
+
+  .systems-shot img {
+    max-height: 13rem;
   }
 
   .packs {
