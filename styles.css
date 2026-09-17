@@ -1251,7 +1251,7 @@ body:has(.brief) .vibe-grain {
   place-items: center;
   min-height: 17rem;
   padding: 1.25rem 1rem;
-  background: #fff;
+  background: transparent;
 }
 
 .systems-shot img {
