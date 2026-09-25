@@ -1122,6 +1122,7 @@ body:has(.brief) .vibe-grain {
 }
 
 .work-card {
+  scroll-margin-top: 1.25rem;
   display: grid;
   grid-template-columns: 1.2fr 0.9fr;
   align-items: stretch;
@@ -1162,6 +1163,10 @@ body:has(.brief) .vibe-grain {
   object-fit: cover;
   object-position: 48% 38%;
   transform: scale(1.06);
+}
+
+.work-shot img.fit-centre {
+  object-position: center 48%;
 }
 
 .work-copy {
