@@ -1209,10 +1209,10 @@ body:has(.brief) .vibe-grain {
 }
 
 .work-rotator img.is-crest {
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   transform: none;
-  background: #5c4334;
+  background: none;
 }
 
 @keyframes work-rot {
