@@ -1208,6 +1208,13 @@ body:has(.brief) .vibe-grain {
   padding: 1.15rem 1.35rem;
 }
 
+.work-rotator img.is-crest {
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+  background: #5c4334;
+}
+
 @keyframes work-rot {
   0% {
     opacity: 0;
