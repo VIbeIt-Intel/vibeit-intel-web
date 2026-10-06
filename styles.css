@@ -1169,6 +1169,63 @@ body:has(.brief) .vibe-grain {
   object-position: center 48%;
 }
 
+.work-rotator {
+  position: relative;
+  background: #000;
+}
+
+.work-rotator img {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  object-position: center 48%;
+  opacity: 0;
+  animation: work-rot 25s infinite;
+}
+
+.work-rotator img:nth-child(2) {
+  animation-delay: 5s;
+}
+
+.work-rotator img:nth-child(3) {
+  animation-delay: 10s;
+}
+
+.work-rotator img:nth-child(4) {
+  animation-delay: 15s;
+}
+
+.work-rotator img:nth-child(5) {
+  animation-delay: 20s;
+}
+
+.work-rotator img.is-mark {
+  object-fit: contain;
+  object-position: center;
+  transform: none;
+  background: #000;
+  padding: 1.15rem 1.35rem;
+}
+
+@keyframes work-rot {
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  16% {
+    opacity: 1;
+  }
+  23% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .work-copy {
   display: flex;
   flex-direction: column;
@@ -2405,6 +2462,16 @@ body:has(.brief) .vibe-grain {
     aspect-ratio: 16 / 10;
   }
 
+  .work-rotator {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+  }
+
+  .work-rotator img {
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+
   .systems-shot {
     min-height: 14rem;
     padding: 1.2rem;
@@ -2547,6 +2614,15 @@ body:has(.brief) .vibe-grain {
   .work-shot img {
     transform: none;
     transition: none;
+  }
+
+  .work-rotator img {
+    animation: none;
+    opacity: 0;
+  }
+
+  .work-rotator img:first-child {
+    opacity: 1;
   }
 
   .it-link.is-lure::before {
