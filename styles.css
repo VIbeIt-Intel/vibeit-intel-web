@@ -1181,7 +1181,19 @@ body:has(.brief) .vibe-grain {
   aspect-ratio: auto;
   object-position: center 48%;
   opacity: 0;
+  animation: none;
+}
+
+.work-rotator img:first-child {
+  opacity: 1;
+}
+
+.work-rotator.is-on img {
   animation: work-rot 25s infinite;
+}
+
+.work-rotator.is-on img:first-child {
+  animation-name: work-rot-lead;
 }
 
 .work-rotator img:nth-child(2) {
@@ -1213,6 +1225,17 @@ body:has(.brief) .vibe-grain {
   object-position: center;
   transform: none;
   background: none;
+}
+
+@keyframes work-rot-lead {
+  0%,
+  16% {
+    opacity: 1;
+  }
+  23%,
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes work-rot {
@@ -2623,12 +2646,14 @@ body:has(.brief) .vibe-grain {
     transition: none;
   }
 
-  .work-rotator img {
+  .work-rotator img,
+  .work-rotator.is-on img {
     animation: none;
     opacity: 0;
   }
 
-  .work-rotator img:first-child {
+  .work-rotator img:first-child,
+  .work-rotator.is-on img:first-child {
     opacity: 1;
   }
 
