@@ -1189,7 +1189,7 @@ body:has(.brief) .vibe-grain {
 }
 
 .work-rotator.is-on img {
-  animation: work-rot 25s infinite;
+  animation: work-rot 30s infinite;
 }
 
 .work-rotator.is-on img:first-child {
@@ -1212,6 +1212,17 @@ body:has(.brief) .vibe-grain {
   animation-delay: 20s;
 }
 
+.work-rotator img:nth-child(6) {
+  animation-delay: 25s;
+}
+
+.work-rotator img.is-devices {
+  object-fit: cover;
+  object-position: center;
+  transform: none;
+  background: none;
+}
+
 .work-rotator img.is-mark {
   object-fit: contain;
   object-position: center;
@@ -1229,10 +1240,10 @@ body:has(.brief) .vibe-grain {
 
 @keyframes work-rot-lead {
   0%,
-  16% {
+  13.34% {
     opacity: 1;
   }
-  23%,
+  19.17%,
   100% {
     opacity: 0;
   }
@@ -1242,13 +1253,13 @@ body:has(.brief) .vibe-grain {
   0% {
     opacity: 0;
   }
-  4% {
+  3.34% {
     opacity: 1;
   }
-  16% {
+  13.34% {
     opacity: 1;
   }
-  23% {
+  19.17% {
     opacity: 0;
   }
   100% {
