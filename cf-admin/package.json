@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "local-projects": "node local-project-server.mjs",
     "db:local": "wrangler d1 execute vibeit-briefs --local --file=schema.sql",
     "db:remote": "wrangler d1 execute vibeit-briefs --remote --file=schema.sql"
   },
@@ -11,6 +12,8 @@
     "wrangler": "^4.33.1"
   },
   "dependencies": {
+    "fast-png": "^8.0.0",
+    "jpeg-js": "^0.4.4",
     "pdf-lib": "^1.17.1"
   }
 }

@@ -1,29 +1,47 @@
 <!DOCTYPE html>
-<html lang="en" class="__PACKAGE_CLASS__ __SHOP_CLASS__">
+<html lang="en-ZA" class="__PACKAGE_CLASS__ __SHOP_CLASS__ __SERVICES_CLASS__ look-__LOOK__">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>__NAME__</title>
     <meta name="description" content="__TAGLINE__" />
+    <link rel="canonical" href="__ORIGIN__" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="__NAME__" />
+    <meta property="og:title" content="__NAME__" />
+    <meta property="og:description" content="__TAGLINE__" />
+    <meta property="og:url" content="__ORIGIN__" />
+    <meta property="og:image" content="__SHARE_URL__" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="600" />
+    <meta property="og:image:height" content="600" />
+    <meta property="og:image:alt" content="__NAME__ logo" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:image" content="__SHARE_URL__" />
+    <meta name="theme-color" content="__ACCENT__" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="assets/favicon-192.png" type="image/png" sizes="192x192" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <script type="application/ld+json">
+      __SCHEMA__
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link href="__FONT_HREF__" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="top">
       <a class="brand" href="#top">
-        <img src="__LOGO_SRC__" alt="" width="48" height="48" onerror="this.style.display='none'" />
+        <img src="__LOGO_SRC__" alt="__NAME__" width="48" height="48" onerror="this.style.display='none'" />
         <span>__NAME__</span>
       </a>
       <nav>
-        <a href="#about">About</a>
-        <a href="#services">Services</a>
+        <a href="#gallery">Work</a>
+        <a href="#services">What we do</a>
         <a href="#products">Shop</a>
-        <a href="#gallery">Photos</a>
+        <a href="#about">About</a>
         <a href="#bookings">Book</a>
         <a href="#contact">Contact</a>
       </nav>
@@ -31,33 +49,24 @@
     </header>
 
     <main id="top">
-      <section class="hero">
+      <section class="hero" style="__HERO_STYLE__">
         <p class="eyebrow">__TYPE__</p>
-        <h1>__NAME__</h1>
-        <p class="lede">__TAGLINE__</p>
+        <h1>__TAGLINE__</h1>
+        <p class="lede">__NAME__</p>
         <a class="cta" href="__CTA_HREF__">__CTA_LABEL__</a>
       </section>
 
-      <section id="about">
-        <h2>What we do</h2>
-        <p>__ABOUT__</p>
+      <section id="gallery">
+        <h2>The work</h2>
+        <div class="jobs">
+          __GALLERY__
+        </div>
       </section>
 
       <section id="services">
-        <h2>Services</h2>
+        <h2>What we do</h2>
         <ul class="cards">
-          <li>
-            <h3>Service one</h3>
-            <p>Replace with a real service from the brief.</p>
-          </li>
-          <li>
-            <h3>Service two</h3>
-            <p>Replace with a real service from the brief.</p>
-          </li>
-          <li>
-            <h3>Service three</h3>
-            <p>Replace with a real service from the brief.</p>
-          </li>
+          __SERVICES__
         </ul>
       </section>
 
@@ -69,11 +78,9 @@
         </ul>
       </section>
 
-      <section id="gallery">
-        <h2>Photos</h2>
-        <div class="gallery">
-          __GALLERY__
-        </div>
+      <section id="about">
+        <h2>About</h2>
+        <p>__ABOUT__</p>
       </section>
 
       <section id="bookings" class="bookings">
@@ -85,10 +92,12 @@
       <section id="contact">
         <h2>Contact</h2>
         <p>__ADDRESS__</p>
-        <p>
+        <p class="reach">
           <a href="tel:__PHONE_HREF__">__PHONE__</a>
-          ·
-          <a href="mailto:__EMAIL__">__EMAIL__</a>
+          <a href="mailto:__EMAIL__" __EMAIL_HIDDEN__>__EMAIL__</a>
+          <a href="__FACEBOOK_HREF__" __FB_HIDDEN__>Facebook</a>
+          <a href="__INSTAGRAM_HREF__" __IG_HIDDEN__>Instagram</a>
+          <a href="__GOOGLE_HREF__" __GOOGLE_HIDDEN__>Google</a>
         </p>
         <a class="cta" href="__CTA_HREF__">__CTA_LABEL__</a>
       </section>

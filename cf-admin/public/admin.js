@@ -35,7 +35,20 @@
     delete next.timeoutError;
     return fetch(path, next)
       .then(function (res) {
-        return res.json().then(function (body) {
+        return res.text().then(function (text) {
+          let body = {};
+          if (text) {
+            try {
+              body = JSON.parse(text);
+            } catch (parseErr) {
+              if (/^\s*</.test(text)) {
+                throw new Error(
+                  "The server timed out while uploading photos. Refresh the brief and press Start website again — the GitHub repo may already exist."
+                );
+              }
+              throw new Error("Unexpected server response. Refresh and try again.");
+            }
+          }
           if (!res.ok) {
             const err = new Error(body.error || "Request failed");
             err.repoUrl = body.repoUrl || "";
@@ -195,6 +208,8 @@
     Barber: "Cursor will build a barber shop: cuts, fades, hours, and book or walk-in.",
     "Mechanic or panel beater":
       "Cursor will build a workshop: services, jobs, and quote or call — not a salon price list.",
+    "Maker or fabricator":
+      "Cursor will build their work: full-bleed photos, the things they make, and call or WhatsApp. Not a plumber page, and not a copy of another client.",
     "Plumber, electrician or other trade":
       "Cursor will build a trades site: what they fix, where they work, and a quote.",
     "Restaurant, cafe or takeaway":
@@ -283,7 +298,7 @@
     sent.classList.toggle("hidden", !quotes.length);
     quotes.forEach(function (item) {
       const li = document.createElement("li");
-      const label = item.kind === "invoice" ? "Invoice" : "Quote";
+      const label = item.description === "Additional work" ? "Additional work" : item.kind === "invoice" ? "Invoice" : "Quote";
       const via =
         item.sentVia === "sent"
           ? "emailed from Gmail"
@@ -378,8 +393,11 @@
       btn.className = "item";
       btn.innerHTML = "<h2></h2><p></p><span></span>";
       btn.querySelector("h2").textContent = item.businessName || "New brief";
+      const extraBit = item.extraNote
+        ? " · Extra" + (item.extraAmount > 0 ? " " + formatRand(item.extraAmount) : " noted")
+        : "";
       btn.querySelector("p").textContent =
-        (item.package || "Brief") + " · " + when(item.createdAt);
+        (item.package || "Brief") + " · " + when(item.createdAt) + extraBit;
       const tag = btn.querySelector("span");
       tag.className = tagClass(item.status);
       tag.textContent = labelStatus(item.status);
@@ -593,6 +611,68 @@
     return out;
   }
 
+  function canonicalSlot(label) {
+    const raw = String(label || "").toLowerCase();
+    if (/price|catalogue|catalog/.test(raw)) return "Price list";
+    if (/vibe/.test(raw)) return "Vibe photo";
+    if (/logo/.test(raw)) return "Logo";
+    return "Extra photo";
+  }
+
+  function compressPhoto(file) {
+    return new Promise(function (resolve) {
+      if (!file || !file.type || file.type.indexOf("image/") !== 0 || file.type === "image/svg+xml") {
+        resolve(file);
+        return;
+      }
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+      image.onload = function () {
+        const edge = 1600;
+        const scale = Math.min(1, edge / image.width, edge / image.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          function (blob) {
+            URL.revokeObjectURL(url);
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const name = String(file.name || "photo").replace(/\.[^.]+$/, "") + ".jpg";
+            try {
+              resolve(new File([blob], name, { type: "image/jpeg" }));
+            } catch (err) {
+              resolve(file);
+            }
+          },
+          "image/jpeg",
+          0.72
+        );
+      };
+      image.onerror = function () {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      image.src = url;
+    });
+  }
+
+  function setFileMsg(text) {
+    const msg = document.getElementById("d-file-msg");
+    if (!msg) return;
+    msg.textContent = text || "";
+    msg.classList.toggle("hidden", !text);
+  }
+
   function displaySlot(file, files, index) {
     let label = String(file.label || "").trim();
     if (!label || /^file$/i.test(label)) label = inferSlot(file);
@@ -627,16 +707,26 @@
     return "";
   }
 
-  function facebookHref(value) {
-    if (!value) return "";
-    if (/^https?:\/\//i.test(value)) return value;
-    const handle = String(value)
+  function profileHref(value, host) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const handle = raw
       .replace(/^@/, "")
-      .replace(/^(https?:\/\/)?(www\.)?facebook\.com\//i, "")
+      .replace(new RegExp("^(https?:\\/\\/)?(www\\.)?" + host.replace(".", "\\.") + "\\/", "i"), "")
       .replace(/^\//, "")
+      .replace(/\/+$/, "")
       .trim();
     if (!handle || /\s/.test(handle)) return "";
-    return "https://www.facebook.com/" + handle;
+    return "https://www." + host + "/" + handle;
+  }
+
+  function facebookHref(value) {
+    return profileHref(value, "facebook.com");
+  }
+
+  function instagramHref(value) {
+    return profileHref(value, "instagram.com");
   }
 
   function fillCopy(id, lines) {
@@ -661,6 +751,9 @@
       currentEmail = email;
       const phone = brief.phone || fields.Phone || "";
       const whatsapp = fields.WhatsApp || "";
+      const facebook = fields.Facebook || "";
+      const instagram = fields.Instagram || "";
+      const google = fields["Google profile"] || "";
       const typeVal = fields.Type || "";
       const actionVal =
         fields["Customer action"] ||
@@ -731,6 +824,7 @@
       });
 
       fillBill(brief, body.billing || {});
+      fillExtra(brief);
 
       const links = document.getElementById("d-links");
       clearNode(links);
@@ -755,6 +849,36 @@
         wa.rel = "noopener";
         wa.textContent = "WhatsApp";
         links.appendChild(wa);
+      }
+      const facebookLink = facebookHref(facebook);
+      if (facebookLink) {
+        const fb = document.createElement("a");
+        fb.className = "ghost";
+        fb.href = facebookLink;
+        fb.target = "_blank";
+        fb.rel = "noopener";
+        fb.textContent = "Facebook";
+        links.appendChild(fb);
+      }
+      const instagramLink = instagramHref(instagram);
+      if (instagramLink) {
+        const ig = document.createElement("a");
+        ig.className = "ghost";
+        ig.href = instagramLink;
+        ig.target = "_blank";
+        ig.rel = "noopener";
+        ig.textContent = "Instagram";
+        links.appendChild(ig);
+      }
+      const googleLink = domainHref(google);
+      if (googleLink) {
+        const g = document.createElement("a");
+        g.className = "ghost";
+        g.href = googleLink;
+        g.target = "_blank";
+        g.rel = "noopener";
+        g.textContent = "Google";
+        links.appendChild(g);
       }
 
       const palette = document.getElementById("d-palette");
@@ -791,7 +915,9 @@
       addField(contactList, "Phone", phone, phone ? "tel:" + phone.replace(/\s+/g, "") : "");
       addField(contactList, "WhatsApp", whatsapp);
       addField(contactList, "Email", email, email ? "mailto:" + email : "");
-      addField(contactList, "Facebook", fields.Facebook, facebookHref(fields.Facebook));
+      addField(contactList, "Facebook", facebook, facebookHref(facebook));
+      addField(contactList, "Instagram", instagram, instagramHref(instagram));
+      addField(contactList, "Google", google, domainHref(google));
       addField(contactList, "Agreed to terms", fields["Agreed to terms"]);
       showPanel("d-contact-panel", contactList.childNodes.length > 0);
 
@@ -834,9 +960,15 @@
         fields["Google profile"],
         domainHref(fields["Google profile"])
       );
+      addField(adminList, "Google reviews", fields["Google reviews"]);
       showPanel("d-admin-panel", adminList.childNodes.length > 0);
 
       const files = document.getElementById("d-files");
+      const fileMsg = document.getElementById("d-file-msg");
+      if (fileMsg && fileMsg.getAttribute("data-brief") !== id) {
+        setFileMsg("");
+        fileMsg.setAttribute("data-brief", id);
+      }
       clearNode(files);
       const fileList = brief.files || [];
       const listedNames = namesFromBrief(brief.briefText);
@@ -846,15 +978,17 @@
         const slot = displaySlot(file, fileList, index);
         const original = displayFileName(file, slot, listedNames[index]);
         const caption = original && original !== slot ? slot + " · " + original : slot;
+        const href = "/api/briefs/" + id + "/file/" + index + "?v=" + encodeURIComponent(file.updated || file.size || index);
+        const card = document.createElement("article");
+        card.className = "file";
         const link = document.createElement("a");
-        link.className = "file";
-        link.href = "/api/briefs/" + id + "/file/" + index;
+        link.href = href;
         link.target = "_blank";
         link.rel = "noopener";
         link.title = caption;
         if (file.type && file.type.indexOf("image/") === 0) {
           const img = document.createElement("img");
-          img.src = link.href;
+          img.src = href;
           img.alt = caption;
           link.appendChild(img);
         } else {
@@ -864,6 +998,7 @@
           fallback.textContent = ext || (slot || "FILE").slice(0, 12);
           link.appendChild(fallback);
         }
+        card.appendChild(link);
         const cap = document.createElement("span");
         cap.className = "file-cap";
         const slotEl = document.createElement("strong");
@@ -876,8 +1011,38 @@
           nameEl.textContent = original;
           cap.appendChild(nameEl);
         }
-        link.appendChild(cap);
-        files.appendChild(link);
+        card.appendChild(cap);
+        const actions = document.createElement("div");
+        actions.className = "file-actions";
+        const slotSelect = document.createElement("select");
+        slotSelect.className = "file-slot-edit";
+        slotSelect.setAttribute("data-index", String(index));
+        slotSelect.setAttribute("aria-label", "What this file is");
+        ["Extra photo", "Logo", "Vibe photo", "Price list"].forEach(function (value) {
+          const opt = document.createElement("option");
+          opt.value = value;
+          opt.textContent = value;
+          if (value === canonicalSlot(file.label)) opt.selected = true;
+          slotSelect.appendChild(opt);
+        });
+        const replace = document.createElement("label");
+        replace.className = "file-replace";
+        replace.textContent = "Replace";
+        const replaceInput = document.createElement("input");
+        replaceInput.type = "file";
+        replaceInput.accept = "image/*";
+        replaceInput.setAttribute("data-index", String(index));
+        replace.appendChild(replaceInput);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "file-remove";
+        remove.setAttribute("data-index", String(index));
+        remove.textContent = "Remove";
+        actions.appendChild(slotSelect);
+        actions.appendChild(replace);
+        actions.appendChild(remove);
+        card.appendChild(actions);
+        files.appendChild(card);
       });
       show(detail);
     });
@@ -908,6 +1073,117 @@
 
   document.getElementById("d-type").addEventListener("change", syncFormatNote);
 
+  const fileSlot = document.getElementById("d-file-slot");
+  const fileAdd = document.getElementById("d-file-add");
+  if (fileSlot && fileAdd) {
+    fileSlot.addEventListener("change", function () {
+      fileAdd.accept = fileSlot.value === "Price list" ? "image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv" : "image/*";
+    });
+    fileAdd.addEventListener("change", function () {
+      if (!currentId || !fileAdd.files || !fileAdd.files.length) return;
+      const list = Array.prototype.slice.call(fileAdd.files);
+      const slot = fileSlot.value || "Extra photo";
+      const briefId = currentId;
+      fileAdd.value = "";
+      let done = 0;
+      function step() {
+        if (done >= list.length) {
+          return openBrief(briefId).then(function () {
+            setFileMsg(list.length + (list.length === 1 ? " photo added." : " photos added."));
+          });
+        }
+        setFileMsg("Preparing " + (done + 1) + " of " + list.length + "…");
+        return compressPhoto(list[done]).then(function (file) {
+          setFileMsg("Uploading " + (done + 1) + " of " + list.length + "…");
+          const data = new FormData();
+          data.set("slot", slot);
+          data.append("photos", file);
+          return api("/api/briefs/" + briefId + "/files", {
+            method: "POST",
+            body: data,
+            timeout: 45000,
+            timeoutError: "Photo " + (done + 1) + " took too long. The earlier ones are saved. Try the rest again.",
+          });
+        }).then(function () {
+          done += 1;
+          return step();
+        });
+      }
+      step().catch(function (err) {
+        const saved = done ? done + " saved. " : "";
+        setFileMsg(saved + (err.message || "Could not add those photos."));
+        if (done) openBrief(briefId);
+      });
+    });
+  }
+
+  document.getElementById("d-files").addEventListener("change", function (event) {
+    const target = event.target;
+    if (!currentId || !target) return;
+    if (target.classList.contains("file-slot-edit")) {
+      const index = target.getAttribute("data-index");
+      setFileMsg("Saving…");
+      api("/api/briefs/" + currentId + "/file/" + index, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot: target.value }),
+      })
+        .then(function () {
+          return openBrief(currentId);
+        })
+        .then(function () {
+          setFileMsg("Updated.");
+        })
+        .catch(function (err) {
+          setFileMsg(err.message || "Could not update that photo.");
+          openBrief(currentId);
+        });
+      return;
+    }
+    if (target.type === "file" && target.getAttribute("data-index") != null && target.files && target.files[0]) {
+      const index = target.getAttribute("data-index");
+      const original = target.files[0];
+      setFileMsg("Preparing photo…");
+      compressPhoto(original).then(function (file) {
+      const data = new FormData();
+      data.set("file", file);
+      setFileMsg("Replacing…");
+      return api("/api/briefs/" + currentId + "/file/" + index, {
+        method: "PATCH",
+        body: data,
+        timeout: 45000,
+      });
+      })
+        .then(function () {
+          return openBrief(currentId);
+        })
+        .then(function () {
+          setFileMsg("Photo replaced.");
+        })
+        .catch(function (err) {
+          setFileMsg(err.message || "Could not replace that photo.");
+        });
+    }
+  });
+
+  document.getElementById("d-files").addEventListener("click", function (event) {
+    const button = event.target.closest(".file-remove");
+    if (!button || !currentId) return;
+    const index = button.getAttribute("data-index");
+    if (!window.confirm("Remove this photo from the brief?")) return;
+    setFileMsg("Removing…");
+    api("/api/briefs/" + currentId + "/file/" + index, { method: "DELETE" })
+      .then(function () {
+        return openBrief(currentId);
+      })
+      .then(function () {
+        setFileMsg("Photo removed.");
+      })
+      .catch(function (err) {
+        setFileMsg(err.message || "Could not remove that photo.");
+      });
+  });
+
   document.getElementById("d-build").addEventListener("click", function () {
     const type = document.getElementById("d-type").value;
     const action = document.getElementById("d-action").value;
@@ -928,16 +1204,30 @@
     }
     btn.disabled = true;
     btn.textContent = "Starting…";
-    msg.classList.add("hidden");
+    msg.classList.remove("hidden");
+    msg.textContent = "Starting…";
+    stopPreviewPoll();
+    postBuild(type, action, instructions, btn, msg);
+  });
+
+  function postBuild(type, action, instructions, btn, msg) {
     api("/api/briefs/" + currentId + "/build", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: type, action: action, instructions: instructions }),
       timeout: 90000,
       timeoutError:
-        "Start website is still creating the repo. Refresh in a minute, then hit Open in Cursor to watch the agent.",
+        "Uploading the site files. Press Start website again if this stops — it continues where it left off.",
     })
       .then(function (body) {
+        if (body.seeding) {
+          btn.disabled = true;
+          btn.textContent = "Uploading…";
+          msg.textContent = body.progress || "Uploading the site files…";
+          msg.classList.remove("hidden");
+          postBuild(type, action, instructions, btn, msg);
+          return;
+        }
         setBuildLinks(
           body.repoUrl,
           body.cursorUrl,
@@ -953,6 +1243,19 @@
             : "Agent is running under VIbeIt-Intel. Preview pending until GitHub Pages finishes."
           : "GitHub repo is pinned under VIbeIt-Intel.";
         msg.classList.remove("hidden");
+        const businessName = document.getElementById("d-name").textContent;
+        openLocalProject(businessName, body.repoUrl).then(function (local) {
+          if (local && local.folder) {
+            msg.textContent =
+              "New Cursor project: " + local.folder + ". The agent is building this business on that repo.";
+          } else if (local && local.error) {
+            msg.textContent = (msg.textContent ? msg.textContent + " " : "") + local.error;
+          } else if (body.repoUrl) {
+            msg.textContent =
+              (msg.textContent ? msg.textContent + " " : "") +
+              "The client folder on this PC did not open. The project helper on 127.0.0.1:47831 is not running.";
+          }
+        });
         if (body.cursorUrl || body.agentId) openCursorAgent(body.cursorUrl, body.agentId);
         if (body.repoUrl) startPreviewPoll();
       })
@@ -966,7 +1269,25 @@
           : raw;
         msg.classList.remove("hidden");
       });
-  });
+  }
+
+  function openLocalProject(name, repoUrl) {
+    if (!repoUrl) return Promise.resolve(null);
+    return fetch("http://127.0.0.1:47831/project", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name, repoUrl: repoUrl }),
+    })
+      .then(function (res) {
+        return res.json().then(function (body) {
+          if (!res.ok) return { error: (body && body.error) || "Could not open the local project." };
+          return body;
+        });
+      })
+      .catch(function () {
+        return null;
+      });
+  }
 
   function downloadPdf(url, fallbackName) {
     return fetch(url, { credentials: "same-origin" })
@@ -1010,6 +1331,121 @@
       note.textContent = err.message || "Could not download the PDF.";
       note.classList.remove("hidden");
     });
+  });
+
+  function fillExtra(brief) {
+    const note = document.getElementById("d-extra-note");
+    const amount = document.getElementById("d-extra-amount");
+    const msg = document.getElementById("d-extra-msg");
+    if (!note || !amount) return;
+    note.value = brief.extraNote || "";
+    amount.value = brief.extraAmount > 0 ? String(brief.extraAmount) : "";
+    if (msg) msg.classList.add("hidden");
+  }
+
+  function saveExtra() {
+    const note = String(document.getElementById("d-extra-note").value || "").trim();
+    const amount = Math.max(0, Math.round(Number(document.getElementById("d-extra-amount").value) || 0));
+    return api("/api/briefs/" + currentId, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ extraNote: note, extraAmount: amount }),
+    }).then(function () {
+      return { note: note, amount: amount };
+    });
+  }
+
+  document.getElementById("d-extra-save").addEventListener("click", function () {
+    const msg = document.getElementById("d-extra-msg");
+    const btn = document.getElementById("d-extra-save");
+    btn.disabled = true;
+    saveExtra()
+      .then(function (saved) {
+        btn.disabled = false;
+        msg.textContent = saved.note
+          ? "Saved on this profile" + (saved.amount > 0 ? ". Price " + formatRand(saved.amount) + "." : ". Add a price when you have one.")
+          : "Cleared the additional work note.";
+        msg.classList.remove("hidden");
+        loadList();
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        msg.textContent = err.message || "Could not save.";
+        msg.classList.remove("hidden");
+      });
+  });
+
+  document.getElementById("d-extra-quote").addEventListener("click", function () {
+    const msg = document.getElementById("d-extra-msg");
+    const btn = document.getElementById("d-extra-quote");
+    const note = String(document.getElementById("d-extra-note").value || "").trim();
+    const amount = Math.round(Number(document.getElementById("d-extra-amount").value) || 0);
+    if (!note) {
+      msg.textContent = "Write what they want before quoting it.";
+      msg.classList.remove("hidden");
+      return;
+    }
+    if (!amount || amount < 1) {
+      msg.textContent = "Enter the price for this extra work.";
+      msg.classList.remove("hidden");
+      return;
+    }
+    function postExtra() {
+      return api("/api/briefs/" + currentId + "/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "quote", amount: amount, note: note, extra: true }),
+        timeout: 18000,
+        timeoutError: "Gmail took too long. The note is saved. Press Quote this price again.",
+      });
+    }
+    btn.disabled = true;
+    btn.textContent = "Quoting…";
+    msg.classList.add("hidden");
+    saveExtra()
+      .then(function () {
+        if (!canEmailQuote) {
+          const wrap = document.getElementById("d-gmail-wrap");
+          const passEl = document.getElementById("d-gmail-pass");
+          const pass = passEl ? String(passEl.value || "").trim() : "";
+          if (!pass) {
+            if (wrap) wrap.classList.remove("hidden");
+            btn.disabled = false;
+            btn.textContent = "Quote this price";
+            msg.textContent = "Saved on the profile. Paste a Gmail app password above, then Quote this price.";
+            msg.classList.remove("hidden");
+            return null;
+          }
+          return api("/api/gmail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ appPassword: pass }),
+          }).then(function () {
+            canEmailQuote = true;
+            if (passEl) passEl.value = "";
+            return postExtra();
+          });
+        }
+        return postExtra();
+      })
+      .then(function (body) {
+        if (!body) return;
+        return openBrief(currentId).then(function () {
+          const noteEl = document.getElementById("d-extra-msg");
+          document.getElementById("d-extra-quote").disabled = false;
+          document.getElementById("d-extra-quote").textContent = "Quote this price";
+          noteEl.textContent = body.sent
+            ? "Quote " + body.quote.number + " for " + formatRand(amount) + " emailed with the PDF."
+            : (body.mailError ? body.mailError + " " : "") + "The quote is saved. Nothing was emailed.";
+          noteEl.classList.remove("hidden");
+        });
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = "Quote this price";
+        msg.textContent = err.message || "Could not quote this.";
+        msg.classList.remove("hidden");
+      });
   });
 
   document.getElementById("d-bill-kind").addEventListener("change", function () {

@@ -104,6 +104,7 @@
                 <option>Nail salon</option>
                 <option>Barber</option>
                 <option>Mechanic or panel beater</option>
+                <option>Maker or fabricator</option>
                 <option>Plumber, electrician or other trade</option>
                 <option>Restaurant, cafe or takeaway</option>
                 <option>Medical, dental or physio</option>
@@ -165,6 +166,34 @@
           </div>
           <p id="d-bill-msg" class="note hidden"></p>
           <ul id="d-bill-sent" class="bill-sent hidden"></ul>
+          <section class="extra-work" id="d-extra">
+            <h2>Additional work</h2>
+            <label class="build-notes" for="d-extra-note">
+              What they want
+              <textarea
+                id="d-extra-note"
+                rows="3"
+                maxlength="2000"
+                placeholder="e.g. Vjorn wants a price list and three more build photos."
+              ></textarea>
+            </label>
+            <div class="bill-row">
+              <label class="bill-amount">
+                R
+                <input
+                  id="d-extra-amount"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputmode="numeric"
+                  aria-label="Additional work price in rand"
+                />
+              </label>
+              <button id="d-extra-save" class="btn btn-ghost" type="button">Save on profile</button>
+              <button id="d-extra-quote" class="btn btn-hot" type="button">Quote this price</button>
+            </div>
+            <p id="d-extra-msg" class="note hidden"></p>
+          </section>
         </header>
         <div class="dossier-grid">
           <section class="panel" id="d-contact-panel" hidden>
@@ -207,12 +236,28 @@
           <p id="d-notes" class="copy"></p>
         </section>
         <section class="panel">
-          <h2 id="d-files-title">Files</h2>
+          <div class="files-head">
+            <h2 id="d-files-title">Files</h2>
+            <div class="file-tools">
+              <select id="d-file-slot" aria-label="What the new photos are">
+                <option value="Extra photo">Extra photo</option>
+                <option value="Logo">Logo</option>
+                <option value="Vibe photo">Vibe photo</option>
+                <option value="Price list">Price list</option>
+              </select>
+              <label class="btn btn-ghost btn-mini file-add">
+                Add photos
+                <input id="d-file-add" type="file" accept="image/*" multiple />
+              </label>
+            </div>
+          </div>
+          <p class="file-hint">Add photos they send later. Phone photos are shrunk first, then uploaded one at a time. Change what a photo is, replace it, or remove it. Start website keeps the sharper frame when two shots are the same, then groups different angles of one build into a single job.</p>
+          <p id="d-file-msg" class="note hidden"></p>
           <div id="d-files" class="files"></div>
         </section>
       </article>
     </div>
 
-    <script src="/admin.js?v=29"></script>
+    <script src="/admin.js?v=33"></script>
   </body>
 </html>

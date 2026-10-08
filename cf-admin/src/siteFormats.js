@@ -38,6 +38,18 @@ const FORMATS = {
     ],
     avoid: "Do not dress it like a beauty spa or a restaurant.",
   },
+  "Maker or fabricator": {
+    title: "Maker or fabricator",
+    look: "The work is the page. Dark or high-contrast, full-bleed photos of what they actually build, named pieces, then call or WhatsApp. This is a workshop brand, not a call-out trades brochure and not a copy of any other client.",
+    sections: [
+      "Hero with one line from what they make, and Call / WhatsApp as the main button",
+      "The builds as jobs: every angle of one vehicle, frame, or bar together, with a real name for that piece",
+      "What they make, as products if they sell items",
+      "How the work is done, short — custom, since when, where",
+      "Call / WhatsApp / contact",
+    ],
+    avoid: "Do not use a plumber quote layout, a salon booking page, a cream brochure, or another client's timber/lodge wording.",
+  },
   "Mechanic or panel beater": {
     title: "Mechanic or panel beater",
     look: "Trust and workshop. Practical, darker, photo of real work. Quote and phone beat pretty bookings.",
@@ -169,6 +181,9 @@ function fuzzyKey(raw) {
   if (/nail|gel|lash|manicur/.test(t)) return "Nail salon";
   if (/barber|fade/.test(t)) return "Barber";
   if (/hair|beauty|salon|spa/.test(t)) return "Hair or beauty salon";
+  if (/steel|fabricat|weld|bush\s?bar|4x4|game view|cattle frame|pipe ?work|joiner|cabinet|furniture|timber|metalwork|coachbuild/.test(t)) {
+    return "Maker or fabricator";
+  }
   if (/mechanic|panel|auto|garage|workshop|car repair/.test(t)) {
     return "Mechanic or panel beater";
   }
@@ -191,6 +206,79 @@ function fuzzyKey(raw) {
   return "Other";
 }
 
+const LOOK_BY_KEY = {
+  "Maker or fabricator": "maker",
+  "Mechanic or panel beater": "workshop",
+  Barber: "barber",
+  "Hair or beauty salon": "salon",
+  "Nail salon": "salon",
+  "Restaurant, cafe or takeaway": "food",
+  "Plumber, electrician or other trade": "trade",
+  "Retail shop": "shop",
+  "Medical, dental or physio": "trust",
+  "Professional services": "trust",
+  "Events or photography": "showcase",
+  "Gym or fitness": "fitness",
+  "Cleaning or home services": "clean",
+  Other: "studio",
+};
+
+const FONT_SETS = {
+  maker: ["family=Oswald:wght@500;600;700", "family=Figtree:wght@400;500;600;700"],
+  workshop: ["family=Barlow+Condensed:wght@600;700", "family=Barlow:wght@400;500;600"],
+  barber: ["family=Oswald:wght@500;600;700", "family=Figtree:wght@400;500;600"],
+  salon: ["family=Fraunces:opsz,wght@9..144,560;9..144,680", "family=Outfit:wght@400;500;600"],
+  food: ["family=Fraunces:opsz,wght@9..144,560;9..144,680", "family=Nunito+Sans:wght@400;600;700"],
+  trade: ["family=Outfit:wght@400;500;700;800"],
+  shop: ["family=Sora:wght@500;600;700", "family=Outfit:wght@400;500;600"],
+  trust: ["family=Literata:opsz,wght@7..72,560;7..72,680", "family=Source+Sans+3:wght@400;600;700"],
+  showcase: ["family=Instrument+Serif:ital@0;1", "family=Figtree:wght@400;500;600"],
+  fitness: ["family=Oswald:wght@500;600;700", "family=Figtree:wght@400;500;600"],
+  clean: ["family=Outfit:wght@400;500;600;700"],
+  studio: ["family=Fraunces:opsz,wght@9..144,560;9..144,680", "family=Figtree:wght@400;500;600"],
+};
+
+const FONT_NAMES = {
+  maker: ["Oswald", "Figtree"],
+  workshop: ["Barlow Condensed", "Barlow"],
+  barber: ["Oswald", "Figtree"],
+  salon: ["Fraunces", "Outfit"],
+  food: ["Fraunces", "Nunito Sans"],
+  trade: ["Outfit", "Outfit"],
+  shop: ["Sora", "Outfit"],
+  trust: ["Literata", "Source Sans 3"],
+  showcase: ["Instrument Serif", "Figtree"],
+  fitness: ["Oswald", "Figtree"],
+  clean: ["Outfit", "Outfit"],
+  studio: ["Fraunces", "Figtree"],
+};
+
+export function effectiveType(type, briefText) {
+  const look = formatLook(type).look;
+  const text = String(briefText || "").toLowerCase();
+  if (
+    look === "trade" &&
+    /steel|fabricat|weld|bush\s?bar|4x4|cattle|game view|pipe ?work|furniture|timber|metalwork/.test(text)
+  ) {
+    return "Maker or fabricator";
+  }
+  return type;
+}
+
+export function formatLook(type) {
+  const key = resolveFormat(type).key;
+  const look = LOOK_BY_KEY[key] || "studio";
+  const names = FONT_NAMES[look] || FONT_NAMES.studio;
+  const query = (FONT_SETS[look] || FONT_SETS.studio).join("&");
+  return {
+    look: look,
+    key: key,
+    display: names[0],
+    text: names[1],
+    fontHref: "https://fonts.googleapis.com/css2?" + query + "&display=swap",
+  };
+}
+
 export function resolveFormat(type) {
   const raw = String(type || "").trim();
   const key = FORMATS[raw] ? raw : fuzzyKey(raw);
@@ -210,6 +298,8 @@ export function formatPlaybook(type) {
     }).join("\n"),
     f.avoid,
     "If they sell items (nail products, food, parts, merch), keep a Shop / Menu / Products section separate from services. A salon can have treatments AND a product shelf. Hide Shop if they do not sell items.",
+    "Seeded look class: look-" + formatLook(type).look + ". Colours, logo, and photos are already theirs. Redesign around this business.",
+    "Each finished piece is one job. The starter lists one photo per job. Open every Kept photo in PHOTO-PICKS.md and merge different angles of the same piece into that job. A different piece stays a different job.",
     "Rename nav labels to match this trade. Add or drop starter sections as needed. Keep a single index.html.",
   ].join("\n");
 }

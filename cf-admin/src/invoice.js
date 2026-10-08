@@ -53,9 +53,17 @@ function isInvoice(doc) {
   return Boolean(doc && doc.kind === "invoice");
 }
 
+function isExtra(doc) {
+  return Boolean(doc && doc.extra);
+}
+
+function isPackageQuote(doc) {
+  return !isInvoice(doc) && !isExtra(doc);
+}
+
 function dueNowAmount(doc) {
   const pay = designDeposit(doc && doc.amount);
-  return isInvoice(doc) ? pay.total : pay.deposit;
+  return isPackageQuote(doc) ? pay.deposit : pay.total;
 }
 
 export function quoteLabel(kind) {
@@ -101,30 +109,6 @@ function briefBlock(text, heading) {
   return out.join("\n").trim();
 }
 
-function briefFiles(text) {
-  const labels = [];
-  let inFiles = false;
-  String(text || "")
-    .split(/\r?\n/)
-    .forEach(function (raw) {
-      const line = raw.trim();
-      if (/^FILES\b/.test(line)) {
-        inFiles = true;
-        return;
-      }
-      if (!inFiles) return;
-      if (!line || /^[A-Z][A-Z0-9 ]+$/.test(line)) {
-        inFiles = false;
-        return;
-      }
-      if (/^none attached/i.test(line)) return;
-      const match = line.match(/^[\u2022\-]\s*(.+?)(?:\s+[\u2014\u2013-]\s+.+)?$/);
-      const label = match ? match[1].trim() : line.replace(/^[\u2022\-]\s*/, "");
-      if (label && labels.indexOf(label) === -1) labels.push(label);
-    });
-  return labels;
-}
-
 function clipCopy(text, max) {
   const value = String(text || "").replace(/\s+/g, " ").trim();
   if (!value) return "";
@@ -140,25 +124,12 @@ export function quoteScope(row) {
     if (!v) return;
     facts.push({ label: label, value: v });
   }
-  add("Package", row && row.package);
-  add("Business type", briefField(text, "Type"));
-  add("Main action", briefField(text, "Customer action"));
-  add("Sells items", briefField(text, "Sells products"));
-  add("Phone", (row && row.phone) || briefField(text, "Phone"));
-  add("WhatsApp", briefField(text, "WhatsApp"));
-  add("Facebook", briefField(text, "Facebook"));
-  add("Registration", briefField(text, "Registration"));
+  const phone = String((row && row.phone) || briefField(text, "Phone") || "").trim();
+  const whatsapp = briefField(text, "WhatsApp");
+  add("Phone", phone);
+  if (whatsapp && whatsapp.replace(/\D/g, "") !== phone.replace(/\D/g, "")) add("WhatsApp", whatsapp);
   add("Address", briefField(text, "Address"));
-  add("Domain", briefField(text, "Domain"));
-  add("Domain name", briefField(text, "Domain name"));
-  add("Mail on domain", briefField(text, "Mail on this domain"));
-  add("Domain plan", briefField(text, "Domain plan"));
-  add("Colours", briefField(text, "Colours"));
-  add("Payments", briefField(text, "Payments"));
-  add("Who books", briefField(text, "Booking admin"));
-  add("Google", briefField(text, "Google") || briefField(text, "Google profile"));
-  const files = briefFiles(text);
-  if (files.length) add("Files", files.join(", "));
+  add("Registration", briefField(text, "Registration"));
 
   const sections = [];
   function addSection(title, body) {
@@ -166,12 +137,12 @@ export function quoteScope(row) {
     if (!v) return;
     sections.push({ title: title, body: v });
   }
-  addSection("What they asked us to build", briefBlock(text, "WHAT THEY DO") || briefBlock(text, "WHAT THEY NEED"));
-  addSection("Products or services", briefBlock(text, "PRODUCTS OR SERVICES"));
+  addSection("Your request", briefBlock(text, "WHAT THEY DO") || briefBlock(text, "WHAT THEY NEED"));
+  addSection("Services", briefBlock(text, "PRODUCTS OR SERVICES"));
   addSection("Items for sale", briefBlock(text, "ITEMS FOR SALE"));
   addSection("Bookings", briefBlock(text, "BOOKINGS"));
   addSection("Hours", briefBlock(text, "HOURS"));
-  addSection("Order book and staff office", briefBlock(text, "ORDER BOOK AND STAFF OFFICE"));
+  addSection("Order book", briefBlock(text, "ORDER BOOK AND STAFF OFFICE"));
   addSection("Notes", briefBlock(text, "NOTES"));
   return { facts: facts, sections: sections };
 }
@@ -184,26 +155,32 @@ export function quoteText(doc) {
     "",
     kind === "invoice"
       ? "Your VibeIt-Intel invoice is attached."
-      : "Your VibeIt-Intel quote is attached. It confirms the brief you sent us. Pay 50% (" +
-        formatRand(pay.deposit) +
-        ") to start the design. It stays open for 14 days.",
+      : isExtra(doc)
+        ? "Your VibeIt-Intel quote for additional work is attached. The price is " +
+          formatRand(pay.total) +
+          ". It stays open for 14 days."
+        : "Your VibeIt-Intel quote is attached. It confirms the brief you sent us. Pay 50% (" +
+          formatRand(pay.deposit) +
+          ") to start the design. It stays open for 14 days.",
     "",
     quoteLabel(doc.kind) + " " + doc.number,
     pdfSafeKeep(doc.description),
     "Project total: " + formatRand(pay.total),
-    kind === "invoice"
-      ? "Total due: " + formatRand(pay.total)
-      : "Due now (50% to start design): " + formatRand(pay.deposit),
+    isPackageQuote(doc)
+      ? "Due now (50% to start design): " + formatRand(pay.deposit)
+      : "Total due: " + formatRand(pay.total),
   ];
-  if (kind !== "invoice") {
+  if (isPackageQuote(doc)) {
     lines.push("Balance when you approve (50%): " + formatRand(pay.balance));
   }
   lines.push(
     "",
     "Bank details and the payment reference are on the attached " + kind + ".",
-    kind === "invoice"
-      ? "Pay this invoice in full. Terms: " + SITE + "/terms.html"
-      : "The 50% deposit starts the design. Terms: " + SITE + "/terms.html",
+    isInvoice(doc)
+      ? "Pay this invoice in full. Terms: " + SITE + "/terms/"
+      : isExtra(doc)
+        ? "This quote is the full price for the additional work. Terms: " + SITE + "/terms/"
+        : "The 50% deposit starts the design. Terms: " + SITE + "/terms/",
     "",
     "Questions: support@vibeit-intel.net or WhatsApp 068 943 4124",
     SITE.replace("https://", "")
@@ -224,9 +201,13 @@ export function quoteCoverHtml(doc) {
   const pay = designDeposit(doc.amount);
   const intro = isInvoice(doc)
     ? "Your invoice is attached. Pay using the bank details on that document."
-    : "Your quote is attached. It confirms the brief you sent us. Pay 50% (" +
-      formatRand(pay.deposit) +
-      ") using the bank details on that document to start the design - it stays open for 14 days.";
+    : isExtra(doc)
+      ? "Your quote for additional work is attached. The price is " +
+        formatRand(pay.total) +
+        ". Pay using the bank details on that document. It stays open for 14 days."
+      : "Your quote is attached. It confirms the brief you sent us. Pay 50% (" +
+        formatRand(pay.deposit) +
+        ") using the bank details on that document to start the design - it stays open for 14 days.";
   return [
     '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /></head>',
     '<body style="margin:0;background:#f3eef8;color:#160c22;font-family:Segoe UI,Helvetica,Arial,sans-serif;">',
@@ -260,11 +241,11 @@ export function quoteCoverHtml(doc) {
     '<div style="margin-top:10px;font-size:22px;font-weight:800;color:#4a1f7a;">' +
       escapeHtml(formatRand(dueNowAmount(doc))) +
       "</div>" +
-      (isInvoice(doc)
-        ? ""
-        : '<div style="margin-top:6px;font-size:12px;color:#5c4e6a;">Project total ' +
+      (isPackageQuote(doc)
+        ? '<div style="margin-top:6px;font-size:12px;color:#5c4e6a;">Project total ' +
           escapeHtml(formatRand(pay.total)) +
-          " · 50% to start design</div>"),
+          " · 50% to start design</div>"
+        : ""),
     "</td></tr></table></td></tr>",
     '<tr><td style="padding:18px 24px 28px;font-size:14px;line-height:1.55;color:#5c4e6a;">',
     "<p style=\"margin:0 0 14px;\">Open the attached PDF for the EFT details. Use <strong style=\"color:#160c22;\">" +
@@ -339,52 +320,9 @@ function wrapLines(text, font, size, maxWidth) {
 }
 
 function quoteScopeHtml(doc) {
-  const scope = doc && doc.scope;
-  const photos = Array.isArray(doc && doc.clientImages) ? doc.clientImages : [];
-  if (!scope || (!scope.facts.length && !scope.sections.length && !photos.length && !doc.clientLogoUrl)) return "";
-  const gallery = (photos.length
-    ? photos
-    : doc.clientLogoUrl
-      ? [{ url: doc.clientLogoUrl, label: "Logo" }]
-      : []
-  )
-    .map(function (item) {
-      return (
-        '<td style="padding:6px 8px 10px 0;width:50%;vertical-align:top;">' +
-        '<img src="' +
-        escapeHtml(item.url) +
-        '" alt="' +
-        escapeHtml(item.label || "Photo") +
-        '" style="max-height:110px;max-width:100%;display:block;border:0;" />' +
-        '<div style="margin-top:6px;font-size:11px;font-weight:600;color:#5c4e6a;">' +
-        escapeHtml(item.label || "Photo") +
-        "</div></td>"
-      );
-    })
-    .reduce(function (rows, cell, i) {
-      if (i % 2 === 0) rows.push([cell]);
-      else rows[rows.length - 1].push(cell);
-      return rows;
-    }, [])
-    .map(function (row) {
-      return "<tr>" + row.join("") + (row.length === 1 ? "<td></td>" : "") + "</tr>";
-    })
-    .join("");
-  const logo = gallery
-    ? '<table width="100%" cellpadding="0" cellspacing="0" style="margin:14px 0 4px;">' + gallery + "</table>"
-    : "";
-  const rows = (scope.facts || [])
-    .map(function (item) {
-      return (
-        "<tr><td style=\"padding:5px 0;color:#5c4e6a;font-size:12px;width:148px;vertical-align:top;\">" +
-        escapeHtml(item.label) +
-        "</td><td style=\"padding:5px 0;font-size:13px;font-weight:600;color:#160c22;\">" +
-        escapeHtml(item.value) +
-        "</td></tr>"
-      );
-    })
-    .join("");
-  const blocks = (scope.sections || [])
+  const sections = (doc && doc.scope && doc.scope.sections) || [];
+  if (!sections.length) return "";
+  const blocks = sections
     .map(function (item) {
       return (
         "<div style=\"margin-top:12px;\"><div style=\"font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#00a3a4;\">" +
@@ -397,11 +335,7 @@ function quoteScopeHtml(doc) {
     .join("");
   return (
     "<div style=\"margin-top:22px;padding:16px 18px;background:#f6f1fb;border-radius:12px;\">" +
-    "<div style=\"font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#00a3a4;\">This confirms your request</div>" +
-    logo +
-    (rows ? "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-top:10px;\">" + rows + "</table>" : "") +
     blocks +
-    "<p style=\"margin:14px 0 0;color:#5c4e6a;font-size:12px;\">Paying the 50% deposit accepts this scope. Changes after that are a new quote.</p>" +
     "</div>"
   );
 }
@@ -413,7 +347,9 @@ export function quoteHtml(doc, opts) {
   const logoSrc = opts && opts.logoCid ? "cid:" + opts.logoCid : LOGO_URL;
   const intro = isInvoice(doc)
     ? "Please pay this invoice to the account below."
-    : "This quote confirms the brief you submitted. Pay 50% to start the design - it stays open for 14 days. The other 50% is due when you approve the design.";
+    : isExtra(doc)
+      ? "This quote is for additional work. The price below is the full amount. It stays open for 14 days."
+      : "This quote confirms the brief you submitted. Pay 50% to start the design - it stays open for 14 days. The other 50% is due when you approve the design.";
   const scopeHtml = quoteScopeHtml(doc);
   const note = doc.note
     ? "<tr><td colspan=\"2\" style=\"padding:12px 0 0;color:#5c4e6a;font-size:14px;white-space:pre-wrap;\">" +
@@ -430,8 +366,13 @@ export function quoteHtml(doc, opts) {
       escapeHtml(doc.bank.swift) +
       "</td></tr>"
     : "";
-  const email = doc.toEmail
-    ? "<div style=\"color:#5c4e6a;font-size:13px;\">" + escapeHtml(doc.toEmail) + "</div>"
+  const clientBits = [];
+  if (doc.toEmail) clientBits.push(escapeHtml(doc.toEmail));
+  ((doc.scope && doc.scope.facts) || []).forEach(function (item) {
+    if (item && item.value) clientBits.push(escapeHtml(item.value));
+  });
+  const email = clientBits.length
+    ? "<div style=\"margin-top:4px;color:#5c4e6a;font-size:13px;line-height:1.5;\">" + clientBits.join("<br/>") + "</div>"
     : "";
   const printHint = printable
     ? "<p class=\"hint\" style=\"margin:0 0 16px;color:#5c4e6a;font-size:13px;\">Use the PDF download on the board to attach this quote. This page is a print copy.</p>"
@@ -504,24 +445,24 @@ export function quoteHtml(doc, opts) {
     "<td style=\"padding:14px 12px;border-bottom:1px solid #efe7f5;font-size:15px;\">" +
       escapeHtml(doc.description) +
       "<div style=\"margin-top:4px;color:#5c4e6a;font-size:13px;\">" +
-      (isInvoice(doc) ? "Once-off \u00b7 South African Rand" : "Once-off \u00b7 50% to start design") +
+      (isPackageQuote(doc) ? "Once-off \u00b7 50% to start design" : "Once-off \u00b7 South African Rand") +
       "</div></td>",
     "<td align=\"right\" style=\"padding:14px 12px;border-bottom:1px solid #efe7f5;font-size:18px;font-weight:800;color:#4a1f7a;\">" +
       escapeHtml(formatRand(pay.total)) +
       "</td></tr>",
-    isInvoice(doc)
-      ? ""
-      : "<tr><td style=\"padding:10px 12px;color:#5c4e6a;font-size:14px;\">Due now \u2014 50% to start design</td>" +
+    isPackageQuote(doc)
+      ? "<tr><td style=\"padding:10px 12px;color:#5c4e6a;font-size:14px;\">Due now \u2014 50% to start design</td>" +
         "<td align=\"right\" style=\"padding:10px 12px;font-size:15px;font-weight:700;color:#4a1f7a;\">" +
         escapeHtml(formatRand(pay.deposit)) +
         "</td></tr>" +
         "<tr><td style=\"padding:10px 12px;color:#5c4e6a;font-size:14px;\">Balance when you approve the design</td>" +
         "<td align=\"right\" style=\"padding:10px 12px;font-size:14px;font-weight:600;\">" +
         escapeHtml(formatRand(pay.balance)) +
-        "</td></tr>",
+        "</td></tr>"
+      : "",
     "<tr>",
     "<td style=\"padding:14px 12px;font-size:16px;font-weight:700;vertical-align:middle;\">" +
-      (isInvoice(doc) ? "Total due" : "Pay now") +
+      (isPackageQuote(doc) ? "Pay now" : "Total due") +
       "</td>",
     "<td align=\"right\" style=\"padding:14px 12px;font-size:16px;font-weight:800;color:#160c22;vertical-align:middle;\">" +
       escapeHtml(formatRand(dueNowAmount(doc))) +
@@ -550,10 +491,12 @@ export function quoteHtml(doc, opts) {
     "<p style=\"margin:14px 0 0;color:#cbbfd8;font-size:13px;\">" +
       (isInvoice(doc)
         ? "Pay this invoice in full."
-        : "Pay 50% now to start the design. The other 50% is due when you approve it.") +
+        : isExtra(doc)
+          ? "This is the full price for the additional work."
+          : "Pay 50% now to start the design. The other 50% is due when you approve it.") +
       ' <a href="' +
       SITE +
-      '/terms.html" style="color:#ff8a1a;">Terms</a></p>',
+      '/terms/" style="color:#ff8a1a;">Terms</a></p>',
     "</td></tr></table>",
     "<p style=\"margin:22px 0 0;color:#5c4e6a;font-size:12px;line-height:1.5;\">" +
       escapeHtml(doc.bank.legalName) +
@@ -609,16 +552,6 @@ async function embedRaster(pdf, image) {
   return null;
 }
 
-function hexToRgb(hex) {
-  const raw = String(hex || "").replace("#", "");
-  if (raw.length !== 6) return null;
-  return rgb(
-    parseInt(raw.slice(0, 2), 16) / 255,
-    parseInt(raw.slice(2, 4), 16) / 255,
-    parseInt(raw.slice(4, 6), 16) / 255
-  );
-}
-
 export async function quotePdf(doc, logos) {
   const pdf = await PDFDocument.create();
   const font = await pdf.embedFont(StandardFonts.Helvetica);
@@ -641,16 +574,6 @@ export async function quotePdf(doc, logos) {
         ? logos
         : await loadLogoBytes();
   const brandImg = await embedRaster(pdf, { bytes: brandBytes, type: "image/png" });
-  const photoInputs = Array.isArray(logos && logos.clientPhotos)
-    ? logos.clientPhotos
-    : logos && logos.clientLogo
-      ? [Object.assign({ label: "Logo" }, logos.clientLogo)]
-      : [];
-  const clientImgs = [];
-  for (let i = 0; i < photoInputs.length; i += 1) {
-    const img = await embedRaster(pdf, photoInputs[i]);
-    if (img) clientImgs.push({ img: img, label: photoInputs[i].label || "Photo" });
-  }
   let page = pdf.addPage([width, height]);
   let y = 0;
 
@@ -711,91 +634,11 @@ export async function quotePdf(doc, logos) {
   }
 
   const scope = doc.scope || { facts: [], sections: [] };
-  const hasRequest = Boolean(
-    clientImgs.length || (scope.facts && scope.facts.length) || (scope.sections && scope.sections.length)
-  );
-
-  if (hasRequest) {
-    drawFullHeader(page);
-    y = height - 156;
-    drawText(page, "THIS CONFIRMS YOUR REQUEST", 36, y, 9, bold, teal);
-    y -= 18;
-    wrapLines("This page is the brief you submitted. The next page is the amount and EFT details.", font, 11, width - 72).forEach(
-      function (line) {
-        drawText(page, line, 36, y, 11, font, ink);
-        y -= 14;
-      }
-    );
-    if (clientImgs.length) {
-      y -= 8;
-      const gap = 14;
-      const colW = (width - 72 - gap) / 2;
-      const maxH = 108;
-      for (let i = 0; i < clientImgs.length; i += 2) {
-        const left = clientImgs[i];
-        const right = clientImgs[i + 1];
-        const leftFit = fitBox(left.img, colW, maxH);
-        const rightFit = right ? fitBox(right.img, colW, maxH) : { w: 0, h: 0 };
-        const rowH = Math.max(leftFit.h, rightFit.h) + 16;
-        need(rowH + 8);
-        page.drawImage(left.img, { x: 36, y: y - leftFit.h, width: leftFit.w, height: leftFit.h });
-        drawText(page, left.label, 36, y - leftFit.h - 12, 8, font, muted);
-        if (right) {
-          const rightX = 36 + colW + gap;
-          page.drawImage(right.img, { x: rightX, y: y - rightFit.h, width: rightFit.w, height: rightFit.h });
-          drawText(page, right.label, rightX, y - rightFit.h - 12, 8, font, muted);
-        }
-        y -= rowH + 8;
-      }
-    }
-    scope.facts.forEach(function (item) {
-      const chips = [];
-      if (item.label === "Colours") {
-        String(item.value || "").replace(/#[0-9a-fA-F]{6}/g, function (hex) {
-          if (chips.indexOf(hex.toLowerCase()) === -1) chips.push(hex.toLowerCase());
-        });
-      }
-      const valueLines = wrapLines(item.value, font, 10, 390);
-      need(14 * valueLines.length + 8);
-      drawText(page, item.label, 36, y, 9, bold, muted);
-      if (chips.length) {
-        chips.slice(0, 3).forEach(function (hex, i) {
-          const colour = hexToRgb(hex);
-          if (!colour) return;
-          page.drawRectangle({ x: 148 + i * 22, y: y - 2, width: 14, height: 14, color: colour });
-        });
-        y -= 18;
-      }
-      valueLines.forEach(function (line) {
-        drawText(page, line, 148, y, 10, font, ink);
-        y -= 13;
-      });
-      y -= 2;
-    });
-    scope.sections.forEach(function (item) {
-      y -= 8;
-      need(28);
-      drawText(page, item.title.toUpperCase(), 36, y, 9, bold, teal);
-      y -= 14;
-      wrapLines(item.body, font, 10, width - 72)
-        .slice(0, 10)
-        .forEach(function (line) {
-          need(14);
-          drawText(page, line, 36, y, 10, font, ink);
-          y -= 13;
-        });
-    });
-    y -= 10;
-    need(16);
-    drawText(page, "Paying the 50% deposit accepts this scope. Changes after that are a new quote.", 36, y, 9, font, muted);
-    footer(page);
-    page = pdf.addPage([width, height]);
-  }
 
   drawFullHeader(page);
   y = height - 156;
   drawText(page, "FROM", 36, y, 9, bold, teal);
-  drawText(page, "BILL TO", 320, y, 9, bold, teal);
+  drawText(page, "CLIENT", 320, y, 9, bold, teal);
   y -= 18;
   const fromLines = wrapLines(doc.bank.legalName, bold, 12, 260);
   const toLines = wrapLines(doc.businessName || "Client", bold, 12, 230);
@@ -805,23 +648,63 @@ export async function quotePdf(doc, logos) {
     if (toLines[i]) drawText(page, toLines[i], 320, y, 12, bold, ink);
     y -= 14;
   }
-  drawText(page, "support@vibeit-intel.net", 36, y, 10, font, muted);
-  if (doc.toEmail) drawText(page, doc.toEmail, 320, y, 10, font, muted);
-  y -= 14;
-  drawText(page, "WhatsApp 068 943 4124", 36, y, 10, font, muted);
+  const columnTop = y;
+  let leftY = columnTop;
+  drawText(page, "support@vibeit-intel.net", 36, leftY, 10, font, muted);
+  leftY -= 14;
+  drawText(page, "WhatsApp 068 943 4124", 36, leftY, 10, font, muted);
+  leftY -= 14;
   if (doc.bank.registration) {
-    y -= 14;
-    drawText(page, "Reg. " + doc.bank.registration, 36, y, 10, font, muted);
+    drawText(page, "Reg. " + doc.bank.registration, 36, leftY, 10, font, muted);
+    leftY -= 14;
   }
   if (doc.bank.vat) {
-    y -= 14;
-    drawText(page, "VAT " + doc.bank.vat, 36, y, 10, font, muted);
+    drawText(page, "VAT " + doc.bank.vat, 36, leftY, 10, font, muted);
+    leftY -= 14;
+  }
+  let rightY = columnTop;
+  if (doc.toEmail) {
+    drawText(page, doc.toEmail, 320, rightY, 10, font, muted);
+    rightY -= 14;
+  }
+  (scope.facts || []).forEach(function (item) {
+    wrapLines(item.value, font, 10, 230).forEach(function (line) {
+      drawText(page, line, 320, rightY, 10, font, muted);
+      rightY -= 13;
+    });
+  });
+  y = Math.min(leftY, rightY) - 16;
+
+  const sections = scope.sections || [];
+  if (sections.length) {
+    sections.forEach(function (item) {
+      need(28);
+      drawText(page, item.title.toUpperCase(), 36, y, 9, bold, teal);
+      y -= 14;
+      wrapLines(item.body, font, 11, width - 72)
+        .slice(0, 12)
+        .forEach(function (line) {
+          need(15);
+          drawText(page, line, 36, y, 11, font, ink);
+          y -= 14;
+        });
+      y -= 6;
+    });
   }
 
-  y -= 26;
+  if (y - 430 < bottom) {
+    footer(page);
+    page = pdf.addPage([width, height]);
+    drawFullHeader(page);
+    y = height - 156;
+  }
+
+  y -= 10;
   const intro = isInvoice(doc)
     ? "Please pay this invoice to the account below."
-    : "Pay 50% to start the design. It stays open for 14 days. The other 50% is due when you approve the design.";
+    : isExtra(doc)
+      ? "This quote is for additional work. The price is the full amount. It stays open for 14 days."
+      : "Pay 50% to start the design. It stays open for 14 days. The other 50% is due when you approve the design.";
   wrapLines(intro, font, 11, width - 72).forEach(function (line) {
     drawText(page, line, 36, y, 11, font, ink);
     y -= 14;
@@ -839,7 +722,7 @@ export async function quotePdf(doc, logos) {
     if (i === 0) drawRight(page, formatRand(doc.amount), amountRight, y, 14, bold, purple);
     y -= 15;
   });
-  drawText(page, isInvoice(doc) ? "Once-off - South African Rand" : "Once-off - 50% to start design", 48, y, 10, font, muted);
+  drawText(page, isPackageQuote(doc) ? "Once-off - 50% to start design" : "Once-off - South African Rand", 48, y, 10, font, muted);
   y -= 14;
   page.drawLine({
     start: { x: 36, y: y },
@@ -848,7 +731,7 @@ export async function quotePdf(doc, logos) {
     color: rgb(0.93, 0.9, 0.96),
   });
   const schedule = designDeposit(doc.amount);
-  if (!isInvoice(doc)) {
+  if (isPackageQuote(doc)) {
     y -= 18;
     drawText(page, "Due now - 50% to start design", 48, y, 10, font, muted);
     drawRight(page, formatRand(schedule.deposit), amountRight, y, 12, bold, purple);
@@ -857,13 +740,13 @@ export async function quotePdf(doc, logos) {
     drawRight(page, formatRand(schedule.balance), amountRight, y, 12, font, ink);
   }
   y -= 22;
-  drawText(page, isInvoice(doc) ? "Total due" : "Pay now", 48, y + 2, 13, bold, ink);
+  drawText(page, isPackageQuote(doc) ? "Pay now" : "Total due", 48, y + 2, 13, bold, ink);
   drawRight(page, formatRand(dueNowAmount(doc)), amountRight, y, 16, bold, ink);
 
   if (doc.note) {
     y -= 22;
     wrapLines(doc.note, font, 10, width - 80)
-      .slice(0, 3)
+      .slice(0, isExtra(doc) ? 12 : 3)
       .forEach(function (line) {
         drawText(page, line, 36, y, 10, font, muted);
         y -= 13;
@@ -877,7 +760,8 @@ export async function quotePdf(doc, logos) {
   ];
   if (doc.bank.branch) pay.push(["Branch", doc.bank.branch]);
   if (doc.bank.swift) pay.push(["SWIFT", doc.bank.swift]);
-  if (!isInvoice(doc)) pay.push(["Pay now (50%)", formatRand(schedule.deposit)]);
+  if (isPackageQuote(doc)) pay.push(["Pay now (50%)", formatRand(schedule.deposit)]);
+  else if (isExtra(doc)) pay.push(["Total due", formatRand(schedule.total)]);
   pay.push(["Reference", doc.number]);
   const boxH = 32 + pay.length * 18 + 18;
   y -= 28;
@@ -897,8 +781,10 @@ export async function quotePdf(doc, logos) {
   drawText(
     page,
     isInvoice(doc)
-      ? "Pay this invoice in full. Terms: vibeit-intel.net/terms.html"
-      : "50% starts the design. Balance is due when you approve it. Terms: vibeit-intel.net/terms.html",
+      ? "Pay this invoice in full. Terms: vibeit-intel.net/terms/"
+      : isExtra(doc)
+        ? "This is the full price for the additional work. Terms: vibeit-intel.net/terms/"
+        : "50% starts the design. Balance is due when you approve it. Terms: vibeit-intel.net/terms/",
     36,
     y,
     10,

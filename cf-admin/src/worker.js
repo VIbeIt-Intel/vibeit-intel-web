@@ -1,5 +1,6 @@
+import { chooseShots, makeMarks, scorePhoto } from "./markImages.js";
 import { STARTER_FILES } from "./starterFiles.js";
-import { formatMarkdown, formatPlaybook } from "./siteFormats.js";
+import { effectiveType, formatLook, formatMarkdown, formatPlaybook } from "./siteFormats.js";
 import {
   bankFromEnv,
   packageAmount,
@@ -61,8 +62,13 @@ async function handle(request, env, url) {
   if (briefMatch && method === "PATCH") return patchBrief(request, env, briefMatch[1]);
   if (briefMatch && method === "DELETE") return deleteBrief(request, env, briefMatch[1]);
 
+  const filesAdd = path.match(/^\/api\/briefs\/([^/]+)\/files$/);
+  if (filesAdd && method === "POST") return addBriefFiles(request, env, filesAdd[1]);
+
   const fileMatch = path.match(/^\/api\/briefs\/([^/]+)\/file\/(\d+)$/);
   if (fileMatch && method === "GET") return getFile(request, env, fileMatch[1], Number(fileMatch[2]));
+  if (fileMatch && method === "PATCH") return patchBriefFile(request, env, fileMatch[1], Number(fileMatch[2]));
+  if (fileMatch && method === "DELETE") return deleteBriefFile(request, env, fileMatch[1], Number(fileMatch[2]));
 
   const buildMatch = path.match(/^\/api\/briefs\/([^/]+)\/build$/);
   if (buildMatch && method === "POST") return startBuild(request, env, buildMatch[1]);
@@ -358,11 +364,12 @@ async function createBrief(request, env, url) {
 async function listBriefs(request, env) {
   const email = await currentUser(request, env);
   if (!email) return json({ error: "Login required" }, 401);
+  await ensureBriefColumns(env);
   const status = new URL(request.url).searchParams.get("status") || "";
   const sql =
     status && /^(new|in_progress|done|declined)$/.test(status)
-      ? "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files FROM briefs WHERE status = ? ORDER BY created_at DESC LIMIT 200"
-      : "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files FROM briefs ORDER BY created_at DESC LIMIT 200";
+      ? "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files, extra_note, extra_amount FROM briefs WHERE status = ? ORDER BY created_at DESC LIMIT 200"
+      : "SELECT id, created_at, status, package, business_name, email, phone, subject, brief_text, files, extra_note, extra_amount FROM briefs ORDER BY created_at DESC LIMIT 200";
   const result = status && /^(new|in_progress|done|declined)$/.test(status)
     ? await env.DB.prepare(sql).bind(status).all()
     : await env.DB.prepare(sql).all();
@@ -418,11 +425,24 @@ async function patchBrief(request, env, id) {
   const body = await request.json().catch(function () {
     return {};
   });
+  const hasExtra = Object.prototype.hasOwnProperty.call(body, "extraNote") || Object.prototype.hasOwnProperty.call(body, "extraAmount");
   const status = String(body.status || "");
-  if (!/^(new|in_progress|done|declined)$/.test(status)) return json({ error: "Bad status" }, 400);
-  const result = await env.DB.prepare("UPDATE briefs SET status = ? WHERE id = ?").bind(status, id).run();
-  if (!result.meta || !result.meta.changes) return json({ error: "Not found" }, 404);
-  return json({ ok: true, status });
+  const statusOk = /^(new|in_progress|done|declined)$/.test(status);
+  if (!hasExtra && !statusOk) return json({ error: "Bad status" }, 400);
+  if (hasExtra) {
+    await ensureBriefColumns(env);
+    const extraNote = String(body.extraNote || "").trim().slice(0, 2000);
+    const extraAmount = Math.max(0, Math.round(Number(body.extraAmount) || 0));
+    const saved = await env.DB.prepare("UPDATE briefs SET extra_note = ?, extra_amount = ? WHERE id = ?")
+      .bind(extraNote, extraAmount, id)
+      .run();
+    if (!saved.meta || !saved.meta.changes) return json({ error: "Not found" }, 404);
+  }
+  if (statusOk) {
+    const result = await env.DB.prepare("UPDATE briefs SET status = ? WHERE id = ?").bind(status, id).run();
+    if (!result.meta || !result.meta.changes) return json({ error: "Not found" }, 404);
+  }
+  return json({ ok: true, status: statusOk ? status : undefined });
 }
 
 async function deleteBrief(request, env, id) {
@@ -439,6 +459,139 @@ async function deleteBrief(request, env, id) {
     }
   }
   await env.DB.prepare("DELETE FROM briefs WHERE id = ?").bind(id).run();
+  return json({ ok: true });
+}
+
+async function loadBriefRow(request, env, id) {
+  const email = await currentUser(request, env);
+  if (!email) return { error: json({ error: "Login required" }, 401) };
+  const row = await env.DB.prepare("SELECT * FROM briefs WHERE id = ?").bind(id).first();
+  if (!row) return { error: json({ error: "Not found" }, 404) };
+  return { row: row };
+}
+
+async function saveBriefFiles(env, row, files) {
+  const normalized = normalizeFileLabels(files);
+  const briefText = replaceFilesBlock(row.brief_text, normalized);
+  await env.DB.prepare("UPDATE briefs SET files = ?, brief_text = ? WHERE id = ?")
+    .bind(JSON.stringify(normalized), briefText, row.id)
+    .run();
+  return normalized;
+}
+
+async function addBriefFiles(request, env, id) {
+  const loaded = await loadBriefRow(request, env, id);
+  if (loaded.error) return loaded.error;
+  const form = await request.formData();
+  const slot = canonicalSlot(form.get("slot") || "Extra photo");
+  const blobs = [];
+  for (const [label, value] of form.entries()) {
+    if (!(value instanceof Blob) || !value.size) continue;
+    if (label === "slot") continue;
+    if (value.size > 8 * 1024 * 1024) {
+      return json({ error: (value.name || "A file") + " is over 8 MB." }, 400);
+    }
+    const type = value.type || "application/octet-stream";
+    if (slot !== "Price list" && type.indexOf("image/") !== 0) {
+      return json({ error: "Photos only, unless the slot is Price list." }, 400);
+    }
+    blobs.push({ blob: value, type: type });
+  }
+  const incoming = [];
+  for (let i = 0; i < blobs.length; i++) {
+    const value = blobs[i].blob;
+    const safe = sanitizeName(value.name || "photo");
+    const key = "briefs/" + id + "/u-" + Date.now() + "-" + i + "-" + safe;
+    await env.FILES.put(key, await value.arrayBuffer());
+    incoming.push({
+      key: key,
+      name: value.name || safe,
+      type: blobs[i].type,
+      size: value.size,
+      label: slot,
+      originalName: value.name || safe,
+      updated: Date.now(),
+    });
+  }
+  if (!incoming.length) return json({ error: "Choose at least one photo." }, 400);
+  let existing = parseFiles(loaded.row.files);
+  if (slot === "Logo" || slot === "Vibe photo") {
+    existing = existing.map(function (file) {
+      if (canonicalSlot(file.label) !== slot) return file;
+      return Object.assign({}, file, { label: "Extra photo" });
+    });
+  }
+  await saveBriefFiles(env, loaded.row, existing.concat(incoming));
+  return json({ ok: true });
+}
+
+async function patchBriefFile(request, env, id, index) {
+  const loaded = await loadBriefRow(request, env, id);
+  if (loaded.error) return loaded.error;
+  const files = parseFiles(loaded.row.files);
+  const current = files[index];
+  if (!current) return json({ error: "Not found" }, 404);
+  const typeHeader = request.headers.get("content-type") || "";
+  let slot = "";
+  let blob = null;
+  if (typeHeader.indexOf("application/json") === 0) {
+    const body = await request.json().catch(function () {
+      return {};
+    });
+    slot = String(body.slot || body.label || "");
+  } else {
+    const form = await request.formData();
+    slot = String(form.get("slot") || form.get("label") || "");
+    const file = form.get("file");
+    if (file instanceof Blob && file.size) blob = file;
+  }
+  if (!slot && !blob) return json({ error: "Nothing to change." }, 400);
+  const nextSlot = canonicalSlot(slot || current.label);
+  if (blob) {
+    if (blob.size > 8 * 1024 * 1024) return json({ error: "That file is over 8 MB." }, 400);
+    const type = blob.type || "application/octet-stream";
+    if (nextSlot !== "Price list" && type.indexOf("image/") !== 0) {
+      return json({ error: "Replace it with a photo, or set the slot to Price list." }, 400);
+    }
+    const safe = sanitizeName(blob.name || current.name || "photo");
+    const key = "briefs/" + id + "/u-" + Date.now() + "-" + safe;
+    await env.FILES.put(key, await blob.arrayBuffer());
+    if (current.key && current.key !== key) {
+      try {
+        await env.FILES.delete(current.key);
+      } catch (err) {}
+    }
+    current.key = key;
+    current.name = blob.name || safe;
+    current.type = type;
+    current.size = blob.size;
+    current.originalName = blob.name || safe;
+    current.updated = Date.now();
+  }
+  if (nextSlot === "Logo" || nextSlot === "Vibe photo") {
+    for (let i = 0; i < files.length; i++) {
+      if (i !== index && canonicalSlot(files[i].label) === nextSlot) files[i].label = "Extra photo";
+    }
+  }
+  current.label = nextSlot;
+  files[index] = current;
+  await saveBriefFiles(env, loaded.row, files);
+  return json({ ok: true });
+}
+
+async function deleteBriefFile(request, env, id, index) {
+  const loaded = await loadBriefRow(request, env, id);
+  if (loaded.error) return loaded.error;
+  const files = parseFiles(loaded.row.files);
+  const current = files[index];
+  if (!current) return json({ error: "Not found" }, 404);
+  if (current.key) {
+    try {
+      await env.FILES.delete(current.key);
+    } catch (err) {}
+  }
+  files.splice(index, 1);
+  await saveBriefFiles(env, loaded.row, files);
   return json({ ok: true });
 }
 
@@ -504,7 +657,7 @@ async function startBuild(request, env, id) {
   const body = await request.json().catch(function () {
     return {};
   });
-  const type = String(body.type || "").trim();
+  const type = effectiveType(String(body.type || "").trim(), row.brief_text);
   const action = String(body.action || "").trim();
   const instructions = String(body.instructions || "").trim().slice(0, 4000);
   if (!type || !action) return json({ error: "Pick a site format and customer action" }, 400);
@@ -544,74 +697,87 @@ async function startBuild(request, env, id) {
   try {
     const seeded = await githubFileExists(env, repo.owner, repo.repo, "index.html");
     if (!seeded) {
-      await seedClientRepo(env, repo.repoUrl, row, type, action, instructions);
+      const progress = await seedClientRepo(env, repo.repoUrl, row, type, action, instructions);
+      if (!progress.done) {
+        return json({
+          ok: true,
+          seeding: true,
+          repoUrl: repo.repoUrl,
+          previewUrl: pagesUrl(repo.owner, repo.repo),
+          previewStatus: "pending",
+          progress: progress.label,
+        });
+      }
     }
-  } catch (err) {
-    const message = "Repo is pinned, but seeding failed: " + (err.message || "could not write starter files.");
-    await saveJobBuild(env, id, { repoUrl: repo.repoUrl, buildError: message, markProgress: true });
-    return json({ error: message, repoUrl: repo.repoUrl }, 502);
-  }
 
-  const pages = await enableGithubPages(env, repo.owner, repo.repo);
-  await saveJobBuild(env, id, {
-    repoUrl: repo.repoUrl,
-    previewUrl: pages.url,
-    previewStatus: pages.ok ? "live" : "pending",
-    buildError: pages.ok ? "" : pages.error,
-    markProgress: true,
-  });
-
-  const images = await collectPromptImages(env, parseFiles(row.files));
-  const promptText = buildSitePrompt(row, type, action, repo.repoUrl, pages.url, instructions);
-  let agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
-  if (!agentRes.ok) {
-    await sleep(2500);
-    agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
-  }
-  const agent = agentRes.body.agent || agentRes.body;
-  const cursorUrl = agent.url || "";
-  const agentId = agent.id || "";
-  if (!agentRes.ok || !cursorUrl) {
-    const message =
-      (agentRes.body.error && agentRes.body.error.message) ||
-      agentRes.body.message ||
-      "Cursor did not start the agent. The GitHub repo is pinned. Check the API key and that the GitHub app can see VIbeIt-Intel.";
+    const pages = await enableGithubPages(env, repo.owner, repo.repo);
     await saveJobBuild(env, id, {
       repoUrl: repo.repoUrl,
       previewUrl: pages.url,
       previewStatus: pages.ok ? "live" : "pending",
-      buildError: message,
+      buildError: pages.ok ? "" : pages.error,
       markProgress: true,
     });
-    return json(
-      {
-        error: message,
+
+    const images = await collectPromptImages(env, parseFiles(row.files));
+    const promptText = buildSitePrompt(row, type, action, repo.repoUrl, pages.url, instructions);
+    let agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
+    if (!agentRes.ok) {
+      await sleep(2500);
+      agentRes = await createCursorAgent(env, businessName, promptText, images, repo.repoUrl);
+    }
+    const agent = agentRes.body.agent || agentRes.body;
+    const cursorUrl = agent.url || "";
+    const agentId = agent.id || "";
+    if (!agentRes.ok || !cursorUrl) {
+      const message =
+        (agentRes.body.error && agentRes.body.error.message) ||
+        agentRes.body.message ||
+        "Cursor did not start the agent. The GitHub repo is pinned. Check the API key and that the GitHub app can see VIbeIt-Intel.";
+      await saveJobBuild(env, id, {
         repoUrl: repo.repoUrl,
         previewUrl: pages.url,
         previewStatus: pages.ok ? "live" : "pending",
-      },
-      502
-    );
-  }
+        buildError: message,
+        markProgress: true,
+      });
+      return json(
+        {
+          error: message,
+          repoUrl: repo.repoUrl,
+          previewUrl: pages.url,
+          previewStatus: pages.ok ? "live" : "pending",
+        },
+        502
+      );
+    }
 
-  await saveJobBuild(env, id, {
-    repoUrl: repo.repoUrl,
-    agentId: agentId,
-    cursorUrl: cursorUrl,
-    previewUrl: pages.url,
-    previewStatus: pages.ok ? "live" : "pending",
-    buildError: pages.ok ? "" : pages.error,
-    markProgress: true,
-  });
-  return json({
-    ok: true,
-    repoUrl: repo.repoUrl,
-    cursorUrl: cursorUrl,
-    agentId: agentId,
-    previewUrl: pages.url,
-    previewStatus: pages.ok ? "live" : "pending",
-    buildError: pages.ok ? "" : pages.error,
-  });
+    await saveJobBuild(env, id, {
+      repoUrl: repo.repoUrl,
+      agentId: agentId,
+      cursorUrl: cursorUrl,
+      previewUrl: pages.url,
+      previewStatus: pages.ok ? "live" : "pending",
+      buildError: pages.ok ? "" : pages.error,
+      markProgress: true,
+    });
+    return json({
+      ok: true,
+      repoUrl: repo.repoUrl,
+      cursorUrl: cursorUrl,
+      agentId: agentId,
+      previewUrl: pages.url,
+      previewStatus: pages.ok ? "live" : "pending",
+      buildError: pages.ok ? "" : pages.error,
+    });
+  } catch (err) {
+    const message =
+      err && err.message
+        ? err.message
+        : "Start website timed out while seeding photos. Refresh and try again — the repo may already exist.";
+    await saveJobBuild(env, id, { repoUrl: repo.repoUrl, buildError: message, markProgress: true });
+    return json({ error: message, repoUrl: repo.repoUrl }, 502);
+  }
 }
 
 function validateJob(row) {
@@ -651,6 +817,12 @@ function buildSitePrompt(row, type, action, repoUrl, previewUrl, instructions) {
     "Primary customer action: " + action,
     "Package: " + pkg,
   ];
+  const facebook = facebookUrl(briefSocial(String(row.brief_text || ""), ["Facebook", "Facebook page name"]));
+  const instagram = instagramUrl(briefSocial(String(row.brief_text || ""), ["Instagram", "Instagram handle"]));
+  const google = mapsUrl(briefSocial(String(row.brief_text || ""), ["Google profile", "Google maps"]));
+  if (facebook) lines.push("Facebook: " + facebook);
+  if (instagram) lines.push("Instagram: " + instagram);
+  if (google) lines.push("Google: " + google);
   if (extra) {
     lines.push("", "SPECIAL INSTRUCTIONS FROM VIBEIT ADMIN (follow these):", extra);
   }
@@ -659,10 +831,18 @@ function buildSitePrompt(row, type, action, repoUrl, previewUrl, instructions) {
     formatPlaybook(type),
     "",
     "Hard rules:",
-    "- This repo already has the VibeIt starter (index.html, styles.css) plus BRIEF.md, FORMAT.md, PREVIEW.md, and assets/. Customise that starter. Do not start from a blank page.",
-    "- Keep a single index.html. Do not add a framework or extra HTML pages.",
-    "- Follow FORMAT.md. A hairdresser, a maintenance trade, and a food seller must not share the same page structure.",
-    "- The main button and contact path must drive this action: " + action + "."
+    "- This repo already has index.html, styles.css, BRIEF.md, FORMAT.md, PREVIEW.md, MOBILE.md, mobile-check.mjs, and assets/. Their name, colours, logo, and photos are already in those files. Keep those facts. Do not delete mobile-check.mjs.",
+    "- Redesign the page for THIS business. A fabricator, a cafe, a salon, and a plumber must not share the same page. The look class is only a start.",
+    "- If the brief is about making or selling physical work (steel, timber, vehicles, furniture, custom builds) and the format says trades or maintenance, treat them as a maker: full-bleed photos of the work, not a quote-and-service-area brochure.",
+    "- Do not copy another client's website, wording, or photo treatment. Do not reuse timber, lodge, or grain language unless this brief is about timber.",
+    "- Write a real headline from what they do. Name every job from what is actually in the pictures. Drop screenshots and photos that are not the work.",
+    "- PHOTO-PICKS.md lists every uploaded photo. If two files are the same frame, keep the sharper one and leave the repeat off the page. Different angles stay.",
+    "- Group the Kept photos into jobs. Open every file listed under Kept in PHOTO-PICKS.md. Those files are in assets/. The images attached to this prompt are only a sample, so do not group from the sample alone.",
+    "- One finished piece is one <article class=\"job\">. A front, a side, and a detail of the same vehicle, frame, bar, room, or build go inside that article's .job-photos. Put one short title in the h3 (what was built) and one line in .job-note if it helps. A different piece is a different article.",
+    "- Do not merge photos just because they are the same colour, the same kind of work, or shot on the same grass. If you cannot tell they are the same piece, leave them as separate jobs. A single photo of a piece stays a job on its own. Do not leave job titles empty.",
+    "- Keep a single index.html and styles.css. Do not add a framework or extra HTML pages.",
+    "- The main button and contact path must drive this action: " + action + ".",
+    "- If the brief has Facebook, Instagram, or a Google profile link, keep those exact links in the contact section. Facebook and Instagram go in LocalBusiness sameAs. A Google Maps link goes in hasMap. Do not swap a given URL for a guessed page name. Do not invent a star rating."
   );
   if (extra) {
     lines.push(
@@ -670,11 +850,15 @@ function buildSitePrompt(row, type, action, repoUrl, previewUrl, instructions) {
     );
   }
   lines.push(
-    "- Use the client's brand colours in styles.css (:root --c1 --c2 --c3). Do not replace them with VibeIt teal/orange.",
+    "- Use the client's colours already in styles.css (--c1 --c2 --c3, --ink, --paper, --accent). Do not replace them with VibeIt teal or orange unless those hex values are theirs.",
     "- Use files in assets/ for the logo and gallery. Do not invent a different logo. Do not ask anyone to paste or drag files.",
+    "- Keep the round logo favicon (favicon.svg, assets/favicon-32.png, assets/favicon-192.png, assets/apple-touch-icon.png) and assets/share.jpg. That share image is what WhatsApp and Google show when the link is forwarded. Do not swap in a different mark.",
+    "- Keep robots.txt, sitemap.xml, the canonical URL, the Open Graph tags, and the LocalBusiness JSON-LD. When a real domain replaces the GitHub Pages address, update those URLs to it. Do not delete them.",
     "- If assets/ has a Word, Excel, PDF, CSV, or photo price list, use it for services and prices. Do not ignore it.",
     "- Services and products are different. Treatments, repairs, and bookings go under Services. Items they sell (food, nail products, parts, merch) go under Shop. Hide Shop if they do not sell items.",
-    "- South African English. Mobile-first. WhatsApp-friendly where a number exists. If the customer action is Email, the main button must be mailto: the client's email from the brief.",
+    "- South African English. WhatsApp-friendly where a number exists. If the customer action is Email, the main button must be mailto: the client's email from the brief.",
+    "- Check the phone layout before the PR. Open the page at 360px wide and at 390px wide, scroll the whole page, and fix sideways scrolling, clipped text, overlapping sections, images wider than the screen, and any button shorter than 44px. The WhatsApp button must not cover the last line.",
+    "- Run node mobile-check.mjs from the repo root. Fix every line it prints and run it again until it prints PASS. Do not open the PR while it fails. In MOBILE.md, record PASS and what you fixed by looking at those two widths.",
     "- Entry is a marketing site only: hide bookings. Intermediate keeps and fills the bookings section.",
     "- Only show a pay link or bank details if they appear in the brief. Do not invent PayFast, iKhoka, SnapScan, or a checkout. If they pay cash or with a card machine, say that. If payment details are missing, tell customers to WhatsApp, email, or call.",
     "- Never show VibeIt fees, package names, or rand amounts like R1,105 on the client's website. That is what they paid us, not a price for their customers. If the brief lists service prices, those may appear; our studio price must not.",
@@ -695,8 +879,14 @@ function buildSitePrompt(row, type, action, repoUrl, previewUrl, instructions) {
 
 async function collectPromptImages(env, files) {
   const images = [];
-  for (let i = 0; i < files.length && images.length < 5; i++) {
-    const file = files[i];
+  const ordered = files.slice().sort(function (a, b) {
+    const aLogo = /logo/i.test(String(a.label || a.name || ""));
+    const bLogo = /logo/i.test(String(b.label || b.name || ""));
+    if (aLogo === bLogo) return 0;
+    return aLogo ? 1 : -1;
+  });
+  for (let i = 0; i < ordered.length && images.length < 5; i++) {
+    const file = ordered[i];
     const type = String(file.type || "");
     if (type.indexOf("image/") !== 0 || type === "image/svg+xml") continue;
     if (!file.key) continue;
@@ -744,6 +934,67 @@ function parseRepo(repoUrl) {
 
 function pagesUrl(owner, repo) {
   return "https://" + String(owner || "").toLowerCase() + ".github.io/" + repo + "/";
+}
+
+function profileUrl(value, host) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const handle = raw
+    .replace(/^@/, "")
+    .replace(new RegExp("^(https?:\\/\\/)?(www\\.)?" + host.replace(/\./g, "\\.") + "\\/", "i"), "")
+    .replace(/^\//, "")
+    .replace(/\/+$/, "")
+    .trim();
+  if (!handle || /\s/.test(handle)) return "";
+  return "https://www." + host + "/" + handle;
+}
+
+function facebookUrl(value) {
+  return profileUrl(value, "facebook.com");
+}
+
+function instagramUrl(value) {
+  return profileUrl(value, "instagram.com");
+}
+
+function briefSocial(text, labels) {
+  for (let i = 0; i < labels.length; i++) {
+    const value = fieldFromBrief(text, labels[i]);
+    if (value) return value;
+  }
+  return "";
+}
+
+function mapsUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^(www\.)?(google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl)\//i.test(raw)) return "https://" + raw.replace(/^\/+/, "");
+  return "";
+}
+
+function businessSchema(fields) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: fields.name,
+    url: fields.origin,
+    image: fields.shareUrl,
+    description: fields.tagline,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: fields.address,
+      addressCountry: "ZA",
+    },
+    areaServed: "ZA",
+  };
+  if (fields.phone) data.telephone = fields.phone;
+  if (fields.email) data.email = fields.email;
+  const sameAs = [fields.facebook, fields.instagram].filter(Boolean);
+  if (sameAs.length) data.sameAs = sameAs;
+  if (fields.google) data.hasMap = fields.google;
+  return JSON.stringify(data, null, 2).replace(/</g, "\\u003c");
 }
 
 async function githubRequest(env, method, path, payload) {
@@ -794,7 +1045,7 @@ async function openOrCreateClientRepo(env, row) {
     throw new Error("Pinned repo " + owner + "/" + repo + " was not found. The GitHub token may not see VIbeIt-Intel.");
   }
 
-  const created = await githubRequest(env, "POST", "/orgs/" + encodeURIComponent(org) + "/repos", {
+  const created = await createGithubRepo(env, org, {
     name: repo,
     description: ("VibeIt site for " + String(row.business_name || repo)).slice(0, 350),
     private: true,
@@ -818,10 +1069,31 @@ async function openOrCreateClientRepo(env, row) {
   const detail = created.data.message || "GitHub could not create the repo";
   if (created.status === 404 || created.status === 403) {
     throw new Error(
-      "GitHub token cannot create repos in " + org + ". Grant org repo access, then try Start website again. (" + detail + ")"
+      "GitHub token cannot create repos for " + org + ". The token must be created while logged in as " + org + ", with the repo scope. (" + detail + ")"
     );
   }
   throw new Error(detail);
+}
+
+async function createGithubRepo(env, owner, payload) {
+  const account = await githubRequest(env, "GET", "/users/" + encodeURIComponent(owner));
+  if (account.ok && account.data && account.data.type === "User") {
+    const me = await githubRequest(env, "GET", "/user");
+    const login = me.ok && me.data && me.data.login ? me.data.login : "";
+    if (login.toLowerCase() !== String(owner).toLowerCase()) {
+      return {
+        ok: false,
+        status: 403,
+        data: {
+          message: login
+            ? "Token belongs to " + login + ", not " + owner
+            : "Token could not be read",
+        },
+      };
+    }
+    return githubRequest(env, "POST", "/user/repos", payload);
+  }
+  return githubRequest(env, "POST", "/orgs/" + encodeURIComponent(owner) + "/repos", payload);
 }
 
 async function githubFileExists(env, owner, repo, path) {
@@ -961,16 +1233,24 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
   const email = String(row.email || fieldFromBrief(briefText, "Email") || "").trim();
   const address = fieldFromBrief(briefText, "Address");
   const whatsapp = fieldFromBrief(briefText, "WhatsApp") || phone;
+  const facebook = facebookUrl(briefSocial(briefText, ["Facebook", "Facebook page name"]));
+  const instagram = instagramUrl(briefSocial(briefText, ["Instagram", "Instagram handle"]));
+  const google = mapsUrl(briefSocial(briefText, ["Google profile", "Google maps"]));
   const about = blockFromBrief(briefText, "WHAT THEY DO") || "Tell people who you serve and what you want them to do.";
   const hours = blockFromBrief(briefText, "HOURS") || "Hours to be confirmed.";
   const colours = coloursFromBrief(briefText);
+  const palette = paletteFromColours(colours);
+  const look = formatLook(type);
   const items = blockFromBrief(briefText, "ITEMS FOR SALE");
+  const servicesText = blockFromBrief(briefText, "PRODUCTS OR SERVICES");
   const sellsItems = /^Sells products:\s*Yes/im.test(briefText) || Boolean(items);
   const pack = /intermediate|booking/i.test(String(row.package || "")) ? "pack-intermediate" : "pack-entry";
   const cta = ctaFromAction(action, phone, email, whatsapp);
   const waHref = whatsappHref(whatsapp);
   const files = parseFiles(row.files);
-  const uploaded = [];
+  const assets = [];
+  let logoKey = "";
+  let logoMime = "";
   let extraCount = 0;
   let listCount = 0;
   let logoSrc = "";
@@ -979,15 +1259,17 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     if (!file.key) continue;
-    const object = await env.FILES.get(file.key, { type: "arrayBuffer" });
-    if (!object || !object.byteLength) continue;
     const label = String(file.label || file.name || "file").toLowerCase();
     const ext = extFromFile(file);
     const image = isImageExt(ext);
     let dest = "assets/file-" + (i + 1) + (ext || ".bin");
     if (label.indexOf("logo") !== -1 && !logoSrc) {
       dest = "assets/logo" + (ext || ".bin");
-      if (image) logoSrc = dest;
+      logoSrc = dest;
+      if (image) {
+        logoKey = file.key;
+        logoMime = String(file.type || "");
+      }
     } else if (label.indexOf("vibe") !== -1 && image) {
       dest = "assets/vibe" + ext;
       gallery.push(dest);
@@ -997,24 +1279,54 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
     } else {
       extraCount += 1;
       dest = "assets/extra-" + extraCount + ext;
-      gallery.push(dest);
+      if (image) gallery.push(dest);
     }
-    uploaded.push({ path: dest, bytes: object, message: "Add " + dest });
+    assets.push({ path: dest, key: file.key });
   }
+
+  const pickNotes = [
+    "# Photo pick",
+    "",
+    "Every uploaded photo is in the repo. Two files that are the same frame should keep the sharper one. Different angles of one piece belong in one job.",
+    "",
+    "Photos:",
+  ];
+  if (!gallery.length) pickNotes.push("- None");
+  gallery.forEach(function (dest) {
+    pickNotes.push("- " + dest);
+  });
+  pickNotes.push(
+    "",
+    "Jobs:",
+    "The page starts with one photo per job. Open each photo and merge angles of the same finished piece into one job.",
+    "The same vehicle, frame, bar, or build seen from the front, the side, and a detail is one job.",
+    "A different piece is a different job. A similar colour or the same kind of work is not enough to merge them.",
+    "Name the job from what is in the pictures. Leave every photo on the page, inside its job, unless it is the same frame as another.",
+    ""
+  );
+
+  const preview = pagesUrl(owner, repo);
 
   const values = {
     PACKAGE_CLASS: pack,
-    NAME: name,
-    TYPE: type,
-    TAGLINE: about.split(/\n/)[0].slice(0, 140) || name,
-    ABOUT: about,
-    ADDRESS: address || "South Africa",
-    PHONE: phone || "Phone on request",
+    NAME: escapeHtml(name),
+    TYPE: escapeHtml(type),
+    TAGLINE: escapeHtml(headlineFrom(about, name)),
+    ABOUT: escapeHtml(about).replace(/\n/g, "<br>"),
+    ADDRESS: escapeHtml(address || "South Africa"),
+    PHONE: escapeHtml(phone || "Phone on request"),
     PHONE_HREF: phone.replace(/\s+/g, "") || "",
-    EMAIL: email || "",
+    EMAIL: escapeHtml(email || ""),
+    EMAIL_HIDDEN: email ? "" : "hidden",
+    FACEBOOK_HREF: facebook || "#contact",
+    FB_HIDDEN: facebook ? "" : "hidden",
+    INSTAGRAM_HREF: instagram || "#contact",
+    IG_HIDDEN: instagram ? "" : "hidden",
+    GOOGLE_HREF: google || "#contact",
+    GOOGLE_HIDDEN: google ? "" : "hidden",
     CTA_HREF: cta.href,
-    CTA_LABEL: cta.label,
-    HOURS: hours,
+    CTA_LABEL: escapeHtml(cta.label),
+    HOURS: escapeHtml(hours).replace(/\n/g, "<br>"),
     WHATSAPP_HREF: waHref || "#contact",
     WA_HIDDEN: waHref ? "" : "hidden",
     LOGO_SRC: logoSrc || "assets/logo.jpg",
@@ -1025,15 +1337,43 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
     PRODUCTS: productCards(items),
     GALLERY: gallery
       .map(function (src) {
-        return '<img src="' + src + '" alt="" />';
+        return (
+          '<article class="job"><h3></h3><div class="job-photos"><figure><img src="' +
+          src +
+          '" alt="" /></figure></div><p class="job-note"></p></article>'
+        );
       })
       .join("\n          ") || "<p>Photos to come.</p>",
-    C1: colours[0] || "#c70000",
-    C2: colours[1] || "#161018",
-    C3: colours[2] || "#f6f1ea",
+    C1: palette.c1,
+    C2: palette.c2,
+    C3: palette.c3,
+    INK: palette.ink,
+    PAPER: palette.paper,
+    ACCENT: palette.accent,
+    ON_ACCENT: palette.onAccent,
+    LOOK: look.look,
+    DISPLAY: look.display,
+    TEXT: look.text,
+    FONT_HREF: look.fontHref,
+    ORIGIN: preview,
+    SHARE_URL: preview + "assets/share.jpg",
+    SCHEMA: businessSchema({
+      name: name,
+      origin: preview,
+      shareUrl: preview + "assets/share.jpg",
+      phone: phone,
+      email: email,
+      address: address || "South Africa",
+      tagline: headlineFrom(about, name),
+      facebook: facebook,
+      instagram: instagram,
+      google: google,
+    }),
+    HERO_STYLE: gallery[0] ? "--hero:url('" + gallery[0] + "')" : "--hero:none",
+    SERVICES_CLASS: servicesText ? "has-services" : "no-services",
+    SERVICES: serviceCards(servicesText),
   };
 
-  const preview = pagesUrl(owner, repo);
   const briefMd = [
     "# " + name,
     "",
@@ -1042,6 +1382,9 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
     "Customer action: " + action,
     "Package: " + String(row.package || ""),
   ];
+  if (facebook) briefMd.push("Facebook: " + facebook);
+  if (instagram) briefMd.push("Instagram: " + instagram);
+  if (google) briefMd.push("Google: " + google);
   const extraNotes = String(instructions || "").trim();
   if (extraNotes) {
     briefMd.push("", "Special instructions from VibeIt admin:", extraNotes);
@@ -1063,22 +1406,173 @@ async function seedClientRepo(env, repoUrl, row, type, action, instructions) {
       "GitHub Pages is served from `main`. If this URL 404s, Pages is still building or not enabled yet. The site files are in index.html.",
       "",
     ].join("\n"),
+    "PHOTO-PICKS.md": pickNotes.join("\n"),
+    "mobile-check.mjs": STARTER_FILES["mobile-check.mjs"],
+    "MOBILE.md": [
+      "# Mobile check",
+      "",
+      "Before the pull request:",
+      "",
+      "1. Open the page at 360px wide and at 390px wide. Scroll from top to bottom.",
+      "2. Fix sideways scrolling, clipped text, overlapping sections, images wider than the screen, and buttons shorter than 44px.",
+      "3. Run `node mobile-check.mjs` until it prints PASS.",
+      "",
+      "Result:",
+      "- Script: not run yet",
+      "- Look at 360px and 390px: not done",
+      "",
+    ].join("\n"),
+    "robots.txt": ["User-agent: *", "Allow: /", "", "Sitemap: " + preview + "sitemap.xml", ""].join("\n"),
+    "sitemap.xml": [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      "  <url>",
+      "    <loc>" + preview + "</loc>",
+      "    <changefreq>monthly</changefreq>",
+      "    <priority>1.0</priority>",
+      "  </url>",
+      "</urlset>",
+      "",
+    ].join("\n"),
   };
 
-  const names = Object.keys(textFiles);
-  for (let i = 0; i < names.length; i++) {
-    await putGithubFile(env, owner, repo, names[i], utf8ToBase64(textFiles[names[i]]), "Seed " + names[i]);
+  const plan = assets.map(function (asset) {
+    return { path: asset.path, key: asset.key };
+  });
+  plan.push(
+    { path: "assets/favicon-32.png", mark: "png32" },
+    { path: "assets/favicon-192.png", mark: "png192" },
+    { path: "assets/apple-touch-icon.png", mark: "apple" },
+    { path: "assets/share.jpg", mark: "share" },
+    { path: "favicon.svg", mark: "svg" }
+  );
+  Object.keys(textFiles).forEach(function (fileName) {
+    if (fileName === "index.html") return;
+    plan.push({ path: fileName, text: textFiles[fileName] });
+  });
+  plan.push({ path: "index.html", text: textFiles["index.html"] });
+
+  const existing = await githubTreePaths(env, owner, repo);
+  const pending = plan.filter(function (item) {
+    return existing.indexOf(item.path) === -1;
+  });
+  if (!pending.length) return { done: true, label: "Site files are in the repo." };
+  const waiting = pending.filter(function (item) {
+    return item.path !== "index.html";
+  });
+  const batch = (waiting.length ? waiting : pending).slice(0, 3);
+  let marks = null;
+  async function seedMarks() {
+    if (marks) return marks;
+    let logoBytes = null;
+    if (logoKey) logoBytes = await env.FILES.get(logoKey, { type: "arrayBuffer" });
+    try {
+      marks = makeMarks(logoBytes, logoMime, palette.paper, palette.accent, name);
+    } catch (err) {
+      marks = makeMarks(null, "", palette.paper, palette.accent, name);
+    }
+    return marks;
   }
-  for (let i = 0; i < uploaded.length; i++) {
-    await putGithubFile(
-      env,
-      owner,
-      repo,
-      uploaded[i].path,
-      bytesToBase64(uploaded[i].bytes),
-      uploaded[i].message
+  const commitFiles = [];
+  for (let i = 0; i < batch.length; i++) {
+    const item = batch[i];
+    if (item.key) {
+      const object = await env.FILES.get(item.key, { type: "arrayBuffer" });
+      if (!object || !object.byteLength) throw new Error("Could not read " + item.path + " from the brief.");
+      commitFiles.push({ path: item.path, bytes: object });
+    } else if (item.mark) {
+      const made = await seedMarks();
+      if (item.mark === "svg") commitFiles.push({ path: item.path, text: made.svg });
+      else commitFiles.push({ path: item.path, bytes: made[item.mark] });
+    } else {
+      commitFiles.push({ path: item.path, text: item.text });
+    }
+  }
+  await commitGithubFiles(env, owner, repo, commitFiles, "Seed VibeIt starter for " + name);
+  const left = pending.length - batch.length;
+  return {
+    done: left === 0,
+    label: "Uploading site files (" + (plan.length - left) + " of " + plan.length + ").",
+  };
+}
+
+async function githubTreePaths(env, owner, repo) {
+  const ref = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo + "/git/ref/heads/main");
+  if (!ref.ok) return [];
+  const commit = await githubRequest(
+    env,
+    "GET",
+    "/repos/" + owner + "/" + repo + "/git/commits/" + ref.data.object.sha
+  );
+  if (!commit.ok) return [];
+  const tree = await githubRequest(
+    env,
+    "GET",
+    "/repos/" + owner + "/" + repo + "/git/trees/" + commit.data.tree.sha + "?recursive=1"
+  );
+  if (!tree.ok || !tree.data.tree) return [];
+  return tree.data.tree
+    .filter(function (item) {
+      return item.type === "blob";
+    })
+    .map(function (item) {
+      return item.path;
+    });
+}
+
+async function commitGithubFiles(env, owner, repo, files, message) {
+  const repoInfo = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo);
+  if (!repoInfo.ok) throw new Error(repoInfo.data.message || "Could not read the GitHub repo.");
+  const branch = repoInfo.data.default_branch || "main";
+  const ref = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo + "/git/ref/heads/" + branch);
+  if (!ref.ok) throw new Error(ref.data.message || "Could not read the repo branch.");
+  const parentSha = ref.data.object.sha;
+  const parent = await githubRequest(env, "GET", "/repos/" + owner + "/" + repo + "/git/commits/" + parentSha);
+  if (!parent.ok) throw new Error(parent.data.message || "Could not read the latest commit.");
+  const baseTreeSha = parent.data.tree.sha;
+
+  const treeEntries = [];
+  const batchSize = 5;
+  for (let i = 0; i < files.length; i += batchSize) {
+    const batch = files.slice(i, i + batchSize);
+    const created = await Promise.all(
+      batch.map(async function (file) {
+        const content = file.bytes ? bytesToBase64(file.bytes) : utf8ToBase64(file.text);
+        const blob = await githubRequest(env, "POST", "/repos/" + owner + "/" + repo + "/git/blobs", {
+          content: content,
+          encoding: "base64",
+        });
+        if (!blob.ok) {
+          throw new Error((blob.data.message || "Could not upload " + file.path) + " (" + file.path + ")");
+        }
+        return { path: file.path, sha: blob.data.sha };
+      })
     );
+    treeEntries.push.apply(treeEntries, created);
   }
+
+  const tree = await githubRequest(env, "POST", "/repos/" + owner + "/" + repo + "/git/trees", {
+    base_tree: baseTreeSha,
+    tree: treeEntries.map(function (entry) {
+      return { path: entry.path, mode: "100644", type: "blob", sha: entry.sha };
+    }),
+  });
+  if (!tree.ok) throw new Error(tree.data.message || "Could not build the GitHub commit.");
+
+  const commit = await githubRequest(env, "POST", "/repos/" + owner + "/" + repo + "/git/commits", {
+    message: message,
+    tree: tree.data.sha,
+    parents: [parentSha],
+  });
+  if (!commit.ok) throw new Error(commit.data.message || "Could not commit the starter files.");
+
+  const updated = await githubRequest(
+    env,
+    "PATCH",
+    "/repos/" + owner + "/" + repo + "/git/refs/heads/" + branch,
+    { sha: commit.data.sha }
+  );
+  if (!updated.ok) throw new Error(updated.data.message || "Could not update the repo branch.");
 }
 
 async function putGithubFile(env, owner, repo, path, content, message) {
@@ -1198,6 +1692,48 @@ function coloursFromBrief(text) {
   return found.slice(0, 3);
 }
 
+function hexLum(hex) {
+  const h = String(hex || "").replace("#", "");
+  if (h.length !== 6) return 0;
+  const channel = function (i) {
+    const c = parseInt(h.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(0) + 0.7152 * channel(2) + 0.0722 * channel(4);
+}
+
+function paletteFromColours(colours) {
+  const list = colours.length ? colours : ["#c45a12", "#f7f3ee", "#16130f"];
+  const ranked = list.slice().sort(function (a, b) {
+    return hexLum(a) - hexLum(b);
+  });
+  const ink = ranked[0];
+  const paper = ranked[ranked.length - 1];
+  const accent = list.filter(function (c) {
+    return c !== ink && c !== paper;
+  })[0] || list[0];
+  return {
+    c1: list[0],
+    c2: list[1] || ink,
+    c3: list[2] || paper,
+    ink: ink,
+    paper: paper,
+    accent: accent,
+    onAccent: hexLum(accent) > 0.45 ? ink : paper,
+  };
+}
+
+function headlineFrom(about, name) {
+  const line = String(about || "").split(/\n/)[0].trim();
+  const sentence = line.split(/(?<=[.!?])\s/)[0] || line || name;
+  if (sentence.length <= 90) return sentence;
+  return sentence.slice(0, 87).replace(/\s+\S*$/, "");
+}
+
+function serviceCards(text) {
+  return productCards(text);
+}
+
 function ctaFromAction(action, phone, email, whatsapp) {
   const label = action || "Contact";
   if (action === "Call" && phone) return { label: label, href: "tel:" + phone.replace(/\s+/g, "") };
@@ -1253,7 +1789,7 @@ async function listQuotes(env, briefId) {
   try {
     await ensureInvoicesTable(env);
     const result = await env.DB.prepare(
-      "SELECT id, created_at, kind, number, amount, sent_at, sent_via FROM invoices WHERE brief_id = ? ORDER BY created_at DESC LIMIT 20"
+      "SELECT id, created_at, kind, number, amount, description, sent_at, sent_via FROM invoices WHERE brief_id = ? ORDER BY created_at DESC LIMIT 20"
     )
       .bind(briefId)
       .all();
@@ -1264,6 +1800,7 @@ async function listQuotes(env, briefId) {
         kind: row.kind,
         number: row.number,
         amount: row.amount,
+        description: row.description || "",
         sentAt: row.sent_at || "",
         sentVia: row.sent_via || "",
       };
@@ -1306,17 +1843,20 @@ function quoteDoc(row, invoice, bank, toEmail) {
   const logo = images.find(function (item) {
     return /logo/i.test(item.label);
   });
+  const extra = String(invoice.description || "") === "Additional work";
+  const scope = quoteScope(row);
   return {
     kind: invoice.kind,
     number: invoice.number,
     amount: Number(invoice.amount) || 0,
     description: invoice.description,
     note: invoice.note || "",
+    extra: extra,
     businessName: String(row.business_name || "").trim() || "Client",
     toEmail: toEmail,
     createdAt: displayDate(invoice.created_at),
     bank: bank,
-    scope: quoteScope(row),
+    scope: extra ? { facts: scope.facts, sections: [] } : scope,
     clientImages: images.map(function (item) {
       return { url: item.url, label: item.label };
     }),
@@ -1384,8 +1924,7 @@ async function loadClientImages(env, row) {
 
 async function renderQuotePdf(env, row, doc) {
   const brandBytes = await loadLogoBytes();
-  const clientPhotos = await loadClientImages(env, row);
-  return quotePdf(doc, { brandBytes: brandBytes, clientPhotos: clientPhotos });
+  return quotePdf(doc, { brandBytes: brandBytes });
 }
 
 async function sendQuote(request, env, id) {
@@ -1413,14 +1952,18 @@ async function sendQuote(request, env, id) {
   const kind = String(body.kind || "quote") === "invoice" ? "invoice" : "quote";
   const amount = Math.round(Number(body.amount));
   if (!amount || amount < 1) return json({ error: "Enter an amount in rand." }, 400);
-  const note = String(body.note || "").trim().slice(0, 400);
+  const extra = Boolean(body.extra);
+  const note = String(body.note || (extra ? row.extra_note : "") || "")
+    .trim()
+    .slice(0, extra ? 2000 : 400);
+  if (extra && !note) return json({ error: "Write what the additional work is before quoting it." }, 400);
   await ensureInvoicesTable(env);
   const invoice = {
     id: crypto.randomUUID(),
     kind: kind,
     number: await nextQuoteNumber(env),
     amount: amount,
-    description: quoteDescription(row, kind),
+    description: extra ? "Additional work" : quoteDescription(row, kind),
     note: note,
     created_at: new Date().toISOString(),
   };
@@ -1594,6 +2137,8 @@ async function ensureBriefColumns(env) {
     "ALTER TABLE briefs ADD COLUMN preview_url TEXT",
     "ALTER TABLE briefs ADD COLUMN preview_status TEXT",
     "ALTER TABLE briefs ADD COLUMN build_error TEXT",
+    "ALTER TABLE briefs ADD COLUMN extra_note TEXT",
+    "ALTER TABLE briefs ADD COLUMN extra_amount INTEGER",
   ];
   for (let i = 0; i < alters.length; i++) {
     try {
@@ -1674,7 +2219,69 @@ function shapeBrief(row) {
     previewUrl: row.preview_url || "",
     previewStatus: row.preview_status || "",
     buildError: row.build_error || "",
+    extraNote: row.extra_note || "",
+    extraAmount: Number(row.extra_amount) || 0,
   };
+}
+
+function canonicalSlot(label) {
+  const raw = String(label || "").toLowerCase();
+  if (/price|catalogue|catalog/.test(raw)) return "Price list";
+  if (/vibe/.test(raw)) return "Vibe photo";
+  if (/logo/.test(raw)) return "Logo";
+  return "Extra photo";
+}
+
+function normalizeFileLabels(files) {
+  let logo = false;
+  let vibe = false;
+  const slotted = files.map(function (file) {
+    let slot = canonicalSlot(file.label);
+    if (slot === "Logo") {
+      if (logo) slot = "Extra photo";
+      else logo = true;
+    } else if (slot === "Vibe photo") {
+      if (vibe) slot = "Extra photo";
+      else vibe = true;
+    }
+    return Object.assign({}, file, { label: slot });
+  });
+  let extra = 0;
+  let price = 0;
+  return slotted.map(function (file) {
+    if (file.label === "Extra photo") {
+      extra += 1;
+      return Object.assign({}, file, { label: "Extra photo " + extra });
+    }
+    if (file.label === "Price list") {
+      price += 1;
+      if (price > 1) return Object.assign({}, file, { label: "Price list " + price });
+    }
+    return file;
+  });
+}
+
+function filesBlock(files) {
+  const lines = ["FILES (" + files.length + ")"];
+  files.forEach(function (file) {
+    lines.push("• " + (file.label || "File") + " — " + (file.originalName || file.name || "file"));
+  });
+  return lines.join("\n");
+}
+
+function replaceFilesBlock(briefText, files) {
+  const lines = String(briefText || "").split(/\r?\n/);
+  const block = filesBlock(files).split("\n");
+  const start = lines.findIndex(function (line) {
+    return /^FILES\b/.test(line.trim());
+  });
+  if (start < 0) {
+    const base = lines.join("\n").trim();
+    return (base ? base + "\n\n" : "") + block.join("\n");
+  }
+  let end = start + 1;
+  while (end < lines.length && /^[•\-]\s/.test(lines[end].trim())) end += 1;
+  return lines.slice(0, start).concat(block, lines.slice(end)).join("\n");
 }
 
 function parseFiles(raw) {

@@ -1,11 +1,12 @@
 name = "vibeit-admin"
 main = "src/worker.js"
 compatibility_date = "2026-08-24"
+compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 
 [[rules]]
 type = "Text"
-globs = ["**/*.html", "**/*.css", "**/*.md"]
+globs = ["**/*.html", "**/*.css", "**/*.md", "**/mobile-check.mjs"]
 fallthrough = true
 
 [assets]
