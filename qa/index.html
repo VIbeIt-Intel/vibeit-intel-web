@@ -7,7 +7,7 @@
     <title>Q&amp;A | VibeIt-Intel</title>
     <meta
       name="description"
-      content="Plain answers about VibeIt-Intel packages: hosting, SSL, and the web address after the first year."
+      content="Plain answers about VibeIt-Intel packages: hosting, SSL, security, and the web address after the first year."
     />
     <link rel="canonical" href="https://vibeit-intel.net/qa/" />
     <script type="application/ld+json">
@@ -22,6 +22,22 @@
               "@type": "Answer",
               "text": "The site stays online. You do not buy a new SSL certificate each year. Hosting and HTTPS stay in place, and the certificate renews in the background. There is no extra hosting or SSL fee after year one. The only yearly cost is the web address if we registered a new .co.za for you. Year one is included. After that the renewal is about R105 a year, depending on the name. If you already had your own address, you keep paying whoever you bought it from. If the domain is not renewed, the address stops working even though the site is still hosted."
             }
+          },
+          {
+            "@type": "Question",
+            "name": "How is the site protected?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Visitors get the padlock. The address stays on HTTPS, so the connection is encrypted, and the browser is told to keep it that way. The page loads its own files, so a script from somewhere else is blocked. The site cannot be placed inside another website, so it cannot be dressed up as a fake page. The browser does not guess what a file is. Camera, microphone, location, and payment prompts stay off unless that package needs them. These stay in place after launch. They are part of the build."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you check the site for threats before launch?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Before the site goes live we check it against the usual threats: a page someone else can change, a form that sends a message to the wrong place, a file that should not be public, and another site pretending to be yours. If something is wrong, we fix it before launch. The same protections stay on the site afterwards."
+            }
           }
         ]
       }
@@ -29,7 +45,7 @@
     <meta property="og:title" content="Q&A — VibeIt-Intel" />
     <meta
       property="og:description"
-      content="Plain answers about hosting, SSL, and the web address after the first year."
+      content="Plain answers about hosting, SSL, security, and the web address after the first year."
     />
     <meta property="og:url" content="https://vibeit-intel.net/qa/" />
     <meta property="og:type" content="website" />
@@ -117,6 +133,40 @@
             <p>
               If the domain is not renewed, the address stops working even
               though the site is still hosted.
+            </p>
+          </div>
+        </details>
+        <details class="qa-item" id="site-security">
+          <summary>How is the site protected?</summary>
+          <div class="qa-a">
+            <p>
+              Visitors get the padlock. The address stays on HTTPS, so the
+              connection is encrypted, and the browser is told to keep it
+              that way.
+            </p>
+            <p>
+              We also set a few rules on the site itself. The page loads its
+              own files, so a script from somewhere else is blocked. The site
+              cannot be placed inside another website, so it cannot be
+              dressed up as a fake page. The browser does not guess what a
+              file is. Camera, microphone, location, and payment prompts stay
+              off unless that package needs them.
+            </p>
+            <p>These stay in place after launch. They are part of the build.</p>
+          </div>
+        </details>
+        <details class="qa-item" id="security-check">
+          <summary>Do you check the site for threats before launch?</summary>
+          <div class="qa-a">
+            <p>
+              Yes. Before the site goes live we check it against the usual
+              threats: a page someone else can change, a form that sends a
+              message to the wrong place, a file that should not be public,
+              and another site pretending to be yours.
+            </p>
+            <p>
+              If something is wrong, we fix it before launch. The same
+              protections stay on the site afterwards.
             </p>
           </div>
         </details>
